@@ -1,6 +1,16 @@
+<<<<<<< HEAD
 *.class
 
 # Package Files #
 *.jar
 *.war
 *.ear
+=======
+bin
+images
+*~
+
+/build
+/msg_gen
+/srv_gen
+>>>>>>> 9fc42f738f66b5f721501c948e3f507a840008d0
