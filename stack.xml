@@ -1,0 +1,18 @@
+<stack>
+  <description brief="knowrob">
+
+    KnowRob is a knowledge processing framework for robots. It has originally
+    been developed in the IAS group at Technische Universitaet Muenchen,
+    Germany and is currently maintained by Moritz Tenorth at the Institute
+    for Artificial Intelligence in Bremen, Germany.
+
+    This repository contains internal development packages of KnowRob.
+    
+  </description>
+  <author>Maintained by Moritz Tenorth</author>
+  <license>GPL,BSD</license>  
+  <review status="unreviewed" notes=""/>
+  <url>http://www.knowrob.org</url>
+  <depend stack="knowrob" />
+
+</stack>
