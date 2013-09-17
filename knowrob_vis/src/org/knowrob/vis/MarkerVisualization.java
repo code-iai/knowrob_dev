@@ -1,6 +1,5 @@
 package org.knowrob.vis;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -19,13 +18,20 @@ import ros.communication.Time;
 import ros.pkg.std_msgs.msg.ColorRGBA;
 import ros.pkg.visualization_msgs.msg.*;
 
-import edu.tum.cs.ias.knowrob.json_prolog.Prolog;
-import edu.tum.cs.ias.knowrob.json_prolog.PrologBindings;
-import edu.tum.cs.ias.knowrob.json_prolog.PrologQueryProxy;
 import edu.tum.cs.ias.knowrob.owl.OWLThing;
 import edu.tum.cs.ias.knowrob.prolog.PrologInterface;
 
 
+/**
+ * Visualization module for the KnowRob knowledge base 
+ * 
+ * The objects to be visualized are published as 'Markers'
+ * on the visualization_marker topic and can be visualized
+ * in the 'rviz' program.
+ * 
+ * @author tenorth@cs.uni-bremen.de
+ *
+ */
 public class MarkerVisualization {
 
 	static Ros ros;
@@ -71,7 +77,7 @@ public class MarkerVisualization {
 	/**
 	 * Add object 'identifier' to the visualization.
 	 * 
-	 * @param identifier OWL instance of an object
+	 * @param identifier OWL identifier of an object instance
 	 */
 	public void addObject(String identifier) {
 
@@ -89,7 +95,7 @@ public class MarkerVisualization {
 	/**
 	 * Add object 'identifier' and all its parts to the visualization.
 	 * 
-	 * @param identifier OWL instance of an object
+	 * @param identifier OWL identifier of an object instance
 	 */
 	public void addObjectWithChildren(String identifier) {
 
@@ -103,6 +109,11 @@ public class MarkerVisualization {
 
 
 
+	/**
+	 * Remove object 'identifier' from the visualization.
+	 * 
+	 * @param identifier OWL identifier of an object instance
+	 */
 	public void removeObject(String identifier) {
 
 		// remove the object from the list
@@ -111,8 +122,11 @@ public class MarkerVisualization {
 		}
 	}
 
-
-
+	/**
+	 * Remove the object 'identifier' as well as its children
+	 * 
+	 * @param identifier OWL identifier of an object instance
+	 */
 	public void removeObjectWithChildren(String identifier) {
 
 		// remove this object
@@ -125,38 +139,74 @@ public class MarkerVisualization {
 
 
 
+	/**
+	 * Highlight the object 'identifier' in red
+	 * 
+	 * @param identifier OWL identifier of an object instance
+	 * @param highlight True to set, False to remove highlight
+	 */
 	public void highlight(String identifier, boolean highlight) {
-		highlight(identifier,highlight, 200, 0, 0, 255);
+		highlight(identifier, highlight, 200, 0, 0, 255);
 	}
 
+	
+	
+	/**
+	 * Highlight the object 'identifier' in 'color'
+	 * 
+	 * @param identifier OWL identifier of an object instance
+	 * @param highlight True to set, False to remove highlight
+	 * @param color Integer of the form #AARRGGBB
+	 */
 	public void highlight(String identifier, boolean highlight, int color) {
 		int a = color & 0xff000000 >> 24;
 		int r = color & 0x00ff0000 >> 16;
 		int g = color & 0x0000ff00 >> 8;
 		int b = color & 0x000000ff;
-		highlight(identifier,highlight, r, g, b, a);
+		highlight(identifier, highlight, r, g, b, a);
 	}
-
-	public void highlight(String identifier, boolean highlight, int r, int g, int b) {
-		highlight(identifier,highlight, r, g, b, 255);
-	}
-
+	
+	
+	/**
+	 * Highlight the object 'identifier' with color RGBA
+	 * 
+	 * @param identifier OWL identifier of an object instance
+	 * @param highlight True to set, False to remove highlight
+	 * @param r Red value (0--255)
+	 * @param g Green value (0--255)
+	 * @param b Blue value (0--255)
+	 * @param a Alpha value (0--255)
+	 */
 	public void highlight(String identifier, boolean highlight, int r, int g, int b, int a) {
 
-		synchronized (highlighted) {
-			highlighted.put(identifier, markers.get(identifier).color);
-		}
+		if(!highlight) {
+			synchronized (markers) {				
+				markers.get(identifier).color = highlighted.get(identifier);
+			}
+			
+		} else {
 
-		synchronized (markers) {
-			markers.get(identifier).color = new ColorRGBA();
-			markers.get(identifier).color.r = ((float) r)/255;
-			markers.get(identifier).color.g = ((float) g)/255;
-			markers.get(identifier).color.b = ((float) b)/255;
-			markers.get(identifier).color.a = ((float) a)/255;
+			synchronized (highlighted) {
+				highlighted.put(identifier, markers.get(identifier).color);
+			}
+
+			synchronized (markers) {
+				markers.get(identifier).color = new ColorRGBA();
+				markers.get(identifier).color.r = ((float) r)/255;
+				markers.get(identifier).color.g = ((float) g)/255;
+				markers.get(identifier).color.b = ((float) b)/255;
+				markers.get(identifier).color.a = ((float) a)/255;
+			}
 		}
 	}
 
 
+	/**
+	 * Highlight the object 'identifier' and its children in red
+	 * 
+	 * @param identifier OWL identifier of an object instance
+	 * @param highlight True to set, False to remove highlight
+	 */
 	public void highlightWithChildren(String identifier, boolean highlight) {
 
 		// remove this object
@@ -169,7 +219,7 @@ public class MarkerVisualization {
 
 
 	/**
-	 * Clears all highlights
+	 * Clear all highlights
 	 */
 	public void clearHighlight() {
 
@@ -360,7 +410,7 @@ public class MarkerVisualization {
 	 * Thread that publishes the current state of the marker set
 	 * to the visualization_marker topic.
 	 * 
-	 * @author tenorth
+	 * @author tenorth@cs.uni-bremen.de
 	 *
 	 */
 	public class PublisherThread implements Runnable {
@@ -391,135 +441,7 @@ public class MarkerVisualization {
 		}
 	}
 
-
-
-
-
-
-	//	
-	//	
-	//
-	//	public void publishMap(String map_id) {
-	//
-	//		Prolog pl = new Prolog();
-	//		PrologQueryProxy bdgs = pl.query("map_root_objects('"+map_id+"', Objs), member(Obj, Objs), map_object_info([Obj, Type, [M00, M01, M02, M03, M10, M11, M12, M13, M20, M21, M22, M23, M30, M31, M32, M33], [D, W, H]])");
-	//		//PrologQueryProxy bdgs = pl.query("map_root_objects('"+map_id+"', Objs), member(Obj, Objs), map_object_info([Obj, Type, Pose, [D, W, H]])");
-	//
-	//		ArrayList<Marker> markers = new ArrayList<Marker>();
-	//		HashSet<String> objs = new HashSet<String>();
-	//
-	//		int id = 0;
-	//		for(PrologBindings bdg : bdgs) {
-	//
-	//			String obj =  bdg.getBdgs_().get("Obj").getValue().toString();
-	//
-	//			if(objs.contains(obj)) {
-	//				continue;
-	//			} else {
-	//				objs.add(obj);
-	//			}
-	//
-	//			Marker m = new Marker();
-	//
-	//			m.header.frame_id = "/map";
-	//			m.header.stamp = Time.now();
-	//			m.ns = "basic_shapes";
-	//			m.id = id++;
-	//
-	//			m.text = obj;
-	//
-	//			m.action = Marker.ADD;
-	//			m.lifetime = new Duration();
-	//
-	//			m.type = Marker.CUBE;
-	//			m.scale.x = Double.valueOf(bdg.getBdgs_().get("D").getValue().toString());
-	//			m.scale.y = Double.valueOf(bdg.getBdgs_().get("W").getValue().toString());
-	//			m.scale.z = Double.valueOf(bdg.getBdgs_().get("H").getValue().toString());
-	//
-	//
-	//			double[] p = new double[16];
-	//			Matrix4d poseMat = new Matrix4d(p);
-	//
-	//			for(int i=0;i<4;i++) {
-	//				for(int j=0;j<4;j++) {
-	//					poseMat.setElement(i, j, Double.valueOf(bdg.getBdgs_().get("M"+i+j).getValue().toString()));
-	//				}
-	//			}
-	//
-	//			Quat4d q = new Quat4d();
-	//			q.set(poseMat);
-	//
-	//			m.pose.orientation.w = q.w;
-	//			m.pose.orientation.x = q.x;
-	//			m.pose.orientation.y = q.y;
-	//			m.pose.orientation.z = q.z;
-	//
-	//			m.pose.position.x = poseMat.m03;
-	//			m.pose.position.y = poseMat.m13;
-	//			m.pose.position.z = poseMat.m23;
-	//
-	//			m.color.r = 0.6f;
-	//			m.color.g = 0.6f;
-	//			m.color.b = 0.6f;
-	//			m.color.a = 1.0f;
-	//
-	//
-	//			markers.add(m);
-	//
-	//		}
-	//
-	//
-	//		Marker m = new Marker();
-	//
-	//		m.header.frame_id = "/map";
-	//		m.header.stamp = Time.now();
-	//		m.ns = "basic_shapes";
-	//		m.id = id++;
-	//
-	//		m.action = Marker.ADD;
-	//		m.lifetime = new Duration();
-	//
-	//		m.type = Marker.MESH_RESOURCE;
-	//		m.scale.x = 1;
-	//		m.scale.y = 1;
-	//		m.scale.z = 1;
-	//
-	//		m.color.r = 0.6f;
-	//		m.color.g = 0.6f;
-	//		m.color.b = 0.6f;
-	//		m.color.a = 1.0f;
-	//
-	//		//		m.mesh_resource = "package://knowrob_cad_models/models/electric-devices/iron_2.dae";
-	//		m.mesh_resource = "package://pr2_description/meshes/base_v0/base.dae";
-	//
-	//		markers.add(m);
-	//
-	//
-	//
-	//
-	//		Publisher<Marker> pub;
-	//		try {
-	//			pub = n.advertise("visualization_marker", new Marker(), 100);
-	//
-	//			while(n.isValid()) {
-	//
-	//				for(Marker mrk : markers)
-	//					pub.publish(mrk);
-	//
-	//				n.spinOnce();
-	//				Thread.sleep(500);
-	//			}
-	//
-	//			pub.shutdown();
-	//
-	//		} catch (RosException e) {
-	//			e.printStackTrace();
-	//		} catch (InterruptedException e) {
-	//			e.printStackTrace();
-	//		}
-	//
-	//	}
-
+	
 	public static void main(String args[]) {
 
 		MarkerVisualization vis = new MarkerVisualization();
