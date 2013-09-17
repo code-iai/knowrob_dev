@@ -14,6 +14,11 @@
   <depend package="knowrob_cad_parser"/>
   <depend package="json_prolog"/>
   <depend package="visualization_msgs"/>
+
+  <export>
+    <java classpath="${prefix}/bin"/>
+  </export>
+  
 </package>
 
 

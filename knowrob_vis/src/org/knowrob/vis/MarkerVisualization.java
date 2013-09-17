@@ -63,7 +63,7 @@ public class MarkerVisualization {
 	public MarkerVisualization() {
 		
 		initRos();
-		PrologInterface.initJPLProlog("knowrob_vis");
+//		PrologInterface.initJPLProlog("knowrob_vis");
 		
 		markers =  Collections.synchronizedMap(new HashMap<String, Marker>());
 		highlighted = Collections.synchronizedMap(new HashMap<String, ColorRGBA>());
@@ -135,6 +135,16 @@ public class MarkerVisualization {
 		// remove children and remove them too
 		for(String child : readChildren(identifier))
 			removeObject(child);
+	}
+	
+	
+	/**
+	 * Remove all objects from the visualization
+	 */
+	public void clear() {
+		synchronized (markers) {
+			markers.clear();
+		}
 	}
 
 
