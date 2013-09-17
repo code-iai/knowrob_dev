@@ -14,3 +14,8 @@ images
 /msg_gen
 /srv_gen
 >>>>>>> 9fc42f738f66b5f721501c948e3f507a840008d0
+msg_gen
+srv_gen
+build
+.classpath
+.project
