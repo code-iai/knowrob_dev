@@ -1,0 +1,18 @@
+<package>
+  <description brief="knowrob_vis">
+
+     knowrob_vis
+
+  </description>
+  <author>Moritz Tenorth</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://knowrob.org</url>
+
+  <depend package="rosjava_jni"/>
+  <depend package="mod_vis"/>
+  <depend package="json_prolog"/>
+  <depend package="visualization_msgs"/>
+</package>
+
+
