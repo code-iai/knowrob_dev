@@ -28,7 +28,9 @@
       visualisation_canvas/0,
       clear_canvas/0,
       add_object/1,
+      add_object/2,
       add_object_with_children/1,
+      add_object_with_children/2,
       remove_object/1,
       remove_object_with_children/1,
       highlight_object/1,
@@ -46,17 +48,18 @@
 :- use_module(library('jpl')).
 
 
-:- rdf_meta add_object(r,?),
-            add_object_with_children(r,?),
-            add_object_perception(r,?),
-            remove_object(r,?),
-            remove_object_with_children(r,?),
+:- rdf_meta add_object(r),
+            add_object(r,r),
+            add_object_with_children(r),
+            add_object_with_children(r,r),
+            remove_object(r),
+            remove_object_with_children(r),
+            highlight_object(r),
             highlight_object(r,?),
             highlight_object(r,?,?),
-            highlight_object(r,?,?,?),
             highlight_object(r,?,?,?,?,?),
-            highlight_object_with_children(r,?),
-            highlight_object_with_children(r,?,?).
+            highlight_object_with_children(r),
+            highlight_object_with_children(r,?).
 
 
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
@@ -100,8 +103,20 @@ clear_canvas :-
 % @param Identifier Object identifier, eg. "http://ias.cs.tum.edu/kb/ias_semantic_map.owl#F360-Containers-revised-walls"
 %
 add_object(Identifier) :-
+    get_timepoint(Time),
+    add_object(Identifier, Time).
+
+
+%% add_object(+Identifier, +Time) is nondet.
+%
+% Add object to the scene with its position at time 'Time'
+%
+% @param Identifier Object identifier, eg. "http://ias.cs.tum.edu/kb/ias_semantic_map.owl#F360-Containers-revised-walls"
+%
+add_object(Identifier, Time) :-
     v_canvas(Canvas),
-    jpl_call(Canvas, 'addObject', [Identifier], _).
+    jpl_call(Canvas, 'addObject', [Identifier, Time], _).
+
 
 
 %% add_object_with_children(+Identifier)
@@ -112,8 +127,20 @@ add_object(Identifier) :-
 % @param Identifier eg. "http://ias.cs.tum.edu/kb/ias_semantic_map.owl#F360-Containers-revised-walls"
 %
 add_object_with_children(Identifier) :-
+    get_timepoint(Time),
+    add_object_with_children(Identifier, Time).
+
+
+%% add_object_with_children(+Identifier, +Time)
+%
+% Adds objects to the scene, including all items that are reachable via knowrob:properPhysicalPartTypes
+% or via knowrob:describedInMap, with their positions at time 'Time'
+%
+% @param Identifier eg. "http://ias.cs.tum.edu/kb/ias_semantic_map.owl#F360-Containers-revised-walls"
+%
+add_object_with_children(Identifier, Time) :-
     v_canvas(Canvas),
-    jpl_call(Canvas, 'addObjectWithChildren', [Identifier], _).
+    jpl_call(Canvas, 'addObjectWithChildren', [Identifier, Time], _).
 
 
 %% remove_object(+Identifier) is det.
