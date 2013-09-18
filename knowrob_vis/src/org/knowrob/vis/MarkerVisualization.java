@@ -458,7 +458,7 @@ public class MarkerVisualization {
 							pub.publish(markers.get(mrk));
 					}
 					n.spinOnce();
-					Thread.sleep(500);
+					Thread.sleep(2000);
 				}
 
 				pub.shutdown();

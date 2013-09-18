@@ -1,6 +1,6 @@
 <launch>
 
   <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" />
-  <node name="knowrob_vis" pkg="rosprolog" type="run_with_prolog_env" args="mod_vis $(find json_prolog)/bin/json_prolog" />
+  <node name="json_prolog" pkg="rosprolog" type="run_with_prolog_env" args="knowrob_vis $(find json_prolog)/bin/json_prolog" />
 
 </launch>

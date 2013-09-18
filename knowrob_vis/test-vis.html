@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link rel="stylesheet" media="all" type="text/css" href="http://fonts.googleapis.com/css?family=Open+Sans:400,400italic,700|Oswald|Source+Code+Pro" />
+  <script type="text/javascript" src="http://cdn.robotwebtools.org/threejs/current/three.min.js"></script>
+  <script type="text/javascript" src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+  <script type="text/javascript" src="http://cdn.robotwebtools.org/ColladaAnimationCompress/current/ColladaLoader2.min.js"></script>
+  <script type="text/javascript" src="http://cdn.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
+  <script type="text/javascript" src="http://localhost/~tenorth/ros3d.min.js"></script>
+  <script type="text/javascript" src="http://localhost/~tenorth/json_prolog.js"></script>
+  <link rel="stylesheet" type="text/css" href="screen.css"/>
+  <script type="text/javascript" type="text/javascript">
+
+    function init() {
+    
+      // Connect to ROS.
+      var ros = new ROSLIB.Ros({
+        url : 'ws://localhost:9090'
+      });
+
+      // Create the main viewer.
+      var viewer = new ROS3D.Viewer({
+        divID : 'markers',
+        width : 750,
+        height : 500,
+        antialias : true,
+        background : '#ffffff'
+      });
+      
+      viewer.addObject(new ROS3D.Grid());
+
+      // Setup a client to listen to TFs.
+      var tfClient = new ROSLIB.TFClient({
+        ros : ros,
+        angularThres : 0.01,
+        transThres : 0.01,
+        rate : 10.0,
+        fixedFrame : '/my_frame'
+      });
+
+      // Setup the marker client.
+      var markerClient = new ROS3D.MarkerClient({
+        ros : ros,
+        tfClient : tfClient,
+        topic : '/visualization_marker',
+        rootObject : viewer.scene
+      });
+    };
+
+    function queryProlog(q) {
+      prolog = new JsonProlog();
+      prolog.jsonQuery(q);
+      document.query_form.user_query.value = "";
+      
+      document.query_form.history.value += q +  "\n\n";
+      document.query_form.history.scrollTop = document.query_form.history.scrollHeight;
+    };
+  
+</script>
+</head>
+
+<body onload="init()" style=" position:relative; left:20px;">
+  <h1>KnowRob Web Console</h1>
+  
+  <div id="console" style="border: 1px black solid; width:500px; height:507px;">
+    <div style="padding:15px;">
+    <form name="query_form" action="post">
+
+      <textarea name="history" readonly  cols="56" rows="20" style="font-family: Source Code Pro,Consolas,monospace; font-size:9pt;background:#ffffff;"></textarea>
+
+      <br/><br/>
+      
+      <textarea name="user_query" cols="56" rows="10" style="font-family: Source Code Pro,Consolas,monospace; font-size:9pt;"></textarea>
+
+      <br/><br/>
+
+      <input type="button" name="q" value="Send query"
+      onclick="queryProlog(document.query_form.user_query.value);">
+    </form>
+</div>
+  </div>
+  <div id="markers" style="border: 1px black solid; width:750px; position:relative; left:530px; top:-507px;"></div>
+</body>
+</html>
