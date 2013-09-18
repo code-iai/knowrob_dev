@@ -78,15 +78,18 @@ public class MarkerVisualization {
 	 * Add object 'identifier' to the visualization.
 	 * 
 	 * @param identifier OWL identifier of an object instance
+	 * @param timepoint  OWL identifier of a timepoint instance
 	 */
-	public void addObject(String identifier) {
+	public void addObject(String identifier, String timepoint) {
 
 		// read marker from Prolog
-		Marker m = readMarkerFromProlog(identifier);
-
+		Marker m = readMarkerFromProlog(identifier, timepoint);
+		
 		// add marker to map
-		synchronized (markers) {
-			markers.put(identifier, m);
+		if(m!=null) {
+			synchronized (markers) {
+				markers.put(identifier, m);
+			}
 		}
 	}
 
@@ -96,15 +99,16 @@ public class MarkerVisualization {
 	 * Add object 'identifier' and all its parts to the visualization.
 	 * 
 	 * @param identifier OWL identifier of an object instance
+	 * @param timepoint  OWL identifier of a timepoint instance
 	 */
-	public void addObjectWithChildren(String identifier) {
+	public void addObjectWithChildren(String identifier, String timepoint) {
 
 		// add this object
-		addObject(identifier);
+		addObject(identifier, timepoint);
 
 		// read children and add them too
 		for(String child : readChildren(identifier))
-			addObject(child);
+			addObject(child, timepoint);
 	}
 
 
@@ -291,7 +295,9 @@ public class MarkerVisualization {
 
 					// read all physical parts of all child objects
 					HashMap<String, Vector<String>> parts = PrologInterface.executeQuery(
-							"rdf_reachable("+mapParts.get("PART").get(i)+", knowrob:properPhysicalParts, P)");
+							"rdf_reachable("+mapParts.get("PART").get(i)+", knowrob:properPhysicalParts, P);" +
+							"rdf_reachable("+mapParts.get("PART").get(i)+", 'http://ias.cs.tum.edu/kb/srdl2-comp.owl#subComponent', P);" +
+							"rdf_reachable("+mapParts.get("PART").get(i)+", 'http://ias.cs.tum.edu/kb/srdl2-comp.owl#successorInKinematicChain', P)");
 
 					if(parts != null && parts.get("P") != null) {
 
@@ -311,10 +317,11 @@ public class MarkerVisualization {
 	/**
 	 * Read object information from Prolog and create a marker from it
 	 * 
-	 * @param identifier
-	 * @return
+	 * @param identifier OWL identifier of an object instance
+	 * @param timepoint  OWL identifier of a timepoint instance
+	 * @return Marker with the object information
 	 */
-	Marker readMarkerFromProlog(String identifier) {
+	Marker readMarkerFromProlog(String identifier, String timepoint) {
 
 		Marker m = new Marker();
 
@@ -329,7 +336,7 @@ public class MarkerVisualization {
 		try {
 			// read object pose
 			HashMap<String, Vector<String>> res = PrologInterface.executeQuery(
-					"current_object_pose('"+ identifier + "', [M00, M01, M02, M03, M10, M11, M12, M13, M20, M21, M22, M23, M30, M31, M32, M33])");
+					"object_pose_at_time('"+ identifier + "', '"+ timepoint + "', [M00, M01, M02, M03, M10, M11, M12, M13, M20, M21, M22, M23, M30, M31, M32, M33])");
 
 			if (res!=null && res.get("M00") != null && res.get("M00").size() > 0 && res.get("M00").get(0)!=null) {
 
@@ -377,9 +384,9 @@ public class MarkerVisualization {
 				m.scale.z = Double.valueOf(OWLThing.removeSingleQuotes(res.get("H").get(0)));
 
 			} else {
-				m.scale.x = 0.1;
-				m.scale.y = 0.1;
-				m.scale.z = 0.1;
+				m.scale.x = 0.05;
+				m.scale.y = 0.05;
+				m.scale.z = 0.05;
 			}
 
 
@@ -398,6 +405,10 @@ public class MarkerVisualization {
 				m.type = Marker.MESH_RESOURCE;
 				m.mesh_resource = OWLThing.removeSingleQuotes(res.get("Path").get(0));
 
+				m.scale.x = 1.0;
+				m.scale.y = 1.0;
+				m.scale.z = 1.0;
+				
 			} else {
 				m.type = Marker.CUBE;
 			}
@@ -455,7 +466,7 @@ public class MarkerVisualization {
 	public static void main(String args[]) {
 
 		MarkerVisualization vis = new MarkerVisualization();
-		vis.addObjectWithChildren("http://ias.cs.tum.edu/kb/ias_semantic_map.owl#SemanticEnvironmentMap0");
+		vis.addObjectWithChildren("http://ias.cs.tum.edu/kb/ias_semantic_map.owl#SemanticEnvironmentMap0", "http://ias.cs.tum.edu/kb/knowrob.owl#timepoint_1377766542");
 		vis.highlight("http://ias.cs.tum.edu/kb/knowrob.owl#Refrigerator67", true, 150, 0, 0, 180);
 
 	}
