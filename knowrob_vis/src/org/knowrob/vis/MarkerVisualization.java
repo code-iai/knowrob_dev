@@ -323,6 +323,15 @@ public class MarkerVisualization {
 	 */
 	Marker readMarkerFromProlog(String identifier, String timepoint) {
 
+		// check if object is blacklisted
+		HashMap<String, Vector<String>> blk = PrologInterface.executeQuery(
+				"owl_individual_of('"+ identifier + "', 'http://ias.cs.tum.edu/kb/srdl2-comp.owl#UrdfJoint') ;" +
+				"owl_individual_of('"+ identifier + "', 'http://ias.cs.tum.edu/kb/knowrob.owl#RoomInAConstruction')");
+		
+		if(blk!=null)
+			return null;
+		
+		
 		Marker m = new Marker();
 
 		m.header.frame_id = "/map";
