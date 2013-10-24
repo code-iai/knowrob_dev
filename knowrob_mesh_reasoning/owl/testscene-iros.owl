@@ -10,10 +10,10 @@
     <owl:Ontology rdf:about="http://ias.cs.tum.edu/kb/knowrob.owl#">
         <owl:imports rdf:resource="http://ias.cs.tum.edu/kb/knowrob.owl"/>
     </owl:Ontology>
-    
 
 
-    <!-- 
+
+    <!--
     ///////////////////////////////////////////////////////////////////////////////////////
     //
     // Datatypes
@@ -21,10 +21,10 @@
     ///////////////////////////////////////////////////////////////////////////////////////
      -->
 
-    
 
 
-    <!-- 
+
+    <!--
     ///////////////////////////////////////////////////////////////////////////////////////
     //
     // Object Properties
@@ -32,40 +32,40 @@
     ///////////////////////////////////////////////////////////////////////////////////////
      -->
 
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#describedInMap -->
 
     <owl:ObjectProperty rdf:about="http://ias.cs.tum.edu/kb/knowrob.owl#describedInMap"/>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#eventOccursAt -->
 
     <owl:ObjectProperty rdf:about="http://ias.cs.tum.edu/kb/knowrob.owl#eventOccursAt"/>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#objectActedOn -->
 
     <owl:ObjectProperty rdf:about="http://ias.cs.tum.edu/kb/knowrob.owl#objectActedOn"/>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#properPhysicalParts -->
 
     <owl:ObjectProperty rdf:about="http://ias.cs.tum.edu/kb/knowrob.owl#properPhysicalParts"/>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#startTime -->
 
     <owl:ObjectProperty rdf:about="http://ias.cs.tum.edu/kb/knowrob.owl#startTime"/>
-    
 
 
-    <!-- 
+
+    <!--
     ///////////////////////////////////////////////////////////////////////////////////////
     //
     // Data properties
@@ -73,136 +73,136 @@
     ///////////////////////////////////////////////////////////////////////////////////////
      -->
 
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#depthOfObject -->
 
     <owl:DatatypeProperty rdf:about="http://ias.cs.tum.edu/kb/knowrob.owl#depthOfObject"/>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#floorNumber -->
 
     <owl:DatatypeProperty rdf:about="http://ias.cs.tum.edu/kb/knowrob.owl#floorNumber"/>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#heightOfObject -->
 
     <owl:DatatypeProperty rdf:about="http://ias.cs.tum.edu/kb/knowrob.owl#heightOfObject"/>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#m00 -->
 
     <owl:DatatypeProperty rdf:about="http://ias.cs.tum.edu/kb/knowrob.owl#m00"/>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#m01 -->
 
     <owl:DatatypeProperty rdf:about="http://ias.cs.tum.edu/kb/knowrob.owl#m01"/>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#m02 -->
 
     <owl:DatatypeProperty rdf:about="http://ias.cs.tum.edu/kb/knowrob.owl#m02"/>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#m03 -->
 
     <owl:DatatypeProperty rdf:about="http://ias.cs.tum.edu/kb/knowrob.owl#m03"/>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#m10 -->
 
     <owl:DatatypeProperty rdf:about="http://ias.cs.tum.edu/kb/knowrob.owl#m10"/>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#m11 -->
 
     <owl:DatatypeProperty rdf:about="http://ias.cs.tum.edu/kb/knowrob.owl#m11"/>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#m12 -->
 
     <owl:DatatypeProperty rdf:about="http://ias.cs.tum.edu/kb/knowrob.owl#m12"/>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#m13 -->
 
     <owl:DatatypeProperty rdf:about="http://ias.cs.tum.edu/kb/knowrob.owl#m13"/>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#m20 -->
 
     <owl:DatatypeProperty rdf:about="http://ias.cs.tum.edu/kb/knowrob.owl#m20"/>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#m21 -->
 
     <owl:DatatypeProperty rdf:about="http://ias.cs.tum.edu/kb/knowrob.owl#m21"/>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#m22 -->
 
     <owl:DatatypeProperty rdf:about="http://ias.cs.tum.edu/kb/knowrob.owl#m22"/>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#m23 -->
 
     <owl:DatatypeProperty rdf:about="http://ias.cs.tum.edu/kb/knowrob.owl#m23"/>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#m30 -->
 
     <owl:DatatypeProperty rdf:about="http://ias.cs.tum.edu/kb/knowrob.owl#m30"/>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#m31 -->
 
     <owl:DatatypeProperty rdf:about="http://ias.cs.tum.edu/kb/knowrob.owl#m31"/>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#m32 -->
 
     <owl:DatatypeProperty rdf:about="http://ias.cs.tum.edu/kb/knowrob.owl#m32"/>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#m33 -->
 
     <owl:DatatypeProperty rdf:about="http://ias.cs.tum.edu/kb/knowrob.owl#m33"/>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#streetNumber -->
 
     <owl:DatatypeProperty rdf:about="http://ias.cs.tum.edu/kb/knowrob.owl#streetNumber"/>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#widthOfObject -->
 
     <owl:DatatypeProperty rdf:about="http://ias.cs.tum.edu/kb/knowrob.owl#widthOfObject"/>
-    
 
 
-    <!-- 
+
+    <!--
     ///////////////////////////////////////////////////////////////////////////////////////
     //
     // Classes
@@ -210,94 +210,94 @@
     ///////////////////////////////////////////////////////////////////////////////////////
      -->
 
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#BentoBox -->
 
     <owl:Class rdf:about="http://ias.cs.tum.edu/kb/knowrob.owl#BentoBox"/>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#Building -->
 
     <owl:Class rdf:about="http://ias.cs.tum.edu/kb/knowrob.owl#Building"/>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#City -->
 
     <owl:Class rdf:about="http://ias.cs.tum.edu/kb/knowrob.owl#City"/>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#GreenTea -->
 
     <owl:Class rdf:about="http://ias.cs.tum.edu/kb/knowrob.owl#GreenTea"/>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#KitchenTable -->
 
     <owl:Class rdf:about="http://ias.cs.tum.edu/kb/knowrob.owl#KitchenTable"/>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#LemonLimeSoftDrink -->
 
     <owl:Class rdf:about="http://ias.cs.tum.edu/kb/knowrob.owl#LemonLimeSoftDrink"/>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#LevelOfAConstruction -->
 
     <owl:Class rdf:about="http://ias.cs.tum.edu/kb/knowrob.owl#LevelOfAConstruction"/>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#Pizza -->
 
     <owl:Class rdf:about="http://ias.cs.tum.edu/kb/knowrob.owl#Pizza"/>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#RotationMatrix3D -->
 
     <owl:Class rdf:about="http://ias.cs.tum.edu/kb/knowrob.owl#RotationMatrix3D"/>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#SemanticEnvironmentMap -->
 
     <owl:Class rdf:about="http://ias.cs.tum.edu/kb/knowrob.owl#SemanticEnvironmentMap"/>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#SemanticMapPerception -->
 
     <owl:Class rdf:about="http://ias.cs.tum.edu/kb/knowrob.owl#SemanticMapPerception"/>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#Street -->
 
     <owl:Class rdf:about="http://ias.cs.tum.edu/kb/knowrob.owl#Street"/>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#TimePoint -->
 
     <owl:Class rdf:about="http://ias.cs.tum.edu/kb/knowrob.owl#TimePoint"/>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#VisualPerception -->
 
     <owl:Class rdf:about="http://ias.cs.tum.edu/kb/knowrob.owl#VisualPerception"/>
-    
 
 
-    <!-- 
+
+    <!--
     ///////////////////////////////////////////////////////////////////////////////////////
     //
     // Individuals
@@ -305,7 +305,7 @@
     ///////////////////////////////////////////////////////////////////////////////////////
      -->
 
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#Building4268 -->
@@ -319,7 +319,7 @@
         <knowrob:properPhysicalParts rdf:resource="http://ias.cs.tum.edu/kb/knowrob.owl#Level4269"/>
         <knowrob:describedInMap rdf:resource="http://ias.cs.tum.edu/kb/knowrob.owl#SemanticEnvironmentMap7635"/>
     </owl:NamedIndividual>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#Level4269 -->
@@ -333,7 +333,7 @@
         <knowrob:properPhysicalParts rdf:resource="http://ias.cs.tum.edu/kb/knowrob.owl#Room7635"/>
         <knowrob:describedInMap rdf:resource="http://ias.cs.tum.edu/kb/knowrob.owl#SemanticEnvironmentMap7635"/>
     </owl:NamedIndividual>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#Munich -->
@@ -346,7 +346,7 @@
         <knowrob:describedInMap rdf:resource="http://ias.cs.tum.edu/kb/knowrob.owl#SemanticEnvironmentMap7635"/>
         <knowrob:properPhysicalParts rdf:resource="http://ias.cs.tum.edu/kb/knowrob.owl#Street4502"/>
     </owl:NamedIndividual>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#Room7635 -->
@@ -357,7 +357,7 @@
         <knowrob:widthOfObject rdf:datatype="http://www.w3.org/2001/XMLSchema#double">0.0</knowrob:widthOfObject>
         <knowrob:describedInMap rdf:resource="http://ias.cs.tum.edu/kb/knowrob.owl#SemanticEnvironmentMap7635"/>
     </owl:NamedIndividual>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#SemanticEnvironmentMap7635 -->
@@ -369,7 +369,7 @@
         <knowrob:widthOfObject rdf:datatype="http://www.w3.org/2001/XMLSchema#double">0.0</knowrob:widthOfObject>
         <knowrob:describedInMap rdf:resource="http://ias.cs.tum.edu/kb/knowrob.owl#SemanticEnvironmentMap7635"/>
     </owl:NamedIndividual>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#Street4502 -->
@@ -382,7 +382,7 @@
         <knowrob:properPhysicalParts rdf:resource="http://ias.cs.tum.edu/kb/knowrob.owl#Building4268"/>
         <knowrob:describedInMap rdf:resource="http://ias.cs.tum.edu/kb/knowrob.owl#SemanticEnvironmentMap7635"/>
     </owl:NamedIndividual>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#VisualPerception48 -->
@@ -395,7 +395,7 @@
         <knowrob:describedInMap rdf:resource="http://ias.cs.tum.edu/kb/knowrob.owl#SemanticEnvironmentMap7635"/>
         <knowrob:objectActedOn rdf:resource="http://ias.cs.tum.edu/kb/knowrob.owl#table1"/>
     </owl:NamedIndividual>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#cup1 -->
@@ -408,7 +408,7 @@
         <knowrob:depthOfObject rdf:datatype="http://www.w3.org/2001/XMLSchema#double">0.0</knowrob:depthOfObject>
         <knowrob:describedInMap rdf:resource="http://ias.cs.tum.edu/kb/knowrob.owl#SemanticEnvironmentMap7635"/>
     </owl:NamedIndividual>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#maker1 -->
@@ -421,7 +421,7 @@
         <knowrob:widthOfObject rdf:datatype="http://www.w3.org/2001/XMLSchema#double">0.3</knowrob:widthOfObject>
         <knowrob:describedInMap rdf:resource="http://ias.cs.tum.edu/kb/knowrob.owl#SemanticEnvironmentMap7635"/>
     </owl:NamedIndividual>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#mix1 -->
@@ -435,20 +435,20 @@
         <knowrob:describedInMap rdf:resource="http://ias.cs.tum.edu/kb/knowrob.owl#SemanticEnvironmentMap7635"/>
     </owl:NamedIndividual>
 
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#pot1 -->
 
     <owl:NamedIndividual rdf:about="http://ias.cs.tum.edu/kb/knowrob.owl#pot1">
-        <knowrob:pathToCadModel rdf:datatype="http://www.w3.org/2001/XMLSchema#string">package://knowrob_cad_models/models/cooking-vessels/pot.kmz</knowrob:pathToCadModel>
+        <knowrob:pathToCadModel rdf:datatype="http://www.w3.org/2001/XMLSchema#string">package://knowrob_cad_models/models/cooking-vessels/pot-ww.dae</knowrob:pathToCadModel>
         <rdf:type rdf:resource="http://ias.cs.tum.edu/kb/knowrob.owl#StoveTopCookingPot"/>
         <knowrob:heightOfObject rdf:datatype="http://www.w3.org/2001/XMLSchema#double">0.25</knowrob:heightOfObject>
         <knowrob:widthOfObject rdf:datatype="http://www.w3.org/2001/XMLSchema#double">0.3</knowrob:widthOfObject>
         <knowrob:depthOfObject rdf:datatype="http://www.w3.org/2001/XMLSchema#double">0.3</knowrob:depthOfObject>
         <knowrob:describedInMap rdf:resource="http://ias.cs.tum.edu/kb/knowrob.owl#SemanticEnvironmentMap7635"/>
     </owl:NamedIndividual>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#table1 -->
@@ -460,7 +460,7 @@
         <knowrob:heightOfObject rdf:datatype="http://www.w3.org/2001/XMLSchema#double">0.0</knowrob:heightOfObject>
         <knowrob:describedInMap rdf:resource="http://ias.cs.tum.edu/kb/knowrob.owl#SemanticEnvironmentMap7635"/>
     </owl:NamedIndividual>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#timepoint_1363460436 -->
@@ -468,7 +468,7 @@
     <owl:NamedIndividual rdf:about="http://ias.cs.tum.edu/kb/knowrob.owl#timepoint_1363460436">
         <rdf:type rdf:resource="http://ias.cs.tum.edu/kb/knowrob.owl#TimePoint"/>
     </owl:NamedIndividual>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#RotationMatrix3D0 -->
@@ -492,7 +492,7 @@
         <knowrob:m22 rdf:datatype="http://www.w3.org/2001/XMLSchema#double">1.0</knowrob:m22>
         <knowrob:m11 rdf:datatype="http://www.w3.org/2001/XMLSchema#double">1.0</knowrob:m11>
     </owl:NamedIndividual>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#RotationMatrix3D10 -->
@@ -535,7 +535,7 @@
         <knowrob:m32 rdf:datatype="http://www.w3.org/2001/XMLSchema#double">0.0</knowrob:m32>
         <knowrob:m33 rdf:datatype="http://www.w3.org/2001/XMLSchema#double">1.0</knowrob:m33>
     </owl:NamedIndividual>-->
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#RotationMatrix3D12 -->
@@ -559,7 +559,7 @@
         <knowrob:m22 rdf:datatype="http://www.w3.org/2001/XMLSchema#double">1.0</knowrob:m22>
         <knowrob:m33 rdf:datatype="http://www.w3.org/2001/XMLSchema#double">1.0</knowrob:m33>
     </owl:NamedIndividual>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#RotationMatrix3D14 -->
@@ -583,7 +583,7 @@
         <knowrob:m23 rdf:datatype="http://www.w3.org/2001/XMLSchema#double">0.9848</knowrob:m23>
         <knowrob:m33 rdf:datatype="http://www.w3.org/2001/XMLSchema#double">1.0</knowrob:m33>
     </owl:NamedIndividual>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#RotationMatrix3D16 -->
@@ -607,7 +607,7 @@
         <knowrob:m11 rdf:datatype="http://www.w3.org/2001/XMLSchema#double">1.0</knowrob:m11>
         <knowrob:m00 rdf:datatype="http://www.w3.org/2001/XMLSchema#double">1.0</knowrob:m00>
     </owl:NamedIndividual>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#RotationMatrix3D18 -->
@@ -631,7 +631,7 @@
         <knowrob:m11 rdf:datatype="http://www.w3.org/2001/XMLSchema#double">1.0</knowrob:m11>
         <knowrob:m33 rdf:datatype="http://www.w3.org/2001/XMLSchema#double">1.0</knowrob:m33>
     </owl:NamedIndividual>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#RotationMatrix3D2 -->
@@ -655,7 +655,7 @@
         <knowrob:m00 rdf:datatype="http://www.w3.org/2001/XMLSchema#double">1.0</knowrob:m00>
         <knowrob:m11 rdf:datatype="http://www.w3.org/2001/XMLSchema#double">1.0</knowrob:m11>
     </owl:NamedIndividual>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#RotationMatrix3D20 -->
@@ -679,7 +679,7 @@
         <knowrob:m22 rdf:datatype="http://www.w3.org/2001/XMLSchema#double">1.0</knowrob:m22>
         <knowrob:m33 rdf:datatype="http://www.w3.org/2001/XMLSchema#double">1.0</knowrob:m33>
     </owl:NamedIndividual>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#RotationMatrix3D22 -->
@@ -703,7 +703,7 @@
         <knowrob:m33 rdf:datatype="http://www.w3.org/2001/XMLSchema#double">1.0</knowrob:m33>
         <knowrob:m01 rdf:datatype="http://www.w3.org/2001/XMLSchema#double">6.895487809205374E-4</knowrob:m01>
     </owl:NamedIndividual>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#RotationMatrix3D4 -->
@@ -727,7 +727,7 @@
         <knowrob:m33 rdf:datatype="http://www.w3.org/2001/XMLSchema#double">1.0</knowrob:m33>
         <knowrob:m01 rdf:datatype="http://www.w3.org/2001/XMLSchema#double">6.895487809205374E-4</knowrob:m01>
     </owl:NamedIndividual>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#RotationMatrix3D6 -->
@@ -751,7 +751,7 @@
         <knowrob:m23 rdf:datatype="http://www.w3.org/2001/XMLSchema#double">0.934</knowrob:m23>
         <knowrob:m33 rdf:datatype="http://www.w3.org/2001/XMLSchema#double">1.0</knowrob:m33>
     </owl:NamedIndividual>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#RotationMatrix3D8 -->
@@ -775,7 +775,7 @@
         <knowrob:m11 rdf:datatype="http://www.w3.org/2001/XMLSchema#double">1.0</knowrob:m11>
         <knowrob:m00 rdf:datatype="http://www.w3.org/2001/XMLSchema#double">1.0</knowrob:m00>
     </owl:NamedIndividual>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#SemanticMapPerception1 -->
@@ -786,7 +786,7 @@
         <knowrob:startTime rdf:resource="http://ias.cs.tum.edu/kb/knowrob.owl#timepoint_1363460436"/>
         <knowrob:eventOccursAt rdf:resource="http://ias.cs.tum.edu/kb/knowrob.owl#RotationMatrix3D0"/>
     </owl:NamedIndividual>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#SemanticMapPerception11 -->
@@ -797,7 +797,7 @@
         <knowrob:startTime rdf:resource="http://ias.cs.tum.edu/kb/knowrob.owl#timepoint_1363460436"/>
         <knowrob:eventOccursAt rdf:resource="http://ias.cs.tum.edu/kb/knowrob.owl#RotationMatrix3D10"/>
     </owl:NamedIndividual>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#SemanticMapPerception13 -->
@@ -808,7 +808,7 @@
         <knowrob:startTime rdf:resource="http://ias.cs.tum.edu/kb/knowrob.owl#timepoint_1363460436"/>
         <knowrob:eventOccursAt rdf:resource="http://ias.cs.tum.edu/kb/knowrob.owl#RotationMatrix3D12"/>
     </owl:NamedIndividual>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#SemanticMapPerception15 -->
@@ -819,7 +819,7 @@
         <knowrob:startTime rdf:resource="http://ias.cs.tum.edu/kb/knowrob.owl#timepoint_1363460436"/>
         <knowrob:eventOccursAt rdf:resource="http://ias.cs.tum.edu/kb/knowrob.owl#RotationMatrix3D14"/>
     </owl:NamedIndividual>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#SemanticMapPerception17 -->
@@ -830,7 +830,7 @@
         <knowrob:startTime rdf:resource="http://ias.cs.tum.edu/kb/knowrob.owl#timepoint_1363460436"/>
         <knowrob:eventOccursAt rdf:resource="http://ias.cs.tum.edu/kb/knowrob.owl#RotationMatrix3D16"/>
     </owl:NamedIndividual>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#SemanticMapPerception19 -->
@@ -841,7 +841,7 @@
         <knowrob:startTime rdf:resource="http://ias.cs.tum.edu/kb/knowrob.owl#timepoint_1363460436"/>
         <knowrob:eventOccursAt rdf:resource="http://ias.cs.tum.edu/kb/knowrob.owl#RotationMatrix3D18"/>
     </owl:NamedIndividual>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#SemanticMapPerception21 -->
@@ -852,7 +852,7 @@
         <knowrob:startTime rdf:resource="http://ias.cs.tum.edu/kb/knowrob.owl#timepoint_1363460436"/>
         <knowrob:eventOccursAt rdf:resource="http://ias.cs.tum.edu/kb/knowrob.owl#RotationMatrix3D20"/>
     </owl:NamedIndividual>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#SemanticMapPerception23 -->
@@ -863,7 +863,7 @@
         <knowrob:startTime rdf:resource="http://ias.cs.tum.edu/kb/knowrob.owl#timepoint_1363460436"/>
         <knowrob:eventOccursAt rdf:resource="http://ias.cs.tum.edu/kb/knowrob.owl#RotationMatrix3D22"/>
     </owl:NamedIndividual>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#SemanticMapPerception3 -->
@@ -874,7 +874,7 @@
         <knowrob:startTime rdf:resource="http://ias.cs.tum.edu/kb/knowrob.owl#timepoint_1363460436"/>
         <knowrob:eventOccursAt rdf:resource="http://ias.cs.tum.edu/kb/knowrob.owl#RotationMatrix3D2"/>
     </owl:NamedIndividual>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#SemanticMapPerception5 -->
@@ -885,7 +885,7 @@
         <knowrob:startTime rdf:resource="http://ias.cs.tum.edu/kb/knowrob.owl#timepoint_1363460436"/>
         <knowrob:eventOccursAt rdf:resource="http://ias.cs.tum.edu/kb/knowrob.owl#RotationMatrix3D4"/>
     </owl:NamedIndividual>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#SemanticMapPerception7 -->
@@ -896,7 +896,7 @@
         <knowrob:startTime rdf:resource="http://ias.cs.tum.edu/kb/knowrob.owl#timepoint_1363460436"/>
         <knowrob:eventOccursAt rdf:resource="http://ias.cs.tum.edu/kb/knowrob.owl#RotationMatrix3D6"/>
     </owl:NamedIndividual>
-    
+
 
 
     <!-- http://ias.cs.tum.edu/kb/knowrob.owl#SemanticMapPerception9 -->
