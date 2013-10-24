@@ -431,10 +431,10 @@ public class MeshReasoning {
 			double maxLength) {
 
 		Set<ConeAnnotation> cones = findAnnotationsCone();
-		Set<ComplexHandleAnnotation> complexHandle = cas
-				.findAnnotations(ComplexHandleAnnotation.class);
-		List<HandleAnnotation> allAnnotations = new ArrayList<HandleAnnotation>(cones.size()
-				+ complexHandle.size());
+		Set<ComplexHandleAnnotation> complexHandle = cas.findAnnotations(ComplexHandleAnnotation.class);
+				
+		List<HandleAnnotation> allAnnotations = new ArrayList<HandleAnnotation>(cones.size() + complexHandle.size());
+		
 		for (ConeAnnotation c : cones) {
 			if (c.isConcave())
 				continue;
@@ -443,15 +443,31 @@ public class MeshReasoning {
 		allAnnotations.addAll(complexHandle);
 		cones.clear();
 		complexHandle.clear();
+		
 		HandleAnnotation[] handleList = allAnnotations.toArray(new HandleAnnotation[0]);
-		Arrays.sort(handleList, new HandleComparator(cas.getModel(), minRadius, maxRadius,
-				minLength, maxLength));
+		Arrays.sort(handleList, new HandleComparator(cas.getModel(), minRadius, maxRadius, minLength, maxLength));
+		
 		ArrayList<HandleAnnotation> rets = new ArrayList<HandleAnnotation>();
 		for (HandleAnnotation h : handleList) {
-			if (HandleComparator.getHandleWeight(h, cas.getModel(),
+			
+			if((HandleComparator.getHandleWeight(h, cas.getModel(),
 					HandleComparator.DEFAULT_RADIUS_MIN, HandleComparator.DEFAULT_RADIUS_MAX,
-					HandleComparator.DEFAULT_LENGTH_MIN, HandleComparator.DEFAULT_LENGTH_MAX) < HandleComparator.MIN_WEIGHT_FOR_HANDLE)
-				break;
+					HandleComparator.DEFAULT_LENGTH_MIN, HandleComparator.DEFAULT_LENGTH_MAX) < HandleComparator.MIN_WEIGHT_FOR_HANDLE)) {
+				
+//				System.out.println("Less than minimum weight");
+				continue;
+			}
+
+			if(cas.getModel().getUnscaled(h.getCone().getRadiusAvg()) > HandleComparator.DEFAULT_RADIUS_MAX) {
+//				System.out.println("Over max radius: " + cas.getModel().getUnscaled(h.getCone().getRadiusAvg()) + " > " + HandleComparator.DEFAULT_RADIUS_MAX);
+				continue;
+			}
+			
+			if(cas.getModel().getUnscaled(h.getCone().getRadiusAvg()) < HandleComparator.DEFAULT_RADIUS_MIN) {
+//				System.out.println("Under min radius: " + cas.getModel().getUnscaled(h.getCone().getRadiusAvg()) + " < " + HandleComparator.DEFAULT_RADIUS_MIN);
+				continue;
+			}
+
 			rets.add(h);
 		}
 		return rets.toArray(new HandleAnnotation[0]);

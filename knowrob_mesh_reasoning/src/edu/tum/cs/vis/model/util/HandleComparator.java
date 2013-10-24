@@ -28,11 +28,11 @@ public class HandleComparator implements Comparator<HandleAnnotation> {
 	/**
 	 * default maximum radius
 	 */
-	public static float	DEFAULT_RADIUS_MAX	= 0.05f;	// 80 millimeters
+	public static float	DEFAULT_RADIUS_MAX	= 0.06f;	// 80 millimeters
 	/**
 	 * default minimum length
 	 */
-	public static float	DEFAULT_LENGTH_MIN	= 0.01f;	// 1cm
+	public static float	DEFAULT_LENGTH_MIN	= 0.005f;	// 1cm
 	/**
 	 * default maximum length
 	 */
@@ -94,6 +94,7 @@ public class HandleComparator implements Comparator<HandleAnnotation> {
 	 */
 	public static double getHandleWeight(HandleAnnotation h, Model model, double minRadius,
 			double maxRadius, double minLength, double maxLength) {
+		
 		double w = getMinMaxWeight(model.getUnscaled(h.getCone().getRadiusAvg()), minRadius,
 				maxRadius, WEIGHT_RADIUS, model.getUnscaled(h.getCone().getRadiusAvg()))
 				* getMinMaxWeight(model.getUnscaled(h.getCone().getHeight()), minLength, maxLength,
@@ -178,7 +179,7 @@ public class HandleComparator implements Comparator<HandleAnnotation> {
 	/**
 	 * Basic weighting factor (importance) of radius
 	 */
-	private final static double	WEIGHT_RADIUS			= 2.5;
+	private final static double	WEIGHT_RADIUS			= 5;
 
 	/**
 	 * Basic weighting factor (importance) of length
@@ -198,7 +199,7 @@ public class HandleComparator implements Comparator<HandleAnnotation> {
 	/**
 	 * Minimum needed weight so that it is a handle
 	 */
-	public final static double	MIN_WEIGHT_FOR_HANDLE	= (WEIGHT_RADIUS * WEIGHT_LENGTH * WEIGHT_FIT_ERROR) * 0.25;
+	public final static double	MIN_WEIGHT_FOR_HANDLE	= (WEIGHT_RADIUS * WEIGHT_LENGTH * WEIGHT_FIT_ERROR) * 0.15;
 
 	/**
 	 * Initialize handle comparator with given values.

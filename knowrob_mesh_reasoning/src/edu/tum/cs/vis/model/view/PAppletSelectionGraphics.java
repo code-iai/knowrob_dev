@@ -24,7 +24,7 @@ public class PAppletSelectionGraphics extends PGraphics3D {
 	/**
 	 * Alpha channel value for drawing with transparency
 	 */
-	private static final float	TRASPARENCY_ALPHA		= 80f;
+	private static final float	TRASPARENCY_ALPHA		= 50f;
 
 	@Override
 	public void fill(float arg) {
