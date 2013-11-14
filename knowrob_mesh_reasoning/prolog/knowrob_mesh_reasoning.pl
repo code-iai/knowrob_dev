@@ -64,7 +64,9 @@
       annotation_container_volume/2,
       annotation_supporting_plane/2,
       annotation_handle/2,
-      bottle_cap/2
+      bottle_cap/2,
+      grasp_point/2,
+      pouring_onto/2
     ]).
 
 :- use_module(library('semweb/rdfs')).
@@ -102,6 +104,8 @@
             object_main_cone(r,r),
             object_main_axis(r,?),
             bottle_cap(r,r),
+            grasp_point(r,?),
+            pouring_onto(r,r),
             mesh_annotator_highlight_part(r,r).
 
 
@@ -149,7 +153,8 @@ grasp_point(Obj, GraspPoint) :-
   rdf_triple(knowrob:properPhysicalParts, Obj, Handle),
   annotation_handle(Handle,  'http://ias.cs.tum.edu/kb/knowrob.owl#Handle'),
 %   rdfs_instance_of(Handle, knowrob:'Handle'),
-  annotation_pose_list(Handle, GraspPoint).
+  annotation_pose_list(Handle, GraspPoint),
+   mesh_annotator_highlight_part(Obj, Handle).
 
 pouring_onto(Obj, Part) :-
   findall(A-P, (rdf_triple(knowrob:properPhysicalParts, Obj, P),
