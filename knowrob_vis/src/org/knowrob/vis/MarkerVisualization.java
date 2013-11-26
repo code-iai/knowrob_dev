@@ -201,15 +201,19 @@ public class MarkerVisualization {
 		} else {
 
 			synchronized (highlighted) {
-				highlighted.put(identifier, markers.get(identifier).color);
+				if(markers.get(identifier)!=null) {
+					highlighted.put(identifier, markers.get(identifier).color);
+				}
 			}
 
 			synchronized (markers) {
-				markers.get(identifier).color = new ColorRGBA();
-				markers.get(identifier).color.r = ((float) r)/255;
-				markers.get(identifier).color.g = ((float) g)/255;
-				markers.get(identifier).color.b = ((float) b)/255;
-				markers.get(identifier).color.a = ((float) a)/255;
+				if(markers.get(identifier)!=null) {
+					markers.get(identifier).color = new ColorRGBA();
+					markers.get(identifier).color.r = ((float) r)/255;
+					markers.get(identifier).color.g = ((float) g)/255;
+					markers.get(identifier).color.b = ((float) b)/255;
+					markers.get(identifier).color.a = ((float) a)/255;
+				}
 			}
 		}
 	}
@@ -224,11 +228,14 @@ public class MarkerVisualization {
 	public void highlightWithChildren(String identifier, boolean highlight) {
 
 		// remove this object
+//		System.err.println("highlighting " + identifier);
 		highlight(identifier, highlight); 
 
 		// remove children and highlight them too
-		for(String child : readChildren(identifier))
+		for(String child : readChildren(identifier)) {
+//			System.err.println("highlighting " + child);
 			highlight(child, highlight); 
+		}
 	}
 
 
@@ -369,6 +376,10 @@ public class MarkerVisualization {
 				m.pose.position.x = poseMat.m03;
 				m.pose.position.y = poseMat.m13;
 				m.pose.position.z = poseMat.m23;
+				
+				// debug
+//				System.err.println("adding " + identifier + " at pose [" + m.pose.position.x + ", " + m.pose.position.y + ", " + m.pose.position.z + "]");
+				
 
 			} else {
 				m.type = Marker.CUBE;
