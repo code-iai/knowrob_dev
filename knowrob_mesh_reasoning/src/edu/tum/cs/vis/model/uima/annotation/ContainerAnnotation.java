@@ -10,8 +10,20 @@ package edu.tum.cs.vis.model.uima.annotation;
 import java.awt.Color;
 
 import javax.vecmath.Tuple3f;
+import javax.vecmath.Vector3d;
 import javax.vecmath.Vector3f;
 
+import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLIndividual;
+import org.semanticweb.owlapi.model.OWLNamedIndividual;
+import org.semanticweb.owlapi.model.OWLObjectProperty;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.util.DefaultPrefixManager;
+
+import edu.tum.cs.ias.knowrob.owl.OWLThing;
+import edu.tum.cs.ias.knowrob.owl.utils.OWLImportExport;
 import edu.tum.cs.vis.model.Model;
 
 /**
@@ -107,6 +119,44 @@ public class ContainerAnnotation extends MeshAnnotation<ContainerAnnotation> {
 	 */
 	public void setVolume(float volume) {
 		this.volume = volume;
+	}
+
+
+	/**
+	 * Export this annotation to an OWL description
+	 * 
+	 * @param manager OWL ontology manager
+	 * @param factory OWL data factory
+	 * @param pm Prefix manager
+	 * @param ontology Ontology to which the assertions shall be added
+	 * @return Reference to an OWLIndividual for this annotation
+	 */
+	public OWLIndividual writeToOWL(OWLIndividual obj_inst, OWLOntologyManager manager, OWLDataFactory factory, DefaultPrefixManager pm, OWLOntology ontology) {
+
+		OWLClass part_class = factory.getOWLClass("knowrob:Container", pm);
+		OWLNamedIndividual part_inst = factory.getOWLNamedIndividual(OWLThing.getUniqueID("knowrob:Container"), pm);
+		manager.addAxiom(ontology, factory.getOWLClassAssertionAxiom(part_class, part_inst));
+
+		// set as physicalPart of parent object
+		OWLObjectProperty properPhysicalParts = factory.getOWLObjectProperty("knowrob:properPhysicalParts", pm);
+		manager.addAxiom(ontology, factory.getOWLObjectPropertyAssertionAxiom(properPhysicalParts, obj_inst, part_inst));
+
+		// TODO: Containers do not have a pose -- once this is added, export it!
+
+		manager.addAxiom(ontology, factory.getOWLDataPropertyAssertionAxiom(
+				factory.getOWLDataProperty("knowrob:volumeOfObject",  pm), 
+				part_inst, 
+				getVolume()));
+		
+		
+		// create direction vector instance
+		OWLIndividual vec_inst = OWLImportExport.createDirVector(new Vector3d(getDirection()), manager, factory, pm, ontology);
+		manager.addAxiom(ontology, factory.getOWLObjectPropertyAssertionAxiom(
+				factory.getOWLObjectProperty("knowrob:longitudinalDirection",  pm), part_inst, vec_inst));
+		
+		
+		return part_inst;
+		
 	}
 
 }

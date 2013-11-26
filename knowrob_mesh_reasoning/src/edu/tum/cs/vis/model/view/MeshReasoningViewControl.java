@@ -11,6 +11,7 @@ import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Timer;
@@ -99,7 +100,13 @@ public final class MeshReasoningViewControl extends JPanel implements ActionList
 	/**
 	 * Button to save current view into an image file
 	 */
-	private final JButton					btnSave;
+	private final JButton					btnSaveImg;
+
+
+	/**
+	 * Button to save current CAS to an OWL file
+	 */
+	private final JButton					btnSaveOWL;
 
 	/**
 	 * cas for which this control is
@@ -158,10 +165,13 @@ public final class MeshReasoningViewControl extends JPanel implements ActionList
 
 		JPanel drawSettingsContainer = new JPanel(new BorderLayout());
 		drawSettingsPanel = new DrawSettingsPanel(cas, view);
-		drawSettingsContainer.add(drawSettingsPanel, BorderLayout.CENTER);
-		btnSave = new JButton("Save image");
-		btnSave.addActionListener(this);
-		drawSettingsContainer.add(btnSave, BorderLayout.SOUTH);
+		drawSettingsContainer.add(drawSettingsPanel, BorderLayout.NORTH);
+		btnSaveImg = new JButton("Save image");
+		btnSaveImg.addActionListener(this);
+		drawSettingsContainer.add(btnSaveImg, BorderLayout.CENTER);
+		btnSaveOWL = new JButton("Save OWL");
+		btnSaveOWL.addActionListener(this);
+		drawSettingsContainer.add(btnSaveOWL, BorderLayout.SOUTH);
 
 		bottomPnl.add(drawSettingsContainer, BorderLayout.SOUTH);
 
@@ -248,11 +258,18 @@ public final class MeshReasoningViewControl extends JPanel implements ActionList
 		if (e.getSource() == btnControlInfo) {
 			@SuppressWarnings("unused")
 			ControlInfoDialog cid = new ControlInfoDialog(null);
-		} else if (e.getSource() == btnSave) {
+		} else if (e.getSource() == btnSaveImg) {
 			String str = (String) JOptionPane.showInputDialog(null, "Enter a filename ",
 					"Filename", JOptionPane.INFORMATION_MESSAGE, null, null, defaultImageFilename);
 			if (str != null)
 				view.saveImage(str);
+		} else if (e.getSource() == btnSaveOWL) {
+			
+			MeshCas cas = view.getCasList().get(0);
+			String outPath = new File(cas.getModelFile()).getParent();
+			String outFile = (new File(cas.getModelFile()).getName()).split("\\.")[0] + ".owl";
+			cas.writeToOWL(outPath + "/" + outFile);
+			
 		} else if (e.getSource() == rbnDrawFill)
 			view.setDrawType(DrawType.FILL);
 		else if (e.getSource() == rbnDrawLines)

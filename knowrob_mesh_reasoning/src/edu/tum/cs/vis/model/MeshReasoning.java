@@ -21,6 +21,7 @@ import javax.swing.JFrame;
 import org.apache.log4j.Logger;
 import org.apache.log4j.xml.DOMConfigurator;
 
+import edu.tum.cs.ias.knowrob.utils.ResourceRetriever;
 import edu.tum.cs.tools.ImageGenerator.ImageGeneratorAction;
 import edu.tum.cs.tools.ImageGenerator.ImageGeneratorSettings;
 import edu.tum.cs.uima.Annotation;
@@ -222,6 +223,21 @@ public class MeshReasoning {
 			analyser = new ArrayList<MeshAnalyser>(5);
 		}
 		cas.setModel(model);
+		
+		// remember model path (e.g. for saving cache files)
+		if (path.indexOf("://") <= 0) { // Is local file
+			cas.setModelFile(path);
+			
+		} else if (path.startsWith("package://")) {
+			int st = path.indexOf('/') + 2;
+			int end = path.indexOf('/', st);
+			String serverName = path.substring(st, end);
+			String filePath = path.substring(end + 1);
+			String pkgPath = ResourceRetriever.findPackage(serverName);
+			if (pkgPath != null)
+				cas.setModelFile(pkgPath + filePath);
+		}
+		
 
 		// in ply (and also collada) files there may be double sided triangles
 		logger.debug("Checking for double sided triangles ...");

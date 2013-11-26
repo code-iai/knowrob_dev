@@ -39,7 +39,7 @@ public class MeshReasoningTest {
 		// String path = "/home/stefan/work/models/silverware/knife1.kmz";
 		// String path = "/home/stefan/work/models/industrial-parts/valves/Ball Valve.kmz";
 		// String path = "/home/stefan/work/models/silverware/Butter Knife.dae";
-		String path = "/home/stefan/work/models/food-drinks/beercan-heineken.kmz";
+		String path = "/home/tenorth/work/ros/groovy/rosbuild_ws/stacks/knowrob_addons/knowrob_cad_models/models/drinking-vessels/cup2.dae";
 		// String path = "/home/stefan/work/models/drinking-vessels/cup2.dae";
 		// String path = "/home/stefan/work/models/drinking-vessels/my_mug_v2.kmz";
 		// String path = "/home/stefan/work/models/food-drinks/mondamin-pancake-mix.dae";

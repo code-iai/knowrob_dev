@@ -12,11 +12,25 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Set;
 
+import javax.vecmath.Matrix4d;
 import javax.vecmath.Matrix4f;
 import javax.vecmath.Tuple3f;
+import javax.vecmath.Vector3d;
 import javax.vecmath.Vector3f;
 
+import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLIndividual;
+import org.semanticweb.owlapi.model.OWLNamedIndividual;
+import org.semanticweb.owlapi.model.OWLObjectProperty;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.util.DefaultPrefixManager;
+
 import processing.core.PGraphics;
+import edu.tum.cs.ias.knowrob.owl.OWLThing;
+import edu.tum.cs.ias.knowrob.owl.utils.OWLImportExport;
 import edu.tum.cs.vis.model.Model;
 import edu.tum.cs.vis.model.uima.annotation.HandleAnnotation;
 import edu.tum.cs.vis.model.uima.annotation.PrimitiveAnnotation;
@@ -209,5 +223,70 @@ public final class ConeAnnotation extends PrimitiveAnnotation<ConeAnnotation> im
 	public boolean isConcave() {
 		return cone.isConcave();
 	}
+	
+	
+	public OWLIndividual writeToOWL(OWLIndividual obj_inst, OWLOntologyManager manager, OWLDataFactory factory, DefaultPrefixManager pm, OWLOntology ontology) {
 
+		OWLClass part_class = factory.getOWLClass("knowrob:Cone", pm);
+		OWLNamedIndividual part_inst = factory.getOWLNamedIndividual(IRI.create(OWLThing.getUniqueID("knowrob:Cone")));
+		manager.addAxiom(ontology, factory.getOWLClassAssertionAxiom(part_class, part_inst));
+
+		// set as physicalPart of parent object
+		OWLObjectProperty properPhysicalParts = factory.getOWLObjectProperty("knowrob:properPhysicalParts", pm);
+		manager.addAxiom(ontology, factory.getOWLObjectPropertyAssertionAxiom(properPhysicalParts, obj_inst, part_inst));
+
+		// set relative pose of this object part w.r.t. to the main object
+		OWLIndividual mat_inst = OWLImportExport.createPoseInst(new Matrix4d(getPoseMatrix()), manager, factory, pm, ontology);
+		manager.addAxiom(ontology, factory.getOWLObjectPropertyAssertionAxiom(
+				factory.getOWLObjectProperty("knowrob:orientation",  pm), part_inst, mat_inst));
+		manager.addAxiom(ontology, factory.getOWLObjectPropertyAssertionAxiom(
+				factory.getOWLObjectProperty("knowrob:relativeTo",  pm), mat_inst, obj_inst));
+		
+
+		manager.addAxiom(ontology, factory.getOWLDataPropertyAssertionAxiom(
+				factory.getOWLDataProperty("knowrob:radius",  pm), 
+				part_inst, 
+				getRadiusAvg()));
+		manager.addAxiom(ontology, factory.getOWLDataPropertyAssertionAxiom(
+				factory.getOWLDataProperty("knowrob:minRadius",  pm), 
+				part_inst, 
+				getRadiusSmall()));
+		manager.addAxiom(ontology, factory.getOWLDataPropertyAssertionAxiom(
+				factory.getOWLDataProperty("knowrob:maxRadius",  pm), 
+				part_inst, 
+				getRadiusLarge()));
+
+		manager.addAxiom(ontology, factory.getOWLDataPropertyAssertionAxiom(
+				factory.getOWLDataProperty("knowrob:lengthOfObject",  pm), 
+				part_inst, 
+				getHeight()));
+
+
+		manager.addAxiom(ontology, factory.getOWLDataPropertyAssertionAxiom(
+				factory.getOWLDataProperty("knowrob:volumeOfObject",  pm), 
+				part_inst, 
+				getVolume()));
+
+		manager.addAxiom(ontology, factory.getOWLDataPropertyAssertionAxiom(
+				factory.getOWLDataProperty("knowrob:areaCoverage",  pm), 
+				part_inst, 
+				getAreaCoverage()));
+
+		manager.addAxiom(ontology, factory.getOWLDataPropertyAssertionAxiom(
+				factory.getOWLDataProperty("knowrob:areaOfObject",  pm), 
+				part_inst, 
+				getArea()));
+		
+
+
+		// create direction vector instance
+		Vector3f d = getDirection();
+		OWLIndividual vec_inst = OWLImportExport.createDirVector(new Vector3d(d.x, d.y, d.z), manager, factory, pm, ontology);
+		
+		manager.addAxiom(ontology, factory.getOWLObjectPropertyAssertionAxiom(
+				factory.getOWLObjectProperty("knowrob:longitudinalDirection",  pm), part_inst, vec_inst));
+		
+		return part_inst;
+		
+	}
 }

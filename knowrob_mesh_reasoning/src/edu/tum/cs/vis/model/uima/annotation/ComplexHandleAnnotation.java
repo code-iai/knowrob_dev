@@ -15,11 +15,24 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 
+import javax.vecmath.Matrix4d;
 import javax.vecmath.Matrix4f;
 import javax.vecmath.Tuple3f;
 import javax.vecmath.Vector3f;
 
+import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLIndividual;
+import org.semanticweb.owlapi.model.OWLNamedIndividual;
+import org.semanticweb.owlapi.model.OWLObjectProperty;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.util.DefaultPrefixManager;
+
 import processing.core.PGraphics;
+import edu.tum.cs.ias.knowrob.owl.OWLThing;
+import edu.tum.cs.ias.knowrob.owl.utils.OWLImportExport;
 import edu.tum.cs.vis.model.Model;
 import edu.tum.cs.vis.model.uima.annotation.primitive.Cone;
 import edu.tum.cs.vis.model.uima.annotation.primitive.PlaneAnnotation;
@@ -364,4 +377,38 @@ public class ComplexHandleAnnotation extends DrawableAnnotation implements Handl
 	public void merge(ComplexHandleAnnotation an) {
 		primitiveAnnotations.addAll(an.primitiveAnnotations);
 	}
+	
+
+
+	/**
+	 * Export this annotation to an OWL description
+	 * 
+	 * @param manager OWL ontology manager
+	 * @param factory OWL data factory
+	 * @param pm Prefix manager
+	 * @param ontology Ontology to which the assertions shall be added
+	 * @return Reference to an OWLIndividual for this annotation
+	 */
+	public OWLIndividual writeToOWL(OWLIndividual obj_inst, OWLOntologyManager manager, OWLDataFactory factory, DefaultPrefixManager pm, OWLOntology ontology) {
+
+		OWLClass part_class = factory.getOWLClass("knowrob:Handle", pm);
+		OWLNamedIndividual part_inst = factory.getOWLNamedIndividual(IRI.create(OWLThing.getUniqueID("knowrob:Handle")));
+		manager.addAxiom(ontology, factory.getOWLClassAssertionAxiom(part_class, part_inst));
+
+		// set as physicalPart of parent object
+		OWLObjectProperty properPhysicalParts = factory.getOWLObjectProperty("knowrob:properPhysicalParts", pm);
+		manager.addAxiom(ontology, factory.getOWLObjectPropertyAssertionAxiom(properPhysicalParts, obj_inst, part_inst));
+
+		// set relative pose of this object part w.r.t. to the main object
+		OWLIndividual mat_inst = OWLImportExport.createPoseInst(new Matrix4d(getPoseMatrix()), manager, factory, pm, ontology);
+		manager.addAxiom(ontology, factory.getOWLObjectPropertyAssertionAxiom(
+				factory.getOWLObjectProperty("knowrob:orientation",  pm), part_inst, mat_inst));
+		manager.addAxiom(ontology, factory.getOWLObjectPropertyAssertionAxiom(
+				factory.getOWLObjectProperty("knowrob:relativeTo",  pm), mat_inst, obj_inst));
+		
+		
+		return part_inst;
+		
+	}
+	
 }

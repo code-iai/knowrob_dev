@@ -7,18 +7,38 @@
  ******************************************************************************/
 package edu.tum.cs.vis.model.uima.cas;
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
 
 import org.apache.log4j.Logger;
+import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.io.RDFXMLOntologyFormat;
+import org.semanticweb.owlapi.model.AddImport;
+import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLImportsDeclaration;
+import org.semanticweb.owlapi.model.OWLIndividual;
+import org.semanticweb.owlapi.model.OWLNamedIndividual;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.util.DefaultPrefixManager;
 
 import processing.core.PGraphics;
+import edu.tum.cs.ias.knowrob.owl.utils.OWLFileUtils;
+import edu.tum.cs.ias.knowrob.owl.utils.OWLImportExport;
 import edu.tum.cs.uima.Annotation;
 import edu.tum.cs.uima.JCas;
 import edu.tum.cs.vis.model.Model;
+import edu.tum.cs.vis.model.uima.annotation.ComplexHandleAnnotation;
+import edu.tum.cs.vis.model.uima.annotation.ContainerAnnotation;
 import edu.tum.cs.vis.model.uima.annotation.DrawableAnnotation;
 import edu.tum.cs.vis.model.uima.annotation.MeshAnnotation;
+import edu.tum.cs.vis.model.uima.annotation.primitive.ConeAnnotation;
+import edu.tum.cs.vis.model.uima.annotation.primitive.PlaneAnnotation;
+import edu.tum.cs.vis.model.uima.annotation.primitive.SphereAnnotation;
 import edu.tum.cs.vis.model.util.Curvature;
 import edu.tum.cs.vis.model.util.DrawSettings;
 import edu.tum.cs.vis.model.util.Triangle;
@@ -46,6 +66,10 @@ public class MeshCas extends JCas implements Serializable {
 	 * Group which represents the mesh and its child groups
 	 */
 	private Model								model;
+	/**
+	 * Filename of the model represented in this CAS
+	 */
+	private String								modelFile;
 
 	/**
 	 * Indicates if the original mesh should be drawn or not.
@@ -56,6 +80,11 @@ public class MeshCas extends JCas implements Serializable {
 	 * Maps curvature property to each vertex of mesh
 	 */
 	private final HashMap<Vertex, Curvature>	curvatures			= new HashMap<Vertex, Curvature>();
+
+	/**
+	 * IRI for exported OWL files
+	 */
+	public final static String CAD = "http://ias.cs.tum.edu/kb/knowrob-cad.owl#";
 
 	/**
 	 * adds a new annotation to the annotations list
@@ -236,5 +265,102 @@ public class MeshCas extends JCas implements Serializable {
 	 */
 	public void setModel(Model model) {
 		this.model = model;
+	}
+
+	/**
+	 * Get path of model file
+	 * 
+	 * @return Pathname of CAD model file
+	 */
+	public String getModelFile() {
+		return modelFile;
+	}
+
+	/**
+	 * Set model file path name
+	 * 
+	 * @param modelFile Pathname of model file
+	 */
+	public void setModelFile(String modelFile) {
+		this.modelFile = modelFile;
+	}
+
+
+	/**
+	 * Export the annotations from this CAS to an OWL file
+	 * 
+	 * @param filename OWL file to which the CAS content shall be exported
+	 */
+	public void writeToOWL(String filename) {
+
+		OWLDataFactory factory;
+		DefaultPrefixManager pm;
+
+		OWLOntology ontology = null;
+
+		try {
+
+			// Create ontology manager and data factory
+			OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+			factory = manager.getOWLDataFactory();
+
+			// Get prefix manager using the base IRI of the JoystickDrive ontology as default namespace
+			pm = OWLImportExport.PREFIX_MANAGER;
+
+			// Create empty OWL ontology
+			ontology = manager.createOntology(IRI.create(CAD));
+			OWLImportExport.PREFIX_MANAGER.setPrefix("cad:", CAD);
+			manager.setOntologyFormat(ontology, new RDFXMLOntologyFormat());
+
+			// Import KnowRob ontology
+			OWLImportsDeclaration oid = factory.getOWLImportsDeclaration(IRI.create(OWLImportExport.KNOWROB));
+			AddImport addImp = new AddImport(ontology,oid);
+			manager.applyChange(addImp);
+
+
+			// create object instance based on CAD file name
+			String obj_inst_iri = new File(filename).getName().split("\\.")[0];
+
+			OWLClass obj_class = factory.getOWLClass("knowrob:HumanScaleObject", pm);
+			OWLNamedIndividual obj_inst = factory.getOWLNamedIndividual(obj_inst_iri, pm);
+			manager.addAxiom(ontology, factory.getOWLClassAssertionAxiom(obj_class, obj_inst));
+
+
+
+			// create instances for all object parts
+			for(Annotation a : annotations) {
+
+				OWLIndividual part = null;	
+				if(a instanceof ComplexHandleAnnotation) {
+					part = ((ComplexHandleAnnotation) a).writeToOWL(obj_inst, manager, factory, pm, ontology);
+
+				} else if(a instanceof ContainerAnnotation) {
+					part = ((ContainerAnnotation) a).writeToOWL(obj_inst, manager, factory, pm, ontology);
+
+				} else if(a instanceof SphereAnnotation) {
+					part = ((SphereAnnotation) a).writeToOWL(obj_inst, manager, factory, pm, ontology);
+
+				} else if(a instanceof PlaneAnnotation) {
+					part = ((PlaneAnnotation) a).writeToOWL(obj_inst, manager, factory, pm, ontology);
+
+				} else if(a instanceof ConeAnnotation) {
+					part = ((ConeAnnotation) a).writeToOWL(obj_inst, manager, factory, pm, ontology);
+
+				}
+				//TODO: add other types 
+
+				if(part!=null) {
+					
+				}
+			}
+
+
+			// export to OWL file
+			OWLFileUtils.saveOntologyToFile(ontology, manager.getOntologyFormat(ontology), filename);
+
+		} catch (Exception e) {
+			ontology = null;
+			e.printStackTrace();
+		}
 	}
 }
