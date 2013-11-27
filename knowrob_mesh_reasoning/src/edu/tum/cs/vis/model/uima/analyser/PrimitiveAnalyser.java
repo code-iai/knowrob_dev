@@ -60,7 +60,7 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 	 * Tolerance in radiant between two surface normals of triangles to connect them as a single
 	 * plane
 	 */
-	private static double		PLANE_TOLERANCE			= 0.5f * Math.PI / 180f;
+	private static double		PLANE_TOLERANCE			= 2.0f * Math.PI / 180f;
 
 	/**
 	 * Analyze given triangle and try to region grow a plane. Only plane annotations are generated
@@ -232,9 +232,9 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 				Set<PrimitiveAnnotation> neighborAnnotations = pa.getNeighborAnnotations(cas,
 						PrimitiveAnnotation.class);
 
-				// check for cone annotation which has less than 2 triangles
-				if (neighborAnnotations.size() > 0 && a instanceof ConeAnnotation
-						&& ((PrimitiveAnnotation) a).getMesh().getTriangles().size() < 2) {
+				// check for cone or sphere annotation which has less than 5 triangles
+				if (neighborAnnotations.size() > 0 && (a instanceof ConeAnnotation || a instanceof SphereAnnotation)
+						&& ((PrimitiveAnnotation) a).getMesh().getTriangles().size() < 5) {
 					toRemove.add(a);
 
 					PrimitiveAnnotation a1 = neighborAnnotations.iterator().next();
@@ -261,7 +261,7 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 					}
 
 					if (!merge && pa instanceof PlaneAnnotation && a1 instanceof ConeAnnotation
-							&& pa.getArea() < a1.getArea() * 0.1) {
+							&& pa.getArea() < a1.getArea() * 0.3) {
 						// found a small plane annotation neighboring cone annotation. Check if
 						// plane annotation should be part of cone annotation by checking if plane
 						// normal is perpendicular to the generating axis.
@@ -283,7 +283,7 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 								float dot = t.getNormalVector().dot(partner.getNormalVector());
 
 								// allow angle difference of approx 8 degree: cos(8*PI/180)=0.99
-								if (dot > 0.99) {
+								if (dot > 0.98) {
 									merge = true;
 									break;
 								}

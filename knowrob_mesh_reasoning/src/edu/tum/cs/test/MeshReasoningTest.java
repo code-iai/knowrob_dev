@@ -25,37 +25,12 @@ public class MeshReasoningTest {
 	 */
 	public static void main(String[] args) {
 
-		// String path = "/home/stefan/Desktop/test2.dae";
-		// String path = "/home/stefan/Desktop/plane.dae";
-		// String path = "/home/stefan/Desktop/plane2.dae";
-		// String path = "/home/stefan/work/models/primitive/TestObject.dae";
-		// String path = "/home/stefan/Desktop/verticalPiece.ply";
+//		String path = "/home/tenorth/work/ros/groovy/rosbuild_ws/stacks/knowrob_addons/knowrob_cad_models/models/drinking-vessels/cup2.dae";
+		String path = "/home/tenorth/work/ros/groovy/rosbuild_ws/stacks/knowrob_addons/knowrob_cad_models/models/kitchen-tools/spatula.kmz";
+//		String path = "/home/tenorth/work/ros/groovy/rosbuild_ws/stacks/knowrob_addons/knowrob_cad_models/models/electric-devices/pancake-maker.dae";
+//		String path = "/home/tenorth/work/ros/groovy/rosbuild_ws/stacks/knowrob_addons/knowrob_cad_models/models/food-drinks/mondamin-pancake-mix.dae";
+		
 
-		/* Complex handle test */
-		// String path = "/home/stefan/work/models/hand-tools/putty.kmz";
-		// String path = "/home/stefan/work/models/hand-tools/hammer2.dae";
-		// String path = "/home/stefan/work/models/hand-tools/wrench.kmz";
-		// String path = "/home/stefan/work/models/silverware/spoon2.kmz";
-		// String path = "/home/stefan/work/models/silverware/knife1.kmz";
-		// String path = "/home/stefan/work/models/industrial-parts/valves/Ball Valve.kmz";
-		// String path = "/home/stefan/work/models/silverware/Butter Knife.dae";
-		String path = "/home/tenorth/work/ros/groovy/rosbuild_ws/stacks/knowrob_addons/knowrob_cad_models/models/drinking-vessels/cup2.dae";
-		// String path = "/home/stefan/work/models/drinking-vessels/cup2.dae";
-		// String path = "/home/stefan/work/models/drinking-vessels/my_mug_v2.kmz";
-		// String path = "/home/stefan/work/models/food-drinks/mondamin-pancake-mix.dae";
-		// String path = "/home/stefan/work/models/cooking-vessels/pot-ww.dae";
-		// String path = "/home/stefan/work/models/cooking-vessels/pancake_maker.dae";
-		// String path = "/home/stefan/work/models/food-drinks/ketchup bottle.dae";
-		// String path = "/home/stefan/work/models/primitive/Handle.dae";
-		// String path = "/home/stefan/work/models/cooking-vessels/pot.kmz";
-		// String path =
-		// "/home/stefan/work/models/industrial-parts/AFAG_11005009_Modultraeger_doppel_MT_45x2a_(0).kmz";
-		// String path = "/home/stefan/work/models/buckets/bucket2.kmz";
-		// String path =
-		// "/home/stefan/work/models/industrial-parts/AFAG_11005009_Modultraeger_doppel_MT_45x2a_(0).kmz";
-		// String path = "/home/stefan/work/models/hand-tools/paintbrush2.kmz";
-		// String path = "/home/stefan/work/models/cooking-vessels/pot3.kmz";
-		// String path = "/home/stefan/Desktop/verticalPiece.ply";
 		MeshReasoning mr = MeshReasoning.initMeshReasoning(true);
 
 		mr.analyseByPath(path);

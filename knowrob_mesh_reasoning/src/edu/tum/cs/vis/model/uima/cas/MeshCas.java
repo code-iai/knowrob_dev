@@ -330,27 +330,20 @@ public class MeshCas extends JCas implements Serializable {
 			// create instances for all object parts
 			for(Annotation a : annotations) {
 
-				OWLIndividual part = null;	
 				if(a instanceof ComplexHandleAnnotation) {
-					part = ((ComplexHandleAnnotation) a).writeToOWL(obj_inst, manager, factory, pm, ontology);
+					((ComplexHandleAnnotation) a).writeToOWL(obj_inst, manager, factory, pm, ontology);
 
 				} else if(a instanceof ContainerAnnotation) {
-					part = ((ContainerAnnotation) a).writeToOWL(obj_inst, manager, factory, pm, ontology);
+					((ContainerAnnotation) a).writeToOWL(obj_inst, manager, factory, pm, ontology);
 
 				} else if(a instanceof SphereAnnotation) {
-					part = ((SphereAnnotation) a).writeToOWL(obj_inst, manager, factory, pm, ontology);
+					((SphereAnnotation) a).writeToOWL(obj_inst, manager, factory, pm, ontology);
 
 				} else if(a instanceof PlaneAnnotation) {
-					part = ((PlaneAnnotation) a).writeToOWL(obj_inst, manager, factory, pm, ontology);
+					((PlaneAnnotation) a).writeToOWL(obj_inst, manager, factory, pm, ontology);
 
 				} else if(a instanceof ConeAnnotation) {
-					part = ((ConeAnnotation) a).writeToOWL(obj_inst, manager, factory, pm, ontology);
-
-				}
-				//TODO: add other types 
-
-				if(part!=null) {
-					
+					((ConeAnnotation) a).writeToOWL(obj_inst, manager, factory, pm, ontology);
 				}
 			}
 
