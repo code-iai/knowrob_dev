@@ -26,9 +26,9 @@ public class MeshReasoningTest {
 	public static void main(String[] args) {
 
 //		String path = "/home/tenorth/work/ros/groovy/rosbuild_ws/stacks/knowrob_addons/knowrob_cad_models/models/drinking-vessels/cup2.dae";
-		String path = "/home/tenorth/work/ros/groovy/rosbuild_ws/stacks/knowrob_addons/knowrob_cad_models/models/kitchen-tools/spatula.kmz";
+//		String path = "/home/tenorth/work/ros/groovy/rosbuild_ws/stacks/knowrob_addons/knowrob_cad_models/models/kitchen-tools/spatula.kmz";
 //		String path = "/home/tenorth/work/ros/groovy/rosbuild_ws/stacks/knowrob_addons/knowrob_cad_models/models/electric-devices/pancake-maker.dae";
-//		String path = "/home/tenorth/work/ros/groovy/rosbuild_ws/stacks/knowrob_addons/knowrob_cad_models/models/food-drinks/mondamin-pancake-mix.dae";
+		String path = "/home/tenorth/work/ros/groovy/rosbuild_ws/stacks/knowrob_addons/knowrob_cad_models/models/food-drinks/mondamin-pancake-mix.dae";
 		
 
 		MeshReasoning mr = MeshReasoning.initMeshReasoning(true);

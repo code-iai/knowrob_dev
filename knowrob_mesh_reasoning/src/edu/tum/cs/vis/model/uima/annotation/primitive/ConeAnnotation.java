@@ -18,7 +18,6 @@ import javax.vecmath.Tuple3f;
 import javax.vecmath.Vector3d;
 import javax.vecmath.Vector3f;
 
-import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLIndividual;
@@ -228,9 +227,9 @@ public final class ConeAnnotation extends PrimitiveAnnotation<ConeAnnotation> im
 	public OWLIndividual writeToOWL(OWLIndividual obj_inst, OWLOntologyManager manager, OWLDataFactory factory, DefaultPrefixManager pm, OWLOntology ontology) {
 
 		OWLClass part_class = factory.getOWLClass("knowrob:Cone", pm);
-		OWLNamedIndividual part_inst = factory.getOWLNamedIndividual(IRI.create(OWLThing.getUniqueID("knowrob:Cone")));
+		OWLNamedIndividual part_inst = factory.getOWLNamedIndividual(OWLThing.getUniqueID("knowrob:Cone"), pm);
 		manager.addAxiom(ontology, factory.getOWLClassAssertionAxiom(part_class, part_inst));
-
+		
 		// set as physicalPart of parent object
 		OWLObjectProperty properPhysicalParts = factory.getOWLObjectProperty("knowrob:properPhysicalParts", pm);
 		manager.addAxiom(ontology, factory.getOWLObjectPropertyAssertionAxiom(properPhysicalParts, obj_inst, part_inst));

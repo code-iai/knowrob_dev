@@ -392,7 +392,7 @@ public class ComplexHandleAnnotation extends DrawableAnnotation implements Handl
 	public OWLIndividual writeToOWL(OWLIndividual obj_inst, OWLOntologyManager manager, OWLDataFactory factory, DefaultPrefixManager pm, OWLOntology ontology) {
 
 		OWLClass part_class = factory.getOWLClass("knowrob:Handle", pm);
-		OWLNamedIndividual part_inst = factory.getOWLNamedIndividual(IRI.create(OWLThing.getUniqueID("knowrob:Handle")));
+		OWLNamedIndividual part_inst = factory.getOWLNamedIndividual(OWLThing.getUniqueID("knowrob:Handle"), pm);
 		manager.addAxiom(ontology, factory.getOWLClassAssertionAxiom(part_class, part_inst));
 
 		// set as physicalPart of parent object

@@ -7,7 +7,9 @@
  ******************************************************************************/
 package edu.tum.cs.vis.model.uima.cas;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -20,7 +22,6 @@ import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLImportsDeclaration;
-import org.semanticweb.owlapi.model.OWLIndividual;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
@@ -349,11 +350,55 @@ public class MeshCas extends JCas implements Serializable {
 
 
 			// export to OWL file
-			OWLFileUtils.saveOntologyToFile(ontology, manager.getOntologyFormat(ontology), filename);
+			String owldata = beautifyOWL(OWLFileUtils.saveOntologytoString(ontology, manager.getOntologyFormat(ontology)));
+
+			
+			BufferedWriter out = new BufferedWriter(new FileWriter(filename));
+			out.write(owldata);
+			out.close();
+			
 
 		} catch (Exception e) {
 			ontology = null;
 			e.printStackTrace();
 		}
 	}
+
+	
+	private String beautifyOWL(String owl_data) {
+		
+		String header = "\n\n" +
+		"<!DOCTYPE rdf:RDF [\n" +
+	    "    <!ENTITY local_path 'file://@OWL_PATH_PREFIX@/owl/'>\n" +
+		"    <!ENTITY owl \"http://www.w3.org/2002/07/owl#\" >\n" +
+		"    <!ENTITY xsd \"http://www.w3.org/2001/XMLSchema#\" >\n" +
+		"    <!ENTITY knowrob \"http://ias.cs.tum.edu/kb/knowrob.owl#\" >\n" +
+		"    <!ENTITY cad \"http://ias.cs.tum.edu/kb/knowrob-cad.owl#\" >\n" +
+		"    <!ENTITY rdfs \"http://www.w3.org/2000/01/rdf-schema#\" >\n" +
+		"    <!ENTITY rdf \"http://www.w3.org/1999/02/22-rdf-syntax-ns#\" >\n" +
+		"]>\n\n<rdf:RDF";
+		
+		owl_data = owl_data.replace("rdf:resource=\"http://ias.cs.tum.edu/kb/knowrob.owl#", 
+				"rdf:resource=\"&knowrob;");
+		owl_data = owl_data.replace("rdf:about=\"http://ias.cs.tum.edu/kb/knowrob.owl#", 
+				"rdf:about=\"&knowrob;");
+
+		owl_data = owl_data.replace("rdf:resource=\"http://ias.cs.tum.edu/kb/knowrob-cad.owl#", 
+				"rdf:resource=\"&cad;");
+		owl_data = owl_data.replace("rdf:about=\"http://ias.cs.tum.edu/kb/knowrob-cad.owl#", 
+				"rdf:about=\"&cad;");
+
+		owl_data = owl_data.replace("rdf:datatype=\"http://www.w3.org/2001/XMLSchema#", 
+									"rdf:datatype=\"&xsd;");
+		
+		owl_data = owl_data.replace("<owl:imports rdf:resource=\"&constr;\"/>", 
+				"<owl:imports rdf:resource=\"&local_path;knowrob.owl\"/>");
+		
+		
+		
+		owl_data = owl_data.replace("<rdf:RDF", header);
+		return owl_data;
+	}
+
+
 }
