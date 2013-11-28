@@ -28,6 +28,7 @@ import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 
 import processing.core.PGraphics;
+import edu.tum.cs.ias.knowrob.owl.OWLThing;
 import edu.tum.cs.ias.knowrob.owl.utils.OWLFileUtils;
 import edu.tum.cs.ias.knowrob.owl.utils.OWLImportExport;
 import edu.tum.cs.uima.Annotation;
@@ -320,12 +321,9 @@ public class MeshCas extends JCas implements Serializable {
 
 
 			// create object instance based on CAD file name
-			String obj_inst_iri = new File(filename).getName().split("\\.")[0];
-
 			OWLClass obj_class = factory.getOWLClass("knowrob:HumanScaleObject", pm);
-			OWLNamedIndividual obj_inst = factory.getOWLNamedIndividual(obj_inst_iri, pm);
+			OWLNamedIndividual obj_inst = factory.getOWLNamedIndividual(OWLThing.getUniqueID("cad:" + new File(filename).getName().split("\\.")[0]), pm);
 			manager.addAxiom(ontology, factory.getOWLClassAssertionAxiom(obj_class, obj_inst));
-
 
 
 			// create instances for all object parts
@@ -391,7 +389,7 @@ public class MeshCas extends JCas implements Serializable {
 		owl_data = owl_data.replace("rdf:datatype=\"http://www.w3.org/2001/XMLSchema#", 
 									"rdf:datatype=\"&xsd;");
 		
-		owl_data = owl_data.replace("<owl:imports rdf:resource=\"&constr;\"/>", 
+		owl_data = owl_data.replace("<owl:imports rdf:resource=\"&knowrob;\"/>", 
 				"<owl:imports rdf:resource=\"&local_path;knowrob.owl\"/>");
 		
 		
