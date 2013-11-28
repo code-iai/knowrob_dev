@@ -130,19 +130,31 @@ object_main_cone(Inst, MainCone) :-
 object_main_axis(Obj, [X,Y,Z]) :-
   object_main_cone(Obj, C),
   rdf_triple(knowrob:longitudinalDirection, C, Dir),
-  rdf_has(Dir, knowrob:vectorX, literal(type(xsd:'float',X))),
-  rdf_has(Dir, knowrob:vectorY, literal(type(xsd:'float',Y))),
-  rdf_has(Dir, knowrob:vectorZ, literal(type(xsd:'float',Z))).
+  rdf_has(Dir, knowrob:vectorX, literal(type(_,X))),
+  rdf_has(Dir, knowrob:vectorY, literal(type(_,Y))),
+  rdf_has(Dir, knowrob:vectorZ, literal(type(_,Z))).
 
 
+% compute decomposition if not yet done
 bottle_cap(Obj, Cap) :-
- findall(Z-P,
+  \+ rdf_has(Obj, knowrob:properPhysicalParts, _),
+  findall(Z-P,
       (rdf_triple(knowrob:properPhysicalParts, Obj, P),
        owl_individual_of(P, knowrob:'Cone'),
        objpart_pos(P, [_,_,Z])), ConePos),
   keysort(ConePos, ConePosAsc),
   last(ConePosAsc, _-Cap).
 
+% use existing decomposition
+bottle_cap(Obj, Cap) :-
+  findall(Z-P,
+      (rdf_triple(knowrob:properPhysicalParts, Obj, P),
+       owl_individual_of(P, knowrob:'Cone'),
+       rdf_has(P, knowrob:orientation, PosInst),
+       rotmat_to_list(PosInst, [_, _, _, _, _, _, _, _, _, _, _, Z, _, _, _, _])), ConePos),
+  keysort(ConePos, ConePosAsc),
+  last(ConePosAsc, _-Cap).
+  
 objpart_pos(Part, [X,Y,Z]) :-
   annotation_pose_list(Part, PL),
   PL= [_,_,_,X,_,_,_,Y,_,_,_,Z,_,_,_,_].
