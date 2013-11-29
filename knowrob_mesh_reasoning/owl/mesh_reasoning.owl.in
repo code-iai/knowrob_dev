@@ -31,14 +31,15 @@
     <computable:visible rdf:datatype="&xsd;string">unvisible</computable:visible>
     <computable:target rdf:resource="&knowrob;properPhysicalParts"/>
   </computable:PrologProperty>
-  
-  
+
+
   <computable:PrologClass rdf:about="#computeHandle">
     <computable:command rdf:datatype="&xsd;string">annotation_handle</computable:command>
     <computable:cache rdf:datatype="&xsd;string">dontCache</computable:cache>
     <computable:visible rdf:datatype="&xsd;string">unvisible</computable:visible>
-    <computable:target rdf:resource="&knowrob;Handle"/> 
+    <computable:target rdf:resource="&knowrob;Handle"/>
   </computable:PrologClass>
+  
   
   
   <computable:PrologProperty rdf:about="#computeAnnotationArea">

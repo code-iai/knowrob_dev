@@ -66,7 +66,10 @@
       annotation_handle/2,
       bottle_cap/2,
       grasp_point/2,
-      pouring_onto/2
+      pouring_onto/2,
+      object_main_plane/2,
+      object_main_axis/2,
+      object_main_cone/2
     ]).
 
 :- use_module(library('semweb/rdfs')).
@@ -106,6 +109,7 @@
             bottle_cap(r,r),
             grasp_point(r,?),
             pouring_onto(r,r),
+            object_main_plane(r,r),
             mesh_annotator_highlight_part(r,r).
 
 
@@ -136,19 +140,19 @@ object_main_axis(Obj, [X,Y,Z]) :-
 
 
 % compute decomposition if not yet done
-bottle_cap(Obj, Cap) :-
-  \+ rdf_has(Obj, knowrob:properPhysicalParts, _),
-  findall(Z-P,
-      (rdf_triple(knowrob:properPhysicalParts, Obj, P),
-       owl_individual_of(P, knowrob:'Cone'),
-       objpart_pos(P, [_,_,Z])), ConePos),
-  keysort(ConePos, ConePosAsc),
-  last(ConePosAsc, _-Cap).
+% bottle_cap(Obj, Cap) :-
+%   \+(rdf_has(Obj, knowrob:properPhysicalParts, _)),
+%   findall(Z-P,
+%       (rdf_triple(knowrob:properPhysicalParts, Obj, P),
+%        owl_individual_of(P, knowrob:'Cone'),
+%        objpart_pos(P, [_,_,Z])), ConePos),
+%   keysort(ConePos, ConePosAsc),
+%   last(ConePosAsc, _-Cap).
 
 % use existing decomposition
 bottle_cap(Obj, Cap) :-
   findall(Z-P,
-      (rdf_triple(knowrob:properPhysicalParts, Obj, P),
+      (rdf_has(Obj, knowrob:properPhysicalParts, P),
        owl_individual_of(P, knowrob:'Cone'),
        rdf_has(P, knowrob:orientation, PosInst),
        rotmat_to_list(PosInst, [_, _, _, _, _, _, _, _, _, _, _, Z, _, _, _, _])), ConePos),
@@ -169,7 +173,10 @@ grasp_point(Obj, GraspPoint) :-
    mesh_annotator_highlight_part(Obj, Handle).
 
 pouring_onto(Obj, Part) :-
-  findall(A-P, (rdf_triple(knowrob:properPhysicalParts, Obj, P),
+  object_main_plane(Obj, Part).
+   
+object_main_plane(Obj, Part) :-
+  findall(A-P, (rdf_has(Obj, knowrob:properPhysicalParts, P),
                 rdf_triple(rdf:type, P, knowrob:'FlatPhysicalSurface'),
                 rdf_triple(knowrob:areaOfObject, P, AL),
                 strip_literal_type(AL, A)), Planes),
