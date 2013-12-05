@@ -140,14 +140,14 @@ object_main_axis(Obj, [X,Y,Z]) :-
 
 
 % compute decomposition if not yet done
-% bottle_cap(Obj, Cap) :-
-%   \+(rdf_has(Obj, knowrob:properPhysicalParts, _)),
-%   findall(Z-P,
-%       (rdf_triple(knowrob:properPhysicalParts, Obj, P),
-%        owl_individual_of(P, knowrob:'Cone'),
-%        objpart_pos(P, [_,_,Z])), ConePos),
-%   keysort(ConePos, ConePosAsc),
-%   last(ConePosAsc, _-Cap).
+bottle_cap(Obj, Cap) :-
+  \+(rdf_has(Obj, knowrob:properPhysicalParts, _)),
+  findall(Z-P,
+      (rdf_triple(knowrob:properPhysicalParts, Obj, P),
+       owl_individual_of(P, knowrob:'Cone'),
+       objpart_pos(P, [_,_,Z])), ConePos),
+  keysort(ConePos, ConePosAsc),
+  last(ConePosAsc, _-Cap).
 
 % use existing decomposition
 bottle_cap(Obj, Cap) :-
@@ -158,7 +158,7 @@ bottle_cap(Obj, Cap) :-
        rotmat_to_list(PosInst, [_, _, _, _, _, _, _, _, _, _, _, Z, _, _, _, _])), ConePos),
   keysort(ConePos, ConePosAsc),
   last(ConePosAsc, _-Cap).
-  
+
 objpart_pos(Part, [X,Y,Z]) :-
   annotation_pose_list(Part, PL),
   PL= [_,_,_,X,_,_,_,Y,_,_,_,Z,_,_,_,_].
@@ -174,7 +174,7 @@ grasp_point(Obj, GraspPoint) :-
 
 pouring_onto(Obj, Part) :-
   object_main_plane(Obj, Part).
-   
+
 object_main_plane(Obj, Part) :-
   findall(A-P, (rdf_has(Obj, knowrob:properPhysicalParts, P),
                 rdf_triple(rdf:type, P, knowrob:'FlatPhysicalSurface'),
