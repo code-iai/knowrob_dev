@@ -1,12 +1,12 @@
 
 function JsonProlog(){
-  
+
   var ros = new ROSLIB.Ros({
     url : 'ws://localhost:9090'
   });
 
-  this.jsonQuery = function(query) {
-
+  this.jsonQuery = function(query, callback) {
+      
       var qid = this.makeid();
 
       var jsonPrologQueryClient = new ROSLIB.Service({
@@ -34,38 +34,47 @@ function JsonProlog(){
           serviceType : 'json_prolog/PrologNextSolution'
         });
 
-      console.log(result);
+        console.log(result);
+
+        if (result.ok == true) {
     
-        var request2 = new ROSLIB.ServiceRequest({
-          id : qid
-        });
-
-        jsonPrologNextResultClient.callService(request2, function(result) {
-
-          console.log(result);
-          
-//           var res = JSON.parse(result.solution);
-// 
-//           for(var obj in res) {
-//             console.log(obj);
-//           }
-
-          
-          var jsonPrologFinishClient = new ROSLIB.Service({
-            ros : ros,
-            name : '/json_prolog/finish',
-            serviceType : 'json_prolog/PrologFinish'
-          });
-
-          request3 = new ROSLIB.ServiceRequest({
+          var request2 = new ROSLIB.ServiceRequest({
             id : qid
           });
-          jsonPrologFinishClient.callService(request3, function(e) { });
 
-        });
+          jsonPrologNextResultClient.callService(request2, function(result) {
+
+            console.log(result);
+
+// TODO   
+            callback(result.solution);
+          //console.log(result.solution);
+          //this.parseAnswer(result.solution);
+           //var res = JSON.parse(result.solution);
+ 
+           //for(var obj in res) {
+           //  console.log(obj);
+           //}
+
+          
+            var jsonPrologFinishClient = new ROSLIB.Service({
+              ros : ros,
+              name : '/json_prolog/finish',
+              serviceType : 'json_prolog/PrologFinish'
+            });
+
+            request3 = new ROSLIB.ServiceRequest({
+              id : qid
+            });
+            jsonPrologFinishClient.callService(request3, function(e) { });
+
+          });
+        } else {
+          callback(result.message)
+        }
       });
-
   };
+
 
   this.makeid = function() {
 

@@ -8,8 +8,8 @@
   <script type="text/javascript" src="http://cdn.robotwebtools.org/ColladaAnimationCompress/current/ColladaLoader2.min.js"></script>
   <script type="text/javascript" src="http://cdn.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
   <script type="text/javascript" src="http://localhost/~arne/ros3d.js"></script>
-  <script type="text/javascript" src="http://localhost/~arne/MarkerClient.js"></script>
   <script type="text/javascript" src="http://localhost/~arne/json_prolog.js"></script>
+  <script type="text/javascript" src="http://localhost/~arne/MarkerClient.js"></script>
   <link rel="stylesheet" type="text/css" href="screen.css"/>
   <script type="text/javascript" type="text/javascript">
 
@@ -51,10 +51,15 @@
 
     function queryProlog(q) {
       prolog = new JsonProlog();
-      prolog.jsonQuery(q);
+
+      document.query_form.history.value += "?- " + q +  "\n\n";
+
+      prolog.jsonQuery(q, function(result) {
+          document.query_form.history.value += result +  "\n\n";
+      });
+
       document.query_form.user_query.value = "";
       
-      document.query_form.history.value += q +  "\n\n";
       document.query_form.history.scrollTop = document.query_form.history.scrollHeight;
     };
   
