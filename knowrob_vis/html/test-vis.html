@@ -11,7 +11,14 @@
   <script type="text/javascript" src="http://localhost/~arne/knowrob_vis/json_prolog.js"></script>
   <script type="text/javascript" src="http://localhost/~arne/knowrob_vis/MarkerClient.js"></script>
   <link rel="stylesheet" type="text/css" href="screen.css"/>
+
+  <script src="http://d3js.org/d3.v3.min.js"></script>
+
+  <script type="text/javascript" src="chart_demo/DonutChart.js"></script>
+
   <script type="text/javascript" type="text/javascript">
+
+
 
     function init() {
     
@@ -47,6 +54,9 @@
         topic : '/visualization_marker',
         rootObject : viewer.scene
       });
+
+      // add donut chart demo
+      initChart();
     };
 
     function queryProlog(q) {
@@ -66,7 +76,44 @@
         document.query_form.history.scrollTop = document.query_form.history.scrollHeight;
       }
     };
-  
+
+    // donutchart-related stuff
+    // ------------------------
+
+    // some dummy chart data
+    var data3 = [
+      {name: "more", value: 59},
+      {name: "data", value: 5},
+      {name: "some", value: 63},
+      {name: "test", value: 10}
+    ];
+
+    var data2 = [
+      {name: "set", value: 59},
+      {name: "some", value: 90},
+      {name: "data", value: 63}
+    ];
+
+    var chart;
+
+    function initChart() {
+      var options = {
+        data: data3,
+        where: "#chart",
+        label: "units"
+      };
+
+      chart = new DonutChart(options);
+    }
+
+    // swap chart data sets
+    function change() {
+      var d = data3;
+      data3 = data2;
+      data2 = d;
+      chart.update(data3);
+    };
+
 </script>
 </head>
 
@@ -88,8 +135,10 @@
       <input type="button" name="q" value="Send query"
       onclick="queryProlog(document.query_form.user_query.value);">
     </form>
-</div>
+    </div>
   </div>
   <div id="markers" style="border: 1px black solid; width:750px; position:relative; left:530px; top:-507px;"></div>
+
+  <div id="chart" style="border: 1px black solid; width:470px; height:300px; position:relative; padding:15px; top:-490px"><input type="button" name="q" value="change!" onclick="change();"></div>
 </body>
 </html>
