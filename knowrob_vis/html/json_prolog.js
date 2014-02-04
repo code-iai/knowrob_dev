@@ -53,7 +53,7 @@ function JsonProlog(){
             } else if (result.status == 3 && result.solution == "{}") {
               var res = "true.";
             } else {
-              var res = result.solution;
+              var res = result.solution + ".";
             }
             callback(res);
           //console.log(result.solution);
