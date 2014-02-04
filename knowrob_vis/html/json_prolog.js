@@ -45,9 +45,17 @@ function JsonProlog(){
           jsonPrologNextResultClient.callService(request2, function(result) {
 
             console.log(result);
+            console.log(result.solution);
 
-// TODO   
-            callback(result.solution);
+            // TODO result.solution should be parsed
+            if (result.status == 0 && result.solution == "") {
+              var res = "false.";
+            } else if (result.status == 3 && result.solution == "{}") {
+              var res = "true.";
+            } else {
+              var res = result.solution;
+            }
+            callback(res);
           //console.log(result.solution);
           //this.parseAnswer(result.solution);
            //var res = JSON.parse(result.solution);

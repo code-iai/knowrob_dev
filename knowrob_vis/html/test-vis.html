@@ -7,9 +7,9 @@
   <script type="text/javascript" src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
   <script type="text/javascript" src="http://cdn.robotwebtools.org/ColladaAnimationCompress/current/ColladaLoader2.min.js"></script>
   <script type="text/javascript" src="http://cdn.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
-  <script type="text/javascript" src="http://localhost/~arne/ros3d.js"></script>
-  <script type="text/javascript" src="http://localhost/~arne/json_prolog.js"></script>
-  <script type="text/javascript" src="http://localhost/~arne/MarkerClient.js"></script>
+  <script type="text/javascript" src="http://localhost/~arne/knowrob_vis/ros3d.js"></script>
+  <script type="text/javascript" src="http://localhost/~arne/knowrob_vis/json_prolog.js"></script>
+  <script type="text/javascript" src="http://localhost/~arne/knowrob_vis/MarkerClient.js"></script>
   <link rel="stylesheet" type="text/css" href="screen.css"/>
   <script type="text/javascript" type="text/javascript">
 
@@ -50,17 +50,21 @@
     };
 
     function queryProlog(q) {
-      prolog = new JsonProlog();
+      if (q.substr(q.length - 1) == ".") {
+        q = q.substr(0, q.length - 1);
 
-      document.query_form.history.value += "?- " + q +  "\n\n";
+        prolog = new JsonProlog();
 
-      prolog.jsonQuery(q, function(result) {
-          document.query_form.history.value += result +  "\n\n";
-      });
+        document.query_form.history.value += "?- " + q +  ".\n\n";
 
-      document.query_form.user_query.value = "";
+        prolog.jsonQuery(q, function(result) {
+            document.query_form.history.value += result +  "\n\n";
+        });
+
+        document.query_form.user_query.value = "";
       
-      document.query_form.history.scrollTop = document.query_form.history.scrollHeight;
+        document.query_form.history.scrollTop = document.query_form.history.scrollHeight;
+      }
     };
   
 </script>
