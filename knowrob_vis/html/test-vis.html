@@ -7,9 +7,9 @@
   <script type="text/javascript" src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
   <script type="text/javascript" src="http://cdn.robotwebtools.org/ColladaAnimationCompress/current/ColladaLoader2.min.js"></script>
   <script type="text/javascript" src="http://cdn.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
-  <script type="text/javascript" src="http://localhost/~arne/knowrob_vis/ros3d.js"></script>
-  <script type="text/javascript" src="http://localhost/~arne/knowrob_vis/json_prolog.js"></script>
-  <script type="text/javascript" src="http://localhost/~arne/knowrob_vis/MarkerClient.js"></script>
+  <script type="text/javascript" src="ros3d.js"></script>
+  <script type="text/javascript" src="json_prolog.js"></script>
+  <script type="text/javascript" src="MarkerClient.js"></script>
   <link rel="stylesheet" type="text/css" href="screen.css"/>
 
   <script src="http://d3js.org/d3.v3.min.js"></script>
@@ -57,6 +57,10 @@
 
       // add donut chart demo
       initChart();
+
+      // fill example qurey select
+      populateQuerySelect('examplequery', "queries.json");
+
     };
 
     function queryProlog(q) {
@@ -74,13 +78,17 @@
         document.query_form.user_query.value = "";
       
         document.query_form.history.scrollTop = document.query_form.history.scrollHeight;
+
+        // reset select
+        var select = document.getElementById('examplequery');
+        select.selectedIndex = 0;
       }
     };
 
     // donutchart-related stuff
     // ------------------------
 
-    // some dummy chart data
+    // some dummy chart data (just for demo)
     var data3 = [
       {name: "more", value: 59},
       {name: "data", value: 5},
@@ -94,8 +102,10 @@
       {name: "data", value: 63}
     ];
 
+    // chart handle
     var chart;
 
+    // add chart to its div
     function initChart() {
       var options = {
         data: data3,
@@ -106,13 +116,41 @@
       chart = new DonutChart(options);
     }
 
-    // swap chart data sets
+    // switch the chart data (just for demo)
     function change() {
       var d = data3;
       data3 = data2;
       data2 = d;
       chart.update(data3);
     };
+
+    // example query selection stuff
+    // -------------------------------------
+
+    // fill the select with json data from url
+    function populateQuerySelect(id, url) {
+
+      var request = new XMLHttpRequest
+      request.open("GET", url, false);
+      request.send(null);
+
+      var querylist = JSON.parse(request.responseText);
+
+      var select = document.getElementById(id);
+
+      for (var i = 0; i < querylist.query.length; i++) {
+        var opt = document.createElement('option');
+        opt.value = i+1;
+        opt.innerHTML = querylist.query[i];
+        select.appendChild(opt);
+      }
+    }
+
+    // append the selected query to the user_query form
+    function addSelectedToQueryform(selectid) {
+      var select = document.getElementById(selectid);
+      document.query_form.user_query.value += select.options[select.selectedIndex].text;
+    }
 
 </script>
 </head>
@@ -134,6 +172,9 @@
 
       <input type="button" name="q" value="Send query"
       onclick="queryProlog(document.query_form.user_query.value);">
+
+      <select onchange="addSelectedToQueryform('examplequery')" name="examplequery" id="examplequery"><option value=0></option></select>
+
     </form>
     </div>
   </div>
