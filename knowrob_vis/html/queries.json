@@ -6,6 +6,7 @@
     "visualisation_canvas.",
     "owl_individual_of(A, knowrob:'SemanticEnvironmentMap'), add_object_with_children(A).",
     "highlight_object_with_children('http://ias.cs.tum.edu/kb/knowrob.owl#Refrigerator67').",
-    "reset_highlight."
+    "reset_highlight.",
+    "remove_object_with_children('http://ias.cs.tum.edu/kb/knowrob.owl#Refrigerator67')."
     ]
 }
