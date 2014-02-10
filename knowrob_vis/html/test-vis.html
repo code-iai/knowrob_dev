@@ -56,7 +56,7 @@
       });
 
       // add donut chart demo
-      initChart();
+      chart = initChart();
 
       // fill example qurey select
       populateQuerySelect('examplequery', "queries.json");
@@ -113,7 +113,8 @@
         label: "units"
       };
 
-      chart = new DonutChart(options);
+      return new DonutChart(options);
+      //chart = new DonutChart(options);
     }
 
     // switch the chart data (just for demo)
@@ -130,6 +131,8 @@
     // fill the select with json data from url
     function populateQuerySelect(id, url) {
 
+      // url must point to a json-file containing an array named "query" with
+      // the query strings to display in the select
       var request = new XMLHttpRequest
       request.open("GET", url, false);
       request.send(null);
@@ -140,7 +143,7 @@
 
       for (var i = 0; i < querylist.query.length; i++) {
         var opt = document.createElement('option');
-        opt.value = i+1;
+        opt.value = i + 1;
         opt.innerHTML = querylist.query[i];
         select.appendChild(opt);
       }
@@ -180,6 +183,8 @@
   </div>
   <div id="markers" style="border: 1px black solid; width:750px; position:relative; left:530px; top:-507px;"></div>
 
-  <div id="chart" style="border: 1px black solid; width:470px; height:300px; position:relative; padding:15px; top:-490px"><input type="button" name="q" value="change!" onclick="change();"></div>
+  <div id="chart" style="border: 1px black solid; width:470px; height:300px; position:relative; padding:15px; top:-490px">
+    <input type="button" name="q" value="change!" onclick="change();">
+  </div>
 </body>
 </html>
