@@ -63,9 +63,19 @@
 
     };
 
+    //global jsonprolog handle
+    var prolog;
+
     function queryProlog(q) {
+
       if (q.substr(q.length - 1) == ".") {
         q = q.substr(0, q.length - 1);
+
+        if (prolog != null && prolog.finished == false) {
+          //console.log(prolog.finished);
+          prolog.finishClient();
+        }
+
 
         prolog = new JsonProlog();
 
@@ -82,7 +92,21 @@
         // reset select
         var select = document.getElementById('examplequery');
         select.selectedIndex = 0;
+      } else if (q.substr(q.length - 1) == ";") {
+        nextQueryProlog();
+      } else {
+        if (prolog != null && prolog.finished == false) {
+          //console.log(prolog.finished);
+          prolog.finishClient();
+        }
       }
+    };
+
+    function nextQueryProlog() {
+      prolog.nextQuery(function(result) {
+            document.query_form.history.value += result + "\n\n";
+        });
+      document.query_form.history.scrollTop = document.query_form.history.scrollHeight;
     };
 
     // donutchart-related stuff
@@ -175,6 +199,9 @@
 
       <input type="button" name="q" value="Send query"
       onclick="queryProlog(document.query_form.user_query.value);">
+
+      <!-- <input type="button" name="n" value="Next solution"
+      onclick="nextQueryProlog();"> -->
 
       <select onchange="addSelectedToQueryform('examplequery')" name="examplequery" id="examplequery"><option value=0></option></select>
 

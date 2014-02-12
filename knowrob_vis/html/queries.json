@@ -7,6 +7,9 @@
     "owl_individual_of(A, knowrob:'SemanticEnvironmentMap'), add_object_with_children(A).",
     "highlight_object_with_children('http://ias.cs.tum.edu/kb/knowrob.owl#Refrigerator67').",
     "reset_highlight.",
-    "remove_object_with_children('http://ias.cs.tum.edu/kb/knowrob.owl#Refrigerator67')."
+    "remove_object_with_children('http://ias.cs.tum.edu/kb/knowrob.owl#Refrigerator67').",
+    "owl_subclass_of(A, knowrob:'FoodOrDrink').",
+    "owl_has(A, rdf:type, knowrob:'Drawer').",
+    "owl_parse('pick-and-place-no-details.owl', false, false, true)."
     ]
 }
