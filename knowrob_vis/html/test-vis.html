@@ -15,6 +15,7 @@
   <script src="http://d3js.org/d3.v3.min.js"></script>
 
   <script type="text/javascript" src="chart_demo/DonutChart.js"></script>
+  <script type="text/javascript" src="chart_demo/DataVisClient.js"></script>
 
   <script type="text/javascript" type="text/javascript">
 
@@ -56,7 +57,13 @@
       });
 
       // add donut chart demo
-      chart = initChart();
+      //chart = initChart();
+
+      var options = {
+        ros: ros,
+        containerId: '#chart'
+      };
+      var dataVisClient = new DataVisClient(options);
 
       // fill example qurey select
       populateQuerySelect('examplequery', "queries.json");
@@ -113,7 +120,7 @@
     // ------------------------
 
     // some dummy chart data (just for demo)
-    var data3 = [
+    /*var data3 = [
       {name: "more", value: 59},
       {name: "data", value: 5},
       {name: "some", value: 63},
@@ -147,7 +154,7 @@
       data3 = data2;
       data2 = d;
       chart.update(data3);
-    };
+    };*/
 
     // example query selection stuff
     // -------------------------------------
@@ -210,8 +217,8 @@
   </div>
   <div id="markers" style="border: 1px black solid; width:750px; position:relative; left:530px; top:-507px;"></div>
 
-  <div id="chart" style="border: 1px black solid; width:470px; height:300px; position:relative; padding:15px; top:-490px">
-    <input type="button" name="c" value="change!" onclick="change();">
+  <div id="chart" style="border: 1px black solid; width:900px; height:300px; position:relative; padding:15px; top:-490px">
+    <!-- <input type="button" name="c" value="change!" onclick="change();"> -->
   </div>
 </body>
 </html>

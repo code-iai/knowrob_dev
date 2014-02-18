@@ -13,7 +13,6 @@ DataVisClient = function(options) {
 
 
   rosTopic.subscribe(function(message) {
-
     if (chartHandle.findIndex(function (element, index, array) {
           if(element.id == message.id) {return true} else {return false}
         }) == -1) {
@@ -33,6 +32,17 @@ DataVisClient = function(options) {
           if(element.id == message.id) {return true} else {return false}
         })
         .handle.update(message.values[0]);
+
+    } else if (message.values[0].value2.length == 0) {
+
+      chartHandle.find(function (element, index, array) {
+          if(element.id == message.id) {return true} else {return false}
+        })
+        .handle.remove();
+      
+      chartHandle.splice(chartHandle.findIndex(function (element, index, array) {
+          if(element.id == message.id) {return true} else {return false}
+        }), 1);
 
     } else {
 

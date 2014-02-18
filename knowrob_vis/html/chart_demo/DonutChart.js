@@ -2,7 +2,7 @@
 
 function DonutChart(options) {
   options = options || {};
-  var w = 450;
+  var w = 300;
   var h = 300;
   var r = 100;
   var ir = 45;
@@ -14,7 +14,7 @@ function DonutChart(options) {
 
   //OBJECTS TO BE POPULATED WITH DATA LATER
   var lines, valueLabels, nameLabels;
-  var pieData = [];    
+  var pieData = [];
   var oldPieData = [];
   var filteredPieData = [];
 
@@ -90,6 +90,10 @@ var totalUnits = center_group.append("svg:text")
   .attr("text-anchor", "middle") // text-align: right
   .text(label);
 
+// removes this chart
+this.remove = function() {
+  vis.remove();
+}
 
 // update data
 // -----------
