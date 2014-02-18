@@ -11,6 +11,7 @@ function DonutChart(options) {
   var where = options.where || "body";
   var data = options.data || [];
   var label = options.label || "units";
+  //console.log(data);
 
   //OBJECTS TO BE POPULATED WITH DATA LATER
   var lines, valueLabels, nameLabels;

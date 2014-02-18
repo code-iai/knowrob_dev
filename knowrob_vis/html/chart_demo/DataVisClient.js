@@ -1,5 +1,5 @@
 
-DataVisClient = function(options) {
+function DataVisClient(options) {
   var ros = options.ros;
   var containerId = options.containerId;
 
@@ -23,15 +23,28 @@ DataVisClient = function(options) {
         label: message.title
       };
 
-      chartHandle.push({
-        id: message.id,
-        handle: new DonutChart(options)
-      });
+      if (message.type == 0) {
+        chartHandle.push({
+          id: message.id,
+          handle: new DonutChart(options)
+        });
 
-      chartHandle.find(function (element, index, array) {
-          if(element.id == message.id) {return true} else {return false}
-        })
-        .handle.update(message.values[0]);
+        chartHandle.find(function (element, index, array) {
+            if(element.id == message.id) {return true} else {return false}
+          })
+          .handle.update(message.values[0]);
+      } else if (message.type == 1) {
+
+        chartHandle.push({
+          id: message.id,
+          handle: new BarChart(options)
+        });
+
+        chartHandle.find(function (element, index, array) {
+            if(element.id == message.id) {return true} else {return false}
+          })
+          .handle.update(message.values[0]);
+      }
 
     } else if (message.values[0].value2.length == 0) {
 
@@ -51,5 +64,6 @@ DataVisClient = function(options) {
         })
         .handle.update(message.values[0]);
     }
+    console.log(chartHandle);
   });
 }
