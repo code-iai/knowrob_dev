@@ -90,6 +90,7 @@ var totalUnits = center_group.append("svg:text")
   .attr("text-anchor", "middle") // text-align: right
   .text(label);
 
+
 // update data
 // -----------
 
@@ -305,10 +306,5 @@ function textTween(d, i) {
     return "translate(" + Math.cos(val) * (r+textOffset) + "," + Math.sin(val) * (r+textOffset) + ")";
   };
 }
-
-// add initial data set
-
-//this.update(data);
-//this.update(data); // TODO only works when update() is invoked two times, no idea why
 
 }
