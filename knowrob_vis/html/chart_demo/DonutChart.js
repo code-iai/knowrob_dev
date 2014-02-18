@@ -20,7 +20,7 @@ function DonutChart(options) {
 
   //D3 helper function to populate pie slice parameters from array data
   var donut = d3.layout.pie().value(function(d){
-    return d.value;
+    return parseInt(d);
   });
 
   //D3 helper function to create colors from an ordinal scale
@@ -95,20 +95,22 @@ var totalUnits = center_group.append("svg:text")
 
 this.update = function(data) {
 
+  console.log(data);
+
   oldPieData = filteredPieData;
-  pieData = donut(data);
+  pieData = donut(data.value2);
 
   var totalElements = 0;
   filteredPieData = pieData.filter(filterData);
   function filterData(element, index, array) {
-    element.name = data[index].name;
-    element.value = data[index].value;
+    element.name = data.value1[index];
+    element.value = parseInt(data.value2[index]);
     totalElements += element.value;
     return (element.value > 0);
   }
+  console.log(filteredPieData);
 
-
-  if(filteredPieData.length > 0 && oldPieData.length > 0){
+  if(filteredPieData.length > 0 ) {//&& oldPieData.length > 0){
 
     //REMOVE PLACEHOLDER CIRCLE
     arc_group.selectAll("circle").remove();
@@ -306,7 +308,7 @@ function textTween(d, i) {
 
 // add initial data set
 
-this.update(data);
-this.update(data); // TODO only works when update() is invoked two times, no idea why
+//this.update(data);
+//this.update(data); // TODO only works when update() is invoked two times, no idea why
 
 }
