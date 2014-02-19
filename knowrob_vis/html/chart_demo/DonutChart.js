@@ -2,10 +2,10 @@
 
 function DonutChart(options) {
   options = options || {};
-  var w = 300;
-  var h = 300;
-  var r = 100;
-  var ir = 45;
+  var w = options.width || 300;
+  var h = options.height || 300;
+  var r = options.radius || 90;//100
+  var ir = options.innerRadius 40;//45
   var textOffset = 14;
   var tweenDuration = 250;
   var where = options.where || "body";

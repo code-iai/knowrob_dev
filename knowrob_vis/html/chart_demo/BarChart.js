@@ -1,11 +1,10 @@
 function BarChart (options) {
   options = options || {};
-  var w = 200;
-  var h = 200;
+  var w = options.width || 200;
+  var h = options.height || 200;
   var data = options.data || [];
   var where = options.where;
   var label = options.label;
-  //console.log(data);
 
     //setup the svg
   var svg = d3.select(where).append("svg:svg")
@@ -28,14 +27,11 @@ function BarChart (options) {
     svg.remove();
   }
 
-  this.update = function(data) {//rawdata) {
+  this.update = function(data) {
 
-    //var data = rawdata.value2;
-    //console.log(data.value2);
     max = d3.max(data.value2, function(d) {return parseInt(d)});
-    //console.log(max);
+
     var sum = data.value2.reduce(function(a,b) { return parseInt(a) + parseInt(b) });
-    //console.log(sum);
 
     //nice breakdown of d3 scales
     //http://www.jeromecukier.net/blog/2011/08/11/d3-scales-and-color/
@@ -46,9 +42,6 @@ function BarChart (options) {
     y = d3.scale.ordinal()
         .domain(d3.range(data.value2.length))
         .rangeBands([0, h], .2);
-
-
-    //var vis = d3.select("#barchart")
     
     //a good written tutorial of d3 selections coming from protovis
     //http://www.jeromecukier.net/blog/2011/08/09/d3-adding-stuff-and-oh-understanding-selections/
@@ -57,7 +50,7 @@ function BarChart (options) {
 
     //update
     bars
-        .attr("fill", function(d, i) { return color(i); });//"#0a0");
+        .attr("fill", function(d, i) { return color(i); });
         //.attr("stroke", "black")//#050");
         //.attr("stroke-width", 0.1);
 
@@ -111,7 +104,7 @@ function BarChart (options) {
       .remove();
 
     var total = vis.selectAll("text.total")
-      .data([sum])//data.value2)
+      .data([sum]);
       //.attr("x", 5)//x)
       //.attr("y", h+10);//function(d,i){ return y(i) + y.rangeBand()/2; } );
 
@@ -131,7 +124,5 @@ function BarChart (options) {
       .remove();
 
   }
-
-  //this.update(data);
 
 }
