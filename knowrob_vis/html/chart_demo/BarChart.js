@@ -98,9 +98,29 @@ function BarChart (options) {
       .attr("text-anchor", "start");
 
     text
-     .text(function(d,i) {return (100*parseInt(data.value2[i])/sum).toFixed(1) + "% " + data.value1[i]});//function(d) { return d; });
+     .text(function(d,i) {return data.value1[i]});//function(d) { return d; });
 
     text.exit()
+      .remove();
+
+    var percent = vis.selectAll("text.percent")
+      .data(data.value2)
+      .attr("x", 0)//x)
+      .attr("y", function(d,i){ return y(i) + y.rangeBand()/2; } );
+
+    percent
+      .enter().append("text")
+      .attr("class", "percent")
+      .attr("x", 0)//x)
+      .attr("y", function(d,i){ return y(i) + y.rangeBand()/2; } )
+      //.attr("dx", -5)
+      .attr("dy", ".36em")
+      .attr("text-anchor", "end");
+
+    percent
+     .text(function(d,i) {return (100*parseInt(data.value2[i])/sum).toFixed(1) + "%" });//function(d) { return d; });
+
+    percent.exit()
       .remove();
 
     var total = vis.selectAll("text.total")
@@ -118,7 +138,7 @@ function BarChart (options) {
       .attr("text-anchor", "start");
 
     total
-     .text("total "+sum+" "+label);//function(d) { return d; });
+     .text("Total "+sum+" "+label);//function(d) { return d; });
 
     total.exit()
       .remove();
