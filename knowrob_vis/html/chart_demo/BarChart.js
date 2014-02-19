@@ -8,20 +8,21 @@ function BarChart (options) {
   //console.log(data);
 
     //setup the svg
-    var svg = d3.select(where).append("svg:svg")
-        .attr("width", w+100)
-        .attr("height", h+100)
-    svg.append("svg:rect")
-        .attr("width", "100%")
-        .attr("height", "100%")
-        //.attr("stroke", "#000")
-        .attr("fill", "none");
+  var svg = d3.select(where).append("svg:svg")
+    .attr("width", w+100)
+    .attr("height", h+100);
 
-    var vis = svg.append("svg:g")
-        //.attr("id", "barchart")
-        .attr("transform", "translate(50,50)");
+  svg.append("svg:rect")
+    .attr("width", "100%")
+    .attr("height", "100%")
+    //.attr("stroke", "#000")
+    .attr("fill", "none");
 
-    var color = d3.scale.category20();
+  var vis = svg.append("svg:g")
+    //.attr("id", "barchart")
+    .attr("transform", "translate(50,50)");
+
+  var color = d3.scale.category20();
 
   this.remove = function() {
     svg.remove();
@@ -30,9 +31,11 @@ function BarChart (options) {
   this.update = function(data) {//rawdata) {
 
     //var data = rawdata.value2;
-    console.log(data.value2);
+    //console.log(data.value2);
     max = d3.max(data.value2, function(d) {return parseInt(d)});
-    console.log(max);
+    //console.log(max);
+    var sum = data.value2.reduce(function(a,b) { return parseInt(a) + parseInt(b) });
+    //console.log(sum);
 
     //nice breakdown of d3 scales
     //http://www.jeromecukier.net/blog/2011/08/11/d3-scales-and-color/
@@ -85,6 +88,47 @@ function BarChart (options) {
         .attr("transform", function(d,i) {
             return "translate(" + [0, y(i)] + ")"
         });
+
+
+    var text = vis.selectAll("text.value")
+      .data(data.value2)
+      .attr("x", 5)//x)
+      .attr("y", function(d,i){ return y(i) + y.rangeBand()/2; } );
+
+    text
+      .enter().append("text")
+      .attr("class", "value")
+      .attr("x", 5)//x)
+      .attr("y", function(d,i){ return y(i) + y.rangeBand()/2; } )
+      //.attr("dx", -5)
+      .attr("dy", ".36em")
+      .attr("text-anchor", "start");
+
+    text
+     .text(function(d,i) {return (100*parseInt(data.value2[i])/sum).toFixed(1) + "% " + data.value1[i]});//function(d) { return d; });
+
+    text.exit()
+      .remove();
+
+    var total = vis.selectAll("text.total")
+      .data([sum])//data.value2)
+      //.attr("x", 5)//x)
+      //.attr("y", h+10);//function(d,i){ return y(i) + y.rangeBand()/2; } );
+
+    total
+      .enter().append("text")
+      .attr("class", "total")
+      .attr("x", 5)//x)
+      .attr("y", h+15)
+      //.attr("dx", -5)
+      .attr("dy", 0)//".36em")
+      .attr("text-anchor", "start");
+
+    total
+     .text("total "+sum+" "+label);//function(d) { return d; });
+
+    total.exit()
+      .remove();
 
   }
 
