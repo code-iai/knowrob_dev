@@ -39,7 +39,9 @@
       highlight_object/6,
       highlight_object_with_children/1,
       highlight_object_with_children/2,
-      reset_highlight/0
+      reset_highlight/0,
+      diagram_canvas/0,
+      add_diagram/6
     ]).
 
 :- use_module(library('semweb/rdfs')).
@@ -59,7 +61,8 @@
             highlight_object(r,?,?),
             highlight_object(r,?,?,?,?,?),
             highlight_object_with_children(r),
-            highlight_object_with_children(r,?).
+            highlight_object_with_children(r,?),
+            add_diagram(+,+,+,+,+,+).
 
 
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
@@ -241,3 +244,39 @@ highlight_object_with_children(Identifier, Highlight) :-
 reset_highlight :-
     v_canvas(Canvas),
     jpl_call(Canvas, 'clearHighlight', [], _).
+
+
+
+
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+%
+% Diagram canvas management
+%
+
+
+
+%% diagram_canvas is det.
+%
+% Launch the diagram data publisher
+%
+:- assert(d_canvas(fail)).
+diagram_canvas :-
+    d_canvas(fail),
+    jpl_new('org.knowrob.vis.DiagramVisualization', [], Canvas),
+    retract(d_canvas(fail)),
+    assert(d_canvas(Canvas)),!.
+diagram_canvas(Canvas) :-
+    d_canvas(Canvas).
+
+
+%% add_diagram(+Identifier, +Time) is nondet.
+%
+% Add object to the scene with its position at time 'Time'
+%
+% @param Identifier Object identifier, eg. "http://ias.cs.tum.edu/kb/ias_semantic_map.owl#F360-Containers-revised-walls"
+%
+add_diagram(Id, Title, Type, Xlabel, Ylabel, ValueList) :-
+    d_canvas(Canvas),
+    lists_to_arrays(ValueList, ValueArr),
+    jpl_call(Canvas, 'addDiagram', [Id, Title, Type, Xlabel, Ylabel, ValueArr], _),!.
