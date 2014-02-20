@@ -15,7 +15,8 @@
   <depend package="json_prolog"/>
   <depend package="visualization_msgs"/>
   <depend package="knowrob_mongo"/>
-
+  <depend package="data_vis_msgs"/>
+ 
   <export>
     <java classpath="${prefix}/bin"/>
   </export>
