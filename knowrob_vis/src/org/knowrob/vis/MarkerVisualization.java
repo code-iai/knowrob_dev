@@ -1,10 +1,10 @@
 package org.knowrob.vis;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Vector;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.vecmath.Matrix4d;
 import javax.vecmath.Quat4d;
@@ -16,19 +16,18 @@ import ros.RosException;
 import ros.communication.Duration;
 import ros.communication.Time;
 import ros.pkg.std_msgs.msg.ColorRGBA;
-import ros.pkg.visualization_msgs.msg.*;
-
+import ros.pkg.visualization_msgs.msg.Marker;
 import edu.tum.cs.ias.knowrob.owl.OWLThing;
 import edu.tum.cs.ias.knowrob.prolog.PrologInterface;
 
 
 /**
- * Visualization module for the KnowRob knowledge base 
- * 
+ * Visualization module for the KnowRob knowledge base
+ *
  * The objects to be visualized are published as 'Markers'
  * on the visualization_marker topic and can be visualized
  * in the 'rviz' program.
- * 
+ *
  * @author tenorth@cs.uni-bremen.de
  *
  */
@@ -39,7 +38,7 @@ public class MarkerVisualization {
 	Thread markerPublisher;
 
 	/**
-	 * Store the markers to be published 
+	 * Store the markers to be published
 	 */
 	protected Map<String, Marker> markers;
 
@@ -51,22 +50,26 @@ public class MarkerVisualization {
 
 
 	/**
-	 * Counter for marker IDs 
+	 * Counter for marker IDs
 	 */
 	private static int id = 0;
 
 
 
 	/**
-	 * Constructor. Starts the marker publisher in a parallel thread. 
+	 * Constructor. Starts the marker publisher in a parallel thread.
 	 */
 	public MarkerVisualization() {
-		
+
 		initRos();
-//		PrologInterface.initJPLProlog("knowrob_vis");
-		
-		markers =  Collections.synchronizedMap(new HashMap<String, Marker>());
-		highlighted = Collections.synchronizedMap(new HashMap<String, ColorRGBA>());
+
+		// only needed for testing from Java:
+		//PrologInterface.initJPLProlog("knowrob_vis");
+		//PrologInterface.executeQuery("register_ros_package(knowrob_mongo)");
+		//PrologInterface.executeQuery("register_ros_package(mod_srdl)");
+
+		markers =  new ConcurrentHashMap<String, Marker>(8, 0.9f, 1);
+		highlighted = new ConcurrentHashMap<String, ColorRGBA>(8, 0.9f, 1);
 
 		// spawn new thread that publishes the markers in the HashMap
 		markerPublisher = new Thread( new PublisherThread() );
@@ -76,7 +79,7 @@ public class MarkerVisualization {
 
 	/**
 	 * Add object 'identifier' to the visualization.
-	 * 
+	 *
 	 * @param identifier OWL identifier of an object instance
 	 * @param timepoint  OWL identifier of a timepoint instance
 	 */
@@ -84,7 +87,7 @@ public class MarkerVisualization {
 
 		// read marker from Prolog
 		Marker m = readMarkerFromProlog(identifier, timepoint);
-		
+
 		// add marker to map
 		if(m!=null) {
 			synchronized (markers) {
@@ -97,7 +100,7 @@ public class MarkerVisualization {
 
 	/**
 	 * Add object 'identifier' and all its parts to the visualization.
-	 * 
+	 *
 	 * @param identifier OWL identifier of an object instance
 	 * @param timepoint  OWL identifier of a timepoint instance
 	 */
@@ -115,7 +118,7 @@ public class MarkerVisualization {
 
 	/**
 	 * Remove object 'identifier' from the visualization.
-	 * 
+	 *
 	 * @param identifier OWL identifier of an object instance
 	 */
 	public void removeObject(String identifier) {
@@ -128,7 +131,7 @@ public class MarkerVisualization {
 
 	/**
 	 * Remove the object 'identifier' as well as its children
-	 * 
+	 *
 	 * @param identifier OWL identifier of an object instance
 	 */
 	public void removeObjectWithChildren(String identifier) {
@@ -140,8 +143,8 @@ public class MarkerVisualization {
 		for(String child : readChildren(identifier))
 			removeObject(child);
 	}
-	
-	
+
+
 	/**
 	 * Remove all objects from the visualization
 	 */
@@ -155,7 +158,7 @@ public class MarkerVisualization {
 
 	/**
 	 * Highlight the object 'identifier' in red
-	 * 
+	 *
 	 * @param identifier OWL identifier of an object instance
 	 * @param highlight True to set, False to remove highlight
 	 */
@@ -163,11 +166,11 @@ public class MarkerVisualization {
 		highlight(identifier, highlight, 200, 0, 0, 255);
 	}
 
-	
-	
+
+
 	/**
 	 * Highlight the object 'identifier' in 'color'
-	 * 
+	 *
 	 * @param identifier OWL identifier of an object instance
 	 * @param highlight True to set, False to remove highlight
 	 * @param color Integer of the form #AARRGGBB
@@ -179,11 +182,11 @@ public class MarkerVisualization {
 		int b = color & 0x000000ff;
 		highlight(identifier, highlight, r, g, b, a);
 	}
-	
-	
+
+
 	/**
 	 * Highlight the object 'identifier' with color RGBA
-	 * 
+	 *
 	 * @param identifier OWL identifier of an object instance
 	 * @param highlight True to set, False to remove highlight
 	 * @param r Red value (0--255)
@@ -194,15 +197,17 @@ public class MarkerVisualization {
 	public void highlight(String identifier, boolean highlight, int r, int g, int b, int a) {
 
 		if(!highlight) {
-			synchronized (markers) {				
+			synchronized (markers) {
 				markers.get(identifier).color = highlighted.get(identifier);
 			}
-			
+
 		} else {
 
 			synchronized (highlighted) {
-				if(markers.get(identifier)!=null) {
-					highlighted.put(identifier, markers.get(identifier).color);
+				synchronized (markers) {
+					if(markers.get(identifier)!=null) {
+						highlighted.put(identifier, markers.get(identifier).color);
+					}
 				}
 			}
 
@@ -221,7 +226,7 @@ public class MarkerVisualization {
 
 	/**
 	 * Highlight the object 'identifier' and its children in red
-	 * 
+	 *
 	 * @param identifier OWL identifier of an object instance
 	 * @param highlight True to set, False to remove highlight
 	 */
@@ -229,12 +234,12 @@ public class MarkerVisualization {
 
 		// remove this object
 //		System.err.println("highlighting " + identifier);
-		highlight(identifier, highlight); 
+		highlight(identifier, highlight);
 
 		// remove children and highlight them too
 		for(String child : readChildren(identifier)) {
 //			System.err.println("highlighting " + child);
-			highlight(child, highlight); 
+			highlight(child, highlight);
 		}
 	}
 
@@ -246,19 +251,21 @@ public class MarkerVisualization {
 
 		// reset colors to cached original ones
 
-		synchronized (markers) {
-			for(String obj : highlighted.keySet()) {
-				markers.get(obj).color = highlighted.get(obj);
+		synchronized (highlighted) {
+			synchronized (markers) {
+				for(String obj : highlighted.keySet()) {
+					markers.get(obj).color = highlighted.get(obj);
+				}
 			}
 		}
 	}
 
 
 
-	// // // // // // // // // // // // // // // // // // // // // // // // // // // 
-	//  
+	// // // // // // // // // // // // // // // // // // // // // // // // // // //
+	//
 	// Helper methods: read data from Prolog, create data structures
-	//  
+	//
 
 	/**
 	 * Thread-safe ROS initialization
@@ -276,10 +283,10 @@ public class MarkerVisualization {
 
 
 	/**
-	 * Read children of an object instance that are either linked 
+	 * Read children of an object instance that are either linked
 	 * by the 'properPhysicalParts' property or (inversely) by the
 	 * 'describedInMap' property.
-	 * 
+	 *
 	 * @param parent The parent whose children are to the returned, as OWL identifier
 	 * @return Array of OWL identifiers of all children
 	 */
@@ -323,22 +330,23 @@ public class MarkerVisualization {
 
 	/**
 	 * Read object information from Prolog and create a marker from it
-	 * 
+	 *
 	 * @param identifier OWL identifier of an object instance
 	 * @param timepoint  OWL identifier of a timepoint instance
 	 * @return Marker with the object information
 	 */
 	Marker readMarkerFromProlog(String identifier, String timepoint) {
 
+
 		// check if object is blacklisted
 		HashMap<String, Vector<String>> blk = PrologInterface.executeQuery(
 				"owl_individual_of('"+ identifier + "', 'http://ias.cs.tum.edu/kb/srdl2-comp.owl#UrdfJoint') ;" +
 				"owl_individual_of('"+ identifier + "', 'http://ias.cs.tum.edu/kb/knowrob.owl#RoomInAConstruction')");
-		
+
 		if(blk!=null)
 			return null;
-		
-		
+
+
 		Marker m = new Marker();
 
 		m.header.frame_id = "/map";
@@ -376,10 +384,9 @@ public class MarkerVisualization {
 				m.pose.position.x = poseMat.m03;
 				m.pose.position.y = poseMat.m13;
 				m.pose.position.z = poseMat.m23;
-				
+
 				// debug
-//				System.err.println("adding " + identifier + " at pose [" + m.pose.position.x + ", " + m.pose.position.y + ", " + m.pose.position.z + "]");
-				
+				//System.err.println("adding " + identifier + " at pose [" + m.pose.position.x + ", " + m.pose.position.y + ", " + m.pose.position.z + "]");
 
 			} else {
 				m.type = Marker.CUBE;
@@ -409,7 +416,6 @@ public class MarkerVisualization {
 				m.scale.z = 0.05;
 			}
 
-
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -428,7 +434,7 @@ public class MarkerVisualization {
 				m.scale.x = 1.0;
 				m.scale.y = 1.0;
 				m.scale.z = 1.0;
-				
+
 			} else {
 				m.type = Marker.CUBE;
 			}
@@ -450,13 +456,13 @@ public class MarkerVisualization {
 	/**
 	 * Thread that publishes the current state of the marker set
 	 * to the visualization_marker topic.
-	 * 
+	 *
 	 * @author tenorth@cs.uni-bremen.de
 	 *
 	 */
 	public class PublisherThread implements Runnable {
 
-		@Override 
+		@Override
 		public void run() {
 
 			try {
@@ -482,12 +488,20 @@ public class MarkerVisualization {
 		}
 	}
 
-	
+
 	public static void main(String args[]) {
 
-		MarkerVisualization vis = new MarkerVisualization();
-		vis.addObjectWithChildren("http://ias.cs.tum.edu/kb/ias_semantic_map.owl#SemanticEnvironmentMap0", "http://ias.cs.tum.edu/kb/knowrob.owl#timepoint_1377766542");
-		vis.highlight("http://ias.cs.tum.edu/kb/knowrob.owl#Refrigerator67", true, 150, 0, 0, 180);
+//		MarkerVisualization vis = new MarkerVisualization();
+//		vis.addObjectWithChildren("http://ias.cs.tum.edu/kb/ias_semantic_map.owl#SemanticEnvironmentMap0", "http://ias.cs.tum.edu/kb/knowrob.owl#timepoint_1377766542");
+//		vis.highlight("http://ias.cs.tum.edu/kb/knowrob.owl#Refrigerator67", true, 150, 0, 0, 180);
+
+//		PrologInterface.executeQuery("mng_robot_pose_at_time(pr2:'PR2Robot1', '/map', knowrob:timepoint_1392799360, Pose)");
+//		PrologInterface.executeQuery("add_object_with_children(pr2:'PR2Robot1', knowrob:timepoint_1392799360)");
+
+//		vis.addObjectWithChildren("pr2:'PR2Robot1'", "http://ias.cs.tum.edu/kb/knowrob.owl#timepoint_1377766542");
+
+
+//		vis.addObjectWithChildren("pr2:'PR2Robot1'", "http://ias.cs.tum.edu/kb/knowrob.owl#timepoint_1377766542");
 
 	}
 }
