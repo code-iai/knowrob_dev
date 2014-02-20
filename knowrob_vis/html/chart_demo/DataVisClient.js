@@ -2,12 +2,13 @@
 function DataVisClient(options) {
   var ros = options.ros;
   var containerId = options.containerId;
+  var topic = options.topic;
 
   var chartHandle = [];
 
   var rosTopic = new ROSLIB.Topic({
     ros : ros,
-    name : '/data_visualisation',
+    name : topic,
     messageType : 'data_vis_msgs/DataVis'
   });
 
