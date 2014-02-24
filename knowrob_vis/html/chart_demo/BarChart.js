@@ -138,7 +138,7 @@ function BarChart (options) {
       .attr("text-anchor", "start");
 
     total
-     .text(label + " - Total "+sum);//function(d) { return d; });
+     .text(sum + " - " + label);//Total "+sum);//function(d) { return d; });
 
     total.exit()
       .remove();
