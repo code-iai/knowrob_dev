@@ -142,8 +142,8 @@
 
       for (var i = 0; i < querylist.query.length; i++) {
         var opt = document.createElement('option');
-        opt.value = querylist.query[i];//i + 1;
-        opt.innerHTML = querylist.query[i];
+        opt.value = querylist.query[i].q;//i + 1;
+        opt.innerHTML = querylist.query[i].text;
         select.appendChild(opt);
       }
     }
@@ -151,7 +151,7 @@
     // append the selected query to the user_query form
     function addSelectedToQueryform(selectid) {
       var select = document.getElementById(selectid);
-      document.query_form.user_query.value += select.options[select.selectedIndex].text;
+      document.query_form.user_query.value += select.options[select.selectedIndex].value;
     }
 
 </script>
@@ -183,7 +183,7 @@
   <div id="markers" style="border: 1px black solid; width:750px; position:relative; left:530px; top:-507px;"></div>
 
   <div id="library" style="border: 1px black solid; width:1280px; position:relative; left:0px; top:-490px">
-    <select onchange="addSelectedToQueryform('examplequery')" size="5" name="examplequery" id="examplequery" style="width:1280px;"><option value=0></option></select>
+    <select onchange="addSelectedToQueryform('examplequery')" size="5" name="examplequery" id="examplequery" style="width:1280px;"><option value=""></option></select>
   </div>
   
   <div id="chart" style="border: 1px black solid; width:1250px; height:300px; position:relative; padding:15px; top:-470px">
