@@ -64,6 +64,8 @@ public class DiagramVisualization {
 
 		if(type.equals("piechart")) {
 			data.type = DataVis.TYPE_PIECHART;
+		} else if(type.equals("barchart")) {
+			data.type = DataVis.TYPE_BARCHART;
 		}
 
 		for(String[][] val_list : values) {
