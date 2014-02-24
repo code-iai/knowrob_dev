@@ -14,6 +14,13 @@
     {"q": "remove_object_with_children('http://ias.cs.tum.edu/kb/knowrob.owl#Refrigerator67').", "text": "remove object"},
 
     {"q": "", "text": ""},
+    {"q": "", "text": "----- diagram canvas -----"},
+    {"q": "diagram_canvas.", "text": "init diagram canvas"},
+    {"q": "add_diagram(id, title, piechart, xlabel, ylabel, [[[a,b],['1','2']]]).", "text": "add chart (piechart or barchart)"},
+    {"q": "remove_diagram(id).", "text": "remove diagram"},
+    {"q": "clear_diagram_canvas.", "text": "remove all diagrams"},
+
+    {"q": "", "text": ""},
     {"q": "", "text": "----- owl -----"},
     {"q": "owl_parse('pick-and-place-no-details.owl', false, false, true).", "text": "parse owl file"},
     {"q": "owl_subclass_of(A, knowrob:'FoodOrDrink').", "text": "owl_subclass_of(A, knowrob:'FoodOrDrink')."},
@@ -21,10 +28,9 @@
     {"q": "owl_has(knowrob:'Refrigerator67', knowrob:properPhysicalParts, P).", "text": "owl_has(knowrob:'Refrigerator67', knowrob:properPhysicalParts, P)."},
 
     {"q": "", "text": ""},
-    {"q": "", "text": "----- diagram canvas -----"},
-    {"q": "diagram_canvas.", "text": "init diagram canvas"},
-    {"q": "add_diagram(id, title, piechart, xlabel, ylabel, [[[a,b],['1','2']]]).", "text": "add chart (piechart or barchart)"},
-    {"q": "remove_diagram(id).", "text": "remove diagram"},
-    {"q": "clear_diagram_canvas.", "text": "remove all diagrams"}
+    {"q": "", "text": "----- more tricky queries -----"},
+    {"q": "owl_individual_of(A, knowrob:'SemanticEnvironmentMap'), rdf_reachable(PART, knowrob:describedInMap, A), rdf_reachable(PART, knowrob:properPhysicalParts, P).", "text": "get all parts and their physical parts of a map"},
+    {"q": "findall(P, (owl_individual_of(A, knowrob:'SemanticEnvironmentMap'), rdf_reachable(PART, knowrob:describedInMap, A), rdf_reachable(PART, knowrob:properPhysicalParts, P)), L).", "text": "--all solutions of the above at once"},
+    {"q": ", length(L, N).", "text": "---counting the solutions"}
   ]
 }
