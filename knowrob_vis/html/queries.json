@@ -11,6 +11,9 @@
     "owl_subclass_of(A, knowrob:'FoodOrDrink').",
     "owl_has(A, rdf:type, knowrob:'Drawer').",
     "owl_parse('pick-and-place-no-details.owl', false, false, true).",
-    "owl_has(knowrob:'Refrigerator67', knowrob:properPhysicalParts, P)."
+    "owl_has(knowrob:'Refrigerator67', knowrob:properPhysicalParts, P).",
+    "diagram_canvas.",
+    "add_diagram(id, title, type, xlabel, ylabel, [[[a,b],['1','2']]]).",
+    "remove_diagram(id)."
     ]
 }
