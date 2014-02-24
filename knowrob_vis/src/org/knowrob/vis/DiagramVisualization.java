@@ -91,8 +91,35 @@ public class DiagramVisualization {
 
 		// remove the object from the list
 		synchronized (diagrams) {
-			diagrams.remove(id); // TODO: This probably needs to be changed -- how does the widget know that is has to remove it?
+			diagrams.remove(id); 
 		}
+
+
+		// send empty data to id to remove it
+		DataVis data = new DataVis();
+
+		data.id = id;
+		data.title = "";
+		data.xlabel = "";
+		data.ylabel = "";
+		data.type = 0;
+		ValueList v = new ValueList();
+		v.value1 = new ArrayList<String>();
+		v.value2 = new ArrayList<String>();
+		data.values.add(v);
+
+		// TODO: working, but probably not the most elegant way
+		try {
+			Publisher<DataVis> pub = n.advertise("data_vis_msgs", new DataVis(), 100);
+
+			pub.publish(data);
+
+			n.spinOnce();
+			pub.shutdown();
+  		} catch (RosException e) {
+ 			e.printStackTrace();
+		}
+
 	}
 
 	/**

@@ -41,7 +41,8 @@
       highlight_object_with_children/2,
       reset_highlight/0,
       diagram_canvas/0,
-      add_diagram/6
+      add_diagram/6,
+      remove_diagram/1
     ]).
 
 :- use_module(library('semweb/rdfs')).
@@ -62,7 +63,8 @@
             highlight_object(r,?,?,?,?,?),
             highlight_object_with_children(r),
             highlight_object_with_children(r,?),
-            add_diagram(+,+,+,+,+,+).
+            add_diagram(+,+,+,+,+,+)
+            remove_diagram(+). % TODO: not sure if this is correct
 
 
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
@@ -280,3 +282,7 @@ add_diagram(Id, Title, Type, Xlabel, Ylabel, ValueList) :-
     d_canvas(Canvas),
     lists_to_arrays(ValueList, ValueArr),
     jpl_call(Canvas, 'addDiagram', [Id, Title, Type, Xlabel, Ylabel, ValueArr], _),!.
+
+remove_diagram(Id) :-
+    d_canvas(Canvas),
+    jpl_call(Canvas, 'removeDiagram', [Id], _),!.
