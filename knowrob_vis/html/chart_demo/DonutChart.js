@@ -86,7 +86,7 @@ function DonutChart(options) {
   //UNITS LABEL
   var totalUnits = center_group.append("svg:text")
     .attr("class", "units")
-    .attr("dy", 21)
+    .attr("dy", h/2-10)//120)//21)
     .attr("text-anchor", "middle") // text-align: right
     .text(label);
 

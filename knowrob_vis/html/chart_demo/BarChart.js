@@ -1,7 +1,7 @@
 function BarChart (options) {
   options = options || {};
-  var w = options.width || 200;
-  var h = options.height || 200;
+  var w = options.width - 100 || 200;
+  var h = options.height - 100 || 200;
   var data = options.data || [];
   var where = options.where;
   var label = options.label;
@@ -132,13 +132,13 @@ function BarChart (options) {
       .enter().append("text")
       .attr("class", "total")
       .attr("x", 5)//x)
-      .attr("y", h+15)
+      .attr("y", h+40)
       //.attr("dx", -5)
       .attr("dy", 0)//".36em")
       .attr("text-anchor", "start");
 
     total
-     .text("Total "+sum+" "+label);//function(d) { return d; });
+     .text(label + " - Total "+sum);//function(d) { return d; });
 
     total.exit()
       .remove();
