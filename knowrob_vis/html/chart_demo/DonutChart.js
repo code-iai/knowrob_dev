@@ -70,11 +70,11 @@ function DonutChart(options) {
     .attr("r", ir);
 
   // "TOTAL" LABEL
-  var totalLabel = center_group.append("svg:text")
+  /*var totalLabel = center_group.append("svg:text")
     .attr("class", "label")
     .attr("dy", -15)
     .attr("text-anchor", "middle") // text-align: right
-    .text("TOTAL");
+    .text("TOTAL");*/
 
   //TOTAL TRAFFIC VALUE
   var totalValue = center_group.append("svg:text")
