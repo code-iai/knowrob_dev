@@ -34,7 +34,7 @@
       var viewer = new ROS3D.Viewer({
         divID : 'markers',
         width : 750,
-        height : 500,
+        height : 495,
         antialias : true,
         background : '#ffffff'
       });
@@ -65,7 +65,7 @@
         height : 240,
         topic : '/logged_images'
       });
-      
+
       var options = {
         ros: ros,
         containerId: '#chart',
@@ -103,7 +103,6 @@
         });
 
         document.query_form.user_query.value = "";
-      
         document.query_form.history.scrollTop = document.query_form.history.scrollHeight;
 
         // reset select
@@ -113,18 +112,40 @@
         nextQueryProlog();
       } else {
         if (prolog != null && prolog.finished == false) {
-          //console.log(prolog.finished);
           prolog.finishClient();
         }
       }
     };
 
+    function format_designator(desig, pre, level) {
+
+      post = pre;
+      post += "<div class='div"+level+"'>"
+
+      for (var d in desig) {
+        console.log(level);
+      
+        post = post + d;
+        
+        if(desig[d] instanceof Object) {
+          format_designator(desig[d], post, level+1);
+        } else {
+          post += " = " + desig[d];
+          post += "<br/>"
+        }
+      }
+      post += "</div>"
+
+      return post;
+    };
+    
     function nextQueryProlog() {
       prolog.nextQuery(function(result) {
             document.query_form.history.value += result + "\n\n";
         });
       document.query_form.history.scrollTop = document.query_form.history.scrollHeight;
     };
+
 
     // example query selection stuff
     // -------------------------------------
@@ -144,7 +165,7 @@
 
       for (var i = 0; i < querylist.query.length; i++) {
         var opt = document.createElement('option');
-        opt.value = querylist.query[i].q;//i + 1;
+        opt.value = querylist.query[i].q;
         opt.innerHTML = querylist.query[i].text;
         select.appendChild(opt);
       }
@@ -159,18 +180,16 @@
 </script>
 </head>
 
-<body onload="init()" style=" position:relative; left:20px;">
+<body onload="init()" style="position:relative; left:20px;">
   <h1>KnowRob Web Console</h1>
   
-  <div id="console" style="border: 1px black solid; width:500px; height:507px;">
+  <div id="console" style="position:absolute; left:0;  top:75px; width:460px; height:500px; border: 1px black solid;">
     <div style="padding:15px;">
     <form name="query_form" action="post">
 
-      <textarea name="history" readonly  cols="65" rows="23" style="font-family: Source Code Pro,Consolas,monospace; font-size:9pt;background:#ffffff;border: 1px black solid; "></textarea>
-
-      <br/>
+      <textarea name="history" readonly  cols="60" rows="23" style="font-family: Source Code Pro,Consolas,monospace; font-size:9pt;background:#ffffff;border: 1px black solid; margin-bottom:5px;"></textarea>
       
-      <textarea name="user_query" cols="65" rows="10" style="font-family: Source Code Pro,Consolas,monospace; font-size:9pt;border: 1px black solid; "></textarea>
+      <textarea name="user_query" cols="60" rows="10" style="font-family: Source Code Pro,Consolas,monospace; font-size:9pt;border: 1px black solid; margin-bottom:5px; "></textarea>
 
       <input type="button" name="q" value="Send query"
       onclick="queryProlog(document.query_form.user_query.value);">
@@ -182,20 +201,21 @@
     </div>
   </div>
   
-  <div id="markers" style="border: 1px black solid; width:750px; position:relative; left:530px; top:-507px;"></div>
-
-  <div id="library" style="border: 1px black solid; width:1280px; position:relative; left:0px; top:-490px">
-    <select onchange="addSelectedToQueryform('examplequery')" size="5" name="examplequery" id="examplequery" style="width:1280px;"><option value=""></option></select>
+  
+  <div id="markers"    style="position:absolute; left:470px;  top:75px; width:750px; border: 1px black solid; "></div>
+  
+  <div id="designator" style="position:absolute; left:1230px; top:75px; width:400px; height:865px; border: 1px black solid; position:absolute; overflow:auto;"></div>
+  
+  <div id="library"    style="position:absolute; left:0px;    width:1220px; top:510px; border: 1px black solid; position:relative;">
+    <select onchange="addSelectedToQueryform('examplequery')" size="5" name="examplequery" id="examplequery" style="width:1220px;"><option value=0></option></select>
   </div>
   
-  <div id="chart" style="border: 1px black solid; width:1250px; height:300px; position:relative; padding:15px; top:-470px">
-    <!-- <input type="button" name="c" value="change!" onclick="change();"> -->
-  </div>
+  <div id="mjpeg" style="position:absolute; left:00px;  top:700px; width:320px; height:240px; border: 1px black solid;"></div>
+  
+  <div id="chart" style="position:absolute; left:330px;  top:700px; width:860px; height:210px; border: 1px black solid; padding:15px;"></div>
   
   
-  <div id="mjpeg" style="border: 1px black solid; width:320px; height:240px; position:relative; padding:15px; top:-450px">
-   <!-- test -->
-  </div>
+  
   
 </body>
 </html>
