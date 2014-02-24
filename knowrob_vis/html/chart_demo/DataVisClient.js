@@ -3,6 +3,8 @@ function DataVisClient(options) {
   var ros = options.ros;
   var containerId = options.containerId;
   var topic = options.topic;
+  var width = options.width || 300;
+  var height = options.height || 300;
 
   var chartHandle = [];
 
@@ -21,7 +23,11 @@ function DataVisClient(options) {
       var options = {
         data: message.values[0],
         where: containerId,
-        label: message.title
+        label: message.title,
+        width: width,
+        height: height,
+        radius: height*3/10,
+        innerRadius: height*4/30
       };
 
       if (message.type == 0) {
