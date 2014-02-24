@@ -128,8 +128,11 @@ public class DiagramVisualization {
 	 * Remove all objects from the visualization
 	 */
 	public void clear() {
-		synchronized (diagrams) {
+		/*synchronized (diagrams) {
 			diagrams.clear();
+		}*/
+		for(String mrk : diagrams.keySet()) {
+			removeDiagram(mrk);
 		}
 	}
 
