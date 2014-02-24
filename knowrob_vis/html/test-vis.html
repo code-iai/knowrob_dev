@@ -57,9 +57,7 @@
         rootObject : viewer.scene
       });
 
-      // add donut chart demo
-      //chart = initChart();
-
+      // Setup datavisclient (responsible for chart handling).
       var options = {
         ros: ros,
         containerId: '#chart',
@@ -117,46 +115,6 @@
         });
       document.query_form.history.scrollTop = document.query_form.history.scrollHeight;
     };
-
-    // donutchart-related stuff
-    // ------------------------
-
-    // some dummy chart data (just for demo)
-    /*var data3 = [
-      {name: "more", value: 59},
-      {name: "data", value: 5},
-      {name: "some", value: 63},
-      {name: "test", value: 10}
-    ];
-
-    var data2 = [
-      {name: "set", value: 59},
-      {name: "some", value: 90},
-      {name: "data", value: 63}
-    ];
-
-    // chart handle
-    var chart;
-
-    // add chart to its div
-    function initChart() {
-      var options = {
-        data: data3,
-        where: "#chart",
-        label: "units"
-      };
-
-      return new DonutChart(options);
-      //chart = new DonutChart(options);
-    }
-
-    // switch the chart data (just for demo)
-    function change() {
-      var d = data3;
-      data3 = data2;
-      data2 = d;
-      chart.update(data3);
-    };*/
 
     // example query selection stuff
     // -------------------------------------
