@@ -27,7 +27,8 @@ function DataVisClient(options) {
         width: width,
         height: height,
         radius: (height-120)/2,//height*3/10,
-        innerRadius: (height-120)/2*4/9
+        innerRadius: (height-120)/2*4/9,
+        fontsize: "14px"
       };
 
       if (message.type == 0) {

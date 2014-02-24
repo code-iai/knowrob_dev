@@ -11,6 +11,7 @@ function DonutChart(options) {
   var where = options.where || "body";
   var data = options.data || [];
   var label = options.label || "units";
+  var fontsize = options.fontsize || "14px";
 
   //OBJECTS TO BE POPULATED WITH DATA LATER
   var lines, valueLabels, nameLabels;
@@ -81,6 +82,7 @@ function DonutChart(options) {
     .attr("class", "total")
     .attr("dy", 7)
     .attr("text-anchor", "middle") // text-align: right
+    .style("font-size", fontsize)
     .text("Waiting...");
 
   //UNITS LABEL
@@ -88,6 +90,7 @@ function DonutChart(options) {
     .attr("class", "units")
     .attr("dy", h/2-10)//120)//21)
     .attr("text-anchor", "middle") // text-align: right
+    .style("font-size", fontsize)
     .text(label);
 
   // removes this chart
@@ -177,6 +180,7 @@ function DonutChart(options) {
             return "end";
           }
         })
+        .style("font-size", fontsize)
         .text(function(d){
           var percentage = (d.value/totalElements)*100;
           return percentage.toFixed(1) + "%";
@@ -200,7 +204,9 @@ function DonutChart(options) {
           } else {
             return "end";
           }
-        }).text(function(d){
+        })
+        .style("font-size", fontsize)
+        .text(function(d){
           var percentage = (d.value/totalElements)*100;
           return percentage.toFixed(1) + "%";
         });
@@ -225,7 +231,9 @@ function DonutChart(options) {
           } else {
             return "end";
           }
-        }).text(function(d){
+        })
+        .style("font-size", fontsize)
+        .text(function(d){
           return d.name;
         });
 
@@ -247,7 +255,9 @@ function DonutChart(options) {
           } else {
             return "end";
           }
-        }).text(function(d){
+        })
+        .style("font-size", fontsize)
+        .text(function(d){
           return d.name;
         });
 

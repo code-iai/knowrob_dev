@@ -5,6 +5,7 @@ function BarChart (options) {
   var data = options.data || [];
   var where = options.where;
   var label = options.label;
+  var fontsize = options.fontsize || "14px";
 
     //setup the svg
   var svg = d3.select(where).append("svg:svg")
@@ -95,7 +96,8 @@ function BarChart (options) {
       .attr("y", function(d,i){ return y(i) + y.rangeBand()/2; } )
       //.attr("dx", -5)
       .attr("dy", ".36em")
-      .attr("text-anchor", "start");
+      .attr("text-anchor", "start")
+      .style("font-size", fontsize);
 
     text
      .text(function(d,i) {return data.value1[i]});//function(d) { return d; });
@@ -115,7 +117,8 @@ function BarChart (options) {
       .attr("y", function(d,i){ return y(i) + y.rangeBand()/2; } )
       //.attr("dx", -5)
       .attr("dy", ".36em")
-      .attr("text-anchor", "end");
+      .attr("text-anchor", "end")
+      .style("font-size", fontsize);
 
     percent
      .text(function(d,i) {return (100*parseInt(data.value2[i])/sum).toFixed(1) + "%" });//function(d) { return d; });
@@ -135,7 +138,8 @@ function BarChart (options) {
       .attr("y", h+40)
       //.attr("dx", -5)
       .attr("dy", 0)//".36em")
-      .attr("text-anchor", "start");
+      .attr("text-anchor", "start")
+      .style("font-size", fontsize);
 
     total
      .text(sum + " - " + label);//Total "+sum);//function(d) { return d; });
