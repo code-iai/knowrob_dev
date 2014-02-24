@@ -100,7 +100,7 @@ function DonutChart(options) {
 
   this.update = function(data) {
 
-    console.log(data);
+    //console.log(data);
 
     oldPieData = filteredPieData;
     pieData = donut(data.value2);
@@ -113,7 +113,7 @@ function DonutChart(options) {
       totalElements += element.value;
       return (element.value > 0);
     }
-    console.log(filteredPieData);
+    //console.log(filteredPieData);
 
     if(filteredPieData.length > 0 ) {//&& oldPieData.length > 0){
 
