@@ -1,19 +1,25 @@
 {
   "query": [
-    "register_ros_package(knowrob_mongo).",
-    "register_ros_package(mod_srdl).",
-    "register_ros_package(mod_execution_trace).",
-    "visualisation_canvas.",
-    "owl_individual_of(A, knowrob:'SemanticEnvironmentMap'), add_object_with_children(A).",
-    "highlight_object_with_children('http://ias.cs.tum.edu/kb/knowrob.owl#Refrigerator67').",
-    "reset_highlight.",
-    "remove_object_with_children('http://ias.cs.tum.edu/kb/knowrob.owl#Refrigerator67').",
-    "owl_subclass_of(A, knowrob:'FoodOrDrink').",
-    "owl_has(A, rdf:type, knowrob:'Drawer').",
-    "owl_parse('pick-and-place-no-details.owl', false, false, true).",
-    "owl_has(knowrob:'Refrigerator67', knowrob:properPhysicalParts, P).",
-    "diagram_canvas.",
-    "add_diagram(id, title, type, xlabel, ylabel, [[[a,b],['1','2']]]).",
-    "remove_diagram(id)."
-    ]
+
+    {"q": "register_ros_package(knowrob_mongo).", "text": "register_ros_package(knowrob_mongo)."},
+    {"q": "register_ros_package(mod_srdl).", "text": "register_ros_package(mod_srdl)."},
+    {"q": "register_ros_package(mod_execution_trace).", "text": "register_ros_package(mod_execution_trace)."},
+    {"q": "visualisation_canvas.", "text": "init visualisation canvas"},
+
+    {"q": "owl_individual_of(A, knowrob:'SemanticEnvironmentMap'), add_object_with_children(A).", "text": "add object to canvas"},
+    {"q": "highlight_object_with_children('http://ias.cs.tum.edu/kb/knowrob.owl#Refrigerator67').", "text": "highlight object"},
+    {"q": "reset_highlight.", "text": "reset highlight"},
+    {"q": "remove_object_with_children('http://ias.cs.tum.edu/kb/knowrob.owl#Refrigerator67').", "text": "remove object"},
+
+    {"q": "owl_subclass_of(A, knowrob:'FoodOrDrink').", "text": "owl_subclass_of(A, knowrob:'FoodOrDrink')."},
+    {"q": "owl_has(A, rdf:type, knowrob:'Drawer').", "text": "owl_has(A, rdf:type, knowrob:'Drawer')."},
+
+    {"q": "owl_parse('pick-and-place-no-details.owl', false, false, true).", "text": "parse owl file"},
+    {"q": "owl_has(knowrob:'Refrigerator67', knowrob:properPhysicalParts, P).", "text": "owl_has(knowrob:'Refrigerator67', knowrob:properPhysicalParts, P)."},
+
+    {"q": "diagram_canvas.", "text": "init diagram canvas"},
+    {"q": "add_diagram(id, title, piechart, xlabel, ylabel, [[[a,b],['1','2']]]).", "text": "add chart (piechart or barchart)"},
+    {"q": "remove_diagram(id).", "text": "remove diagram"},
+    {"q": "clear_diagram_canvas.", "text": "remove all diagrams"}
+  ]
 }

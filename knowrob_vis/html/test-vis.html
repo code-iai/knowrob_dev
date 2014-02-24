@@ -134,7 +134,7 @@
 
       for (var i = 0; i < querylist.query.length; i++) {
         var opt = document.createElement('option');
-        opt.value = i + 1;
+        opt.value = querylist.query[i];//i + 1;
         opt.innerHTML = querylist.query[i];
         select.appendChild(opt);
       }
@@ -170,7 +170,7 @@
       <!-- <input type="button" name="n" value="Next solution"
       onclick="nextQueryProlog();"> -->
 
-      <select onchange="addSelectedToQueryform('examplequery')" name="examplequery" id="examplequery"><option value=0></option></select>
+      <select onchange="addSelectedToQueryform('examplequery')" name="examplequery" id="examplequery" size="5"><option value=0></option></select>
 
     </form>
     </div>
