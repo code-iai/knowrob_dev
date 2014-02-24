@@ -26,8 +26,8 @@ function DataVisClient(options) {
         label: message.title,
         width: width,
         height: height,
-        radius: height*3/10,
-        innerRadius: height*4/30
+        radius: (height-120)/2,//height*3/10,
+        innerRadius: (height-120)/2*4/9
       };
 
       if (message.type == 0) {
