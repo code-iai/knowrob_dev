@@ -7,6 +7,7 @@
   <script type="text/javascript" src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
   <script type="text/javascript" src="http://cdn.robotwebtools.org/ColladaAnimationCompress/current/ColladaLoader2.min.js"></script>
   <script type="text/javascript" src="http://cdn.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
+  <script type="text/javascript" src="http://cdn.robotwebtools.org/mjpegcanvasjs/current/mjpegcanvas.min.js"></script>
   <script type="text/javascript" src="ros3d.js"></script>
   <script type="text/javascript" src="json_prolog.js"></script>
   <script type="text/javascript" src="MarkerClient.js"></script>
@@ -57,7 +58,14 @@
         rootObject : viewer.scene
       });
 
-      // Setup datavisclient (responsible for chart handling).
+      var viewer = new MJPEGCANVAS.Viewer({
+        divID : 'mjpeg',
+        host : 'localhost',
+        width : 320,
+        height : 240,
+        topic : '/logged_images'
+      });
+      
       var options = {
         ros: ros,
         containerId: '#chart',
@@ -156,13 +164,11 @@
     <div style="padding:15px;">
     <form name="query_form" action="post">
 
-      <textarea name="history" readonly  cols="56" rows="20" style="font-family: Source Code Pro,Consolas,monospace; font-size:9pt;background:#ffffff;"></textarea>
+      <textarea name="history" readonly  cols="65" rows="23" style="font-family: Source Code Pro,Consolas,monospace; font-size:9pt;background:#ffffff;border: 1px black solid; "></textarea>
 
-      <br/><br/>
+      <br/>
       
-      <textarea name="user_query" cols="56" rows="10" style="font-family: Source Code Pro,Consolas,monospace; font-size:9pt;"></textarea>
-
-      <br/><br/>
+      <textarea name="user_query" cols="65" rows="10" style="font-family: Source Code Pro,Consolas,monospace; font-size:9pt;border: 1px black solid; "></textarea>
 
       <input type="button" name="q" value="Send query"
       onclick="queryProlog(document.query_form.user_query.value);">
@@ -170,15 +176,26 @@
       <!-- <input type="button" name="n" value="Next solution"
       onclick="nextQueryProlog();"> -->
 
-      <select onchange="addSelectedToQueryform('examplequery')" name="examplequery" id="examplequery"><option value=0></option></select>
+  
 
     </form>
     </div>
   </div>
+  
   <div id="markers" style="border: 1px black solid; width:750px; position:relative; left:530px; top:-507px;"></div>
 
-  <div id="chart" style="border: 1px black solid; width:900px; height:300px; position:relative; padding:15px; top:-490px">
+  <div id="library" style="border: 1px black solid; width:1280px; position:relative; left:0px; top:-490px">
+    <select onchange="addSelectedToQueryform('examplequery')" size="5" name="examplequery" id="examplequery" style="width:1280px;"><option value=0></option></select>
+  </div>
+  
+  <div id="chart" style="border: 1px black solid; width:1250px; height:300px; position:relative; padding:15px; top:-470px">
     <!-- <input type="button" name="c" value="change!" onclick="change();"> -->
   </div>
+  
+  
+  <div id="mjpeg" style="border: 1px black solid; width:320px; height:240px; position:relative; padding:15px; top:-450px">
+   <!-- test -->
+  </div>
+  
 </body>
 </html>
