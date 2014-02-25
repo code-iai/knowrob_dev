@@ -16,7 +16,7 @@
     {"q": "", "text": ""},
     {"q": "", "text": "----- diagram canvas -----"},
     {"q": "diagram_canvas.", "text": "init diagram canvas"},
-    {"q": "add_diagram(id, title, piechart, xlabel, ylabel, [[[a,b],['1','2']]]).", "text": "add chart (piechart or barchart)"},
+    {"q": "add_diagram(id, title, piechart, xlabel, ylabel, '210', '210', '12px', [[[a,b],['1','2']]]).", "text": "add chart (piechart or barchart)"},
     {"q": "remove_diagram(id).", "text": "remove diagram"},
     {"q": "clear_diagram_canvas.", "text": "remove all diagrams"},
 
@@ -31,6 +31,9 @@
     {"q": "", "text": "----- more tricky queries -----"},
     {"q": "owl_individual_of(A, knowrob:'SemanticEnvironmentMap'), rdf_reachable(PART, knowrob:describedInMap, A), rdf_reachable(PART, knowrob:properPhysicalParts, P).", "text": "get all parts and their physical parts of a map"},
     {"q": "findall(P, (owl_individual_of(A, knowrob:'SemanticEnvironmentMap'), rdf_reachable(PART, knowrob:describedInMap, A), rdf_reachable(PART, knowrob:properPhysicalParts, P)), L).", "text": "--all solutions of the above at once"},
-    {"q": ", length(L, N).", "text": "---counting the solutions"}
+    {"q": ", length(L, N).", "text": "---counting the solutions"},
+    {"q": "owl_individual_of(A, knowrob:'SemanticEnvironmentMap'), findall(L, (rdf_reachable(PART, knowrob:describedInMap, A), findall(P, (rdf_reachable(PART, knowrob:properPhysicalParts, P)), L)), LL).", "text": "get a nested list LL with all kitchen parts and their subparts"},
+    {"q": "owl_individual_of(A, knowrob:'SemanticEnvironmentMap'), findall(N, (rdf_reachable(PART, knowrob:describedInMap, A), findall(P, (rdf_reachable(PART, knowrob:properPhysicalParts, P)), L), length(L, N)), VALUES), findall(PART, (rdf_reachable(PART, knowrob:describedInMap, A)), LABELS), add_diagram(id, 'subparts of kitchen parts', barchart, xlabel, ylabel, '500', '500', '12px', [[LABELS,VALUES]]).", "text": "show subpart distribution of kitchen parts in diagram"}
+
   ]
 }
