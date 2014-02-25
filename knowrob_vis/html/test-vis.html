@@ -99,7 +99,7 @@
         document.query_form.history.value += "?- " + q +  ".\n\n";
 
         prolog.jsonQuery(q, function(result) {
-            document.query_form.history.value += result +  "\n\n";
+            document.query_form.history.value += result;
         });
 
         document.query_form.user_query.value = "";
@@ -141,7 +141,7 @@
     
     function nextQueryProlog() {
       prolog.nextQuery(function(result) {
-            document.query_form.history.value += result + "\n\n";
+            document.query_form.history.value += result;
         });
       document.query_form.history.scrollTop = document.query_form.history.scrollHeight;
     };

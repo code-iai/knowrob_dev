@@ -83,13 +83,35 @@ function JsonProlog(){
 
       // TODO result.solution should be parsed
       if (result.status == 0 && result.solution == "") {
-        callback("false.");
+        callback("false.\n\n");
         that.finishClient();
       } else if (result.status == 3 && result.solution == "{}") {
-        callback("true.");
+        callback("true.\n\n");
         that.finishClient();
       } else if (result.status == 3 && result.solution != "{}") {
-        callback(result.solution);
+        var solution = JSON.parse(result.solution);
+
+        function parseSolution (solution, level, ret) {
+          var indent = "";
+          for (var i = 0; i < level; i++){indent += "  "}
+          for (var key in solution) {
+            if (solution.hasOwnProperty(key)) {
+              if (solution[key] instanceof Array) {
+                ret += indent + key + " = [\n";
+                console.log("array!");
+                ret = parseSolution(solution[key], level + 1, ret);
+                ret += indent + "]\n\n"
+              } else {
+                ret += indent + key + " = " + solution[key] + "\n\n";
+              }
+            }
+          }
+          return ret;
+        }
+        var ret = parseSolution(solution, 0, "");
+
+        console.log(solution);
+        callback(ret);
       } else {
         console.log("wtf?");
       }
