@@ -41,7 +41,7 @@
       highlight_object_with_children/2,
       reset_highlight/0,
       diagram_canvas/0,
-      add_diagram/6,
+      add_diagram/9,
       remove_diagram/1,
       clear_diagram_canvas/0
     ]).
@@ -64,7 +64,7 @@
             highlight_object(r,?,?,?,?,?),
             highlight_object_with_children(r),
             highlight_object_with_children(r,?),
-            add_diagram(+,+,+,+,+,+),
+            add_diagram(+,+,+,+,+,+,+,+,+),
             remove_diagram(+). % TODO: not sure if this is correct
 
 
@@ -279,10 +279,10 @@ diagram_canvas(Canvas) :-
 %
 % @param Identifier Object identifier, eg. "http://ias.cs.tum.edu/kb/ias_semantic_map.owl#F360-Containers-revised-walls"
 %
-add_diagram(Id, Title, Type, Xlabel, Ylabel, ValueList) :-
+add_diagram(Id, Title, Type, Xlabel, Ylabel, Width, Height, Fontsize, ValueList) :-
     d_canvas(Canvas),
     lists_to_arrays(ValueList, ValueArr),
-    jpl_call(Canvas, 'addDiagram', [Id, Title, Type, Xlabel, Ylabel, ValueArr], _),!.
+    jpl_call(Canvas, 'addDiagram', [Id, Title, Type, Xlabel, Ylabel, Width, Height, Fontsize, ValueArr], _),!.
 
 remove_diagram(Id) :-
     d_canvas(Canvas),

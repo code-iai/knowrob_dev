@@ -53,7 +53,7 @@ public class DiagramVisualization {
 	 * Add diagram to the visualization.
 	 *
 	 */
-	public void addDiagram(String id, String title, String type, String xlabel, String ylabel, String[][][] values) {
+	public void addDiagram(String id, String title, String type, String xlabel, String ylabel,String width, String height, String fontsize, String[][][] values) {
 
 		DataVis data = new DataVis();
 
@@ -61,6 +61,9 @@ public class DiagramVisualization {
 		data.title = title;
 		data.xlabel = xlabel;
 		data.ylabel = ylabel;
+		data.width = Integer.parseInt(width);
+		data.height = Integer.parseInt(height);
+		data.fontsize = fontsize;
 
 		if(type.equals("piechart")) {
 			data.type = DataVis.TYPE_PIECHART;
@@ -104,12 +107,16 @@ public class DiagramVisualization {
 		data.title = "";
 		data.xlabel = "";
 		data.ylabel = "";
+		data.width = 0;
+		data.height = 0;
+		data.fontsize = "";
 		data.type = 0;
 		ValueList v = new ValueList();
 		v.value1 = new ArrayList<String>();
 		v.value2 = new ArrayList<String>();
 		data.values.add(v);
 
+		// publish data just once
 		// TODO: working, but probably not the most elegant way
 		try {
 			Publisher<DataVis> pub = n.advertise("data_vis_msgs", new DataVis(), 100);

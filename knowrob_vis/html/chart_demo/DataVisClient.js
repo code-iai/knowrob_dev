@@ -3,8 +3,8 @@ function DataVisClient(options) {
   var ros = options.ros;
   var containerId = options.containerId;
   var topic = options.topic;
-  var width = options.width || 300;
-  var height = options.height || 300;
+  //var width = options.width || 300;
+  //var height = options.height || 300;
 
   var chartHandle = [];
 
@@ -24,11 +24,11 @@ function DataVisClient(options) {
         data: message.values[0],
         where: containerId,
         label: message.title,
-        width: width,
-        height: height,
-        radius: (height-120)/2,//height*3/10,
-        innerRadius: (height-120)/2*4/9,
-        fontsize: "14px"
+        width: message.width,
+        height: message.height,
+        radius: (message.height-120)/2,//height*3/10,
+        innerRadius: (message.height-120)/2*4/9,
+        fontsize: message.fontsize//"14px"
       };
 
       if (message.type == 0) {
@@ -72,6 +72,6 @@ function DataVisClient(options) {
         })
         .handle.update(message.values[0]);
     }
-    console.log(chartHandle);
+    //console.log(chartHandle);
   });
 }
