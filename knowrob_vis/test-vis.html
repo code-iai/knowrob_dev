@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link rel="stylesheet" media="all" type="text/css" href="http://fonts.googleapis.com/css?family=Open+Sans:400,400italic,700|Oswald|Source+Code+Pro" />
+  <script type="text/javascript" src="http://cdn.robotwebtools.org/threejs/current/three.min.js"></script>
+  <script type="text/javascript" src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+  <script type="text/javascript" src="http://cdn.robotwebtools.org/ColladaAnimationCompress/current/ColladaLoader2.min.js"></script>
+  <script type="text/javascript" src="http://cdn.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
+  <script type="text/javascript" src="http://cdn.robotwebtools.org/mjpegcanvasjs/current/mjpegcanvas.min.js"></script>
+  <script type="text/javascript" src="ros3d.js"></script>
+  <script type="text/javascript" src="json_prolog.js"></script>
+  <script type="text/javascript" src="MarkerClient.js"></script>
+  <link rel="stylesheet" type="text/css" href="screen.css"/>
+
+  <script src="http://d3js.org/d3.v3.min.js"></script>
+
+  <script type="text/javascript" src="chart_demo/DonutChart.js"></script>
+  <script type="text/javascript" src="chart_demo/BarChart.js"></script>
+  <script type="text/javascript" src="chart_demo/DataVisClient.js"></script>
+
+  <script type="text/javascript" type="text/javascript">
+
+
+
+    function init() {
+    
+      // Connect to ROS.
+      var ros = new ROSLIB.Ros({
+        url : 'ws://localhost:9090'
+      });
+
+      // Create the main viewer.
+      var viewer = new ROS3D.Viewer({
+        divID : 'markers',
+        width : 750,
+        height : 495,
+        antialias : true,
+        background : '#ffffff'
+      });
+      
+      viewer.addObject(new ROS3D.Grid());
+
+      // Setup a client to listen to TFs.
+      var tfClient = new ROSLIB.TFClient({
+        ros : ros,
+        angularThres : 0.01,
+        transThres : 0.01,
+        rate : 10.0,
+        fixedFrame : '/my_frame'
+      });
+
+      // Setup the marker client.
+      var markerClient = new ROS3D.MarkerClient({
+        ros : ros,
+        tfClient : tfClient,
+        topic : '/visualization_marker',
+        rootObject : viewer.scene
+      });
+
+      var listener = new ROSLIB.Topic({
+        ros : ros,
+        name : '/logged_designators',
+        messageType : 'designator_integration_msgs/Designator'
+      });
+
+      listener.subscribe(function(message) {
+        document.getElementById("designator").innerHTML=format_designator(message.description, "", 0, 0);
+      });
+      
+      var viewer = new MJPEGCANVAS.Viewer({
+        divID : 'mjpeg',
+        host : 'localhost',
+        width : 320,
+        height : 240,
+        topic : '/logged_images'
+      });
+
+      var options = {
+        ros: ros,
+        containerId: '#chart',
+        topic: 'data_vis_msgs'
+      };
+      var dataVisClient = new DataVisClient(options);
+
+      // fill example qurey select
+      populateQuerySelect('examplequery', "queries.json");
+
+    };
+
+    //global jsonprolog handle
+    var prolog;
+
+    function queryProlog(q) {
+
+      if (q.substr(q.length - 1) == ".") {
+        q = q.substr(0, q.length - 1);
+
+        if (prolog != null && prolog.finished == false) {
+          //console.log(prolog.finished);
+          prolog.finishClient();
+        }
+
+
+        prolog = new JsonProlog();
+
+        document.query_form.history.value += "?- " + q +  ".\n\n";
+
+        prolog.jsonQuery(q, function(result) {
+            document.query_form.history.value += result +  "\n\n";
+        });
+
+        document.query_form.user_query.value = "";
+        document.query_form.history.scrollTop = document.query_form.history.scrollHeight;
+
+        // reset select
+        var select = document.getElementById('examplequery');
+        select.selectedIndex = 0;
+      } else if (q.substr(q.length - 1) == ";") {
+        nextQueryProlog();
+      } else {
+        if (prolog != null && prolog.finished == false) {
+          prolog.finishClient();
+        }
+      }
+    };
+
+
+    function format_designator(desig, pre, parent, level) {
+
+      if(desig.length==0)
+        return pre;
+    
+      post = pre;
+      d = desig.shift() 
+
+      // context ended, go one level up
+      if(d["parent"] < parent)
+        level--;
+      
+      
+        if(d["type"]==0) { // string 
+          post += "<div class='desig div"+level+"'>\n"
+          post += d["key"];
+          post += " = " + d["value_string"];
+          post += "</div>\n"
+          post = format_designator(desig, post, d["parent"], level);
+          
+        } if(d["type"]==1) { // float
+          post += "<div class='desig div"+level+"'>\n"
+          post += d["key"];
+          post += " = " + d["value_float"];
+          post += "</div>\n"
+          post = format_designator(desig, post, d["parent"], level);
+          
+        } if(d["type"]==5) { // Pose
+          post += "<div class='desig div"+level+"'>\n"
+          post += d["key"];
+          post += printPose(d["value_pose"], level);
+          post += "</div>\n"
+          post = format_designator(desig, post, d["parent"], level);
+          
+        } if(d["type"]==4) { // PoseStamped
+          post += "<div class='desig div"+level+"'>\n"
+          post += d["key"];
+          post += printPoseStamped(d["value_posestamped"], level);
+          post += "</div>\n"
+          post = format_designator(desig, post, d["parent"], level);
+          
+        } if(d["type"]==3) {
+          post += "<div class='desig div"+level+"'>\n"
+          post += d["key"];
+          post = format_designator(desig, post, d["parent"], level+1);
+          post += "</div>\n"
+          
+        } if(d["type"]==6 || d["type"]==7 || d["type"]==8 ) {
+          post += "<div class='desig div"+level+"'>\n"
+          post += d["key"];
+          post = format_designator(desig, post, d["parent"], level+1);
+          post += "</div>\n"
+
+        }
+      return post;
+    };
+    
+    function printPoseStamped(poseStampedMsg, level) {
+      post = "";
+      post += "<div class='desig div"+(level+1)+"'>";
+      post += "header<br/>\n";
+        post += "<div class='desig div"+(level+2)+"'>";
+        post += "seq = " + poseStampedMsg["header"]["seq"] + "<br/>\n";
+        post += "stamp = " + poseStampedMsg["header"]["stamp"]["secs"] + "<br/>\n";
+        post += "frame_id = " + poseStampedMsg["header"]["frame_id"] + "<br/>\n";
+        post += "</div>\n";
+      post += "pose<br/>\n";
+        post += printPose(poseStampedMsg["pose"], level+1);
+      post += "</div>\n";
+      return post;
+    }
+    
+    function printPose(poseMsg, level) {
+      post = "";
+      post += "<div class='desig div"+(level+1)+"'>";
+      post += "position<br/>\n";
+        post += "<div class='div"+(level+2)+"'>";
+        post += "x = " + poseMsg["position"]["x"] + "<br/>\n";
+        post += "y = " + poseMsg["position"]["y"] + "<br/>\n";
+        post += "z = " + poseMsg["position"]["z"] + "<br/>\n";
+        post += "</div>\n";
+      post += "orientation<br/>\n";
+        post += "<div class='desig div"+(level+2)+"'>";
+        post += "x = " + poseMsg["orientation"]["x"] + "<br/>\n";
+        post += "y = " + poseMsg["orientation"]["y"] + "<br/>\n";
+        post += "z = " + poseMsg["orientation"]["z"] + "<br/>\n";
+        post += "w = " + poseMsg["orientation"]["w"] + "<br/>\n";
+        post += "</div>\n";
+      post += "</div>\n";
+      return post;
+    };
+    
+    function nextQueryProlog() {
+      prolog.nextQuery(function(result) {
+            document.query_form.history.value += result + "\n\n";
+        });
+      document.query_form.history.scrollTop = document.query_form.history.scrollHeight;
+    };
+
+
+    // example query selection stuff
+    // -------------------------------------
+
+    // fill the select with json data from url
+    function populateQuerySelect(id, url) {
+
+      // url must point to a json-file containing an array named "query" with
+      // the query strings to display in the select
+      var request = new XMLHttpRequest
+      request.open("GET", url, false);
+      request.send(null);
+
+      var querylist = JSON.parse(request.responseText);
+
+      var select = document.getElementById(id);
+
+      for (var i = 0; i < querylist.query.length; i++) {
+        var opt = document.createElement('option');
+        opt.value = i + 1;
+        opt.innerHTML = querylist.query[i];
+        select.appendChild(opt);
+      }
+    }
+
+    // append the selected query to the user_query form
+    function addSelectedToQueryform(selectid) {
+      var select = document.getElementById(selectid);
+      document.query_form.user_query.value += select.options[select.selectedIndex].text;
+    }
+
+</script>
+</head>
+
+<body onload="init()" style="position:relative; left:20px;">
+  <h1>KnowRob Web Console</h1>
+  
+  <div id="console" style="position:absolute; left:0;  top:75px; width:460px; height:500px; border: 1px black solid;">
+    <div style="padding:15px;">
+    <form name="query_form" action="post">
+
+      <textarea name="history" readonly  cols="60" rows="23" style="font-family: Source Code Pro,Consolas,monospace; font-size:9pt;background:#ffffff;border: 1px black solid; margin-bottom:5px;"></textarea>
+      
+      <textarea name="user_query" cols="60" rows="10" style="font-family: Source Code Pro,Consolas,monospace; font-size:9pt;border: 1px black solid; margin-bottom:5px; "></textarea>
+
+      <input type="button" name="q" value="Send query"
+      onclick="queryProlog(document.query_form.user_query.value);">
+
+      <!-- <input type="button" name="n" value="Next solution"
+      onclick="nextQueryProlog();"> -->
+
+    </form>
+    </div>
+  </div>
+  
+  
+  <div id="markers"    style="position:absolute; left:470px;  top:75px; width:750px; border: 1px black solid; "></div>
+  
+  <div id="designator" style="position:absolute; left:1230px; top:75px; width:400px; height:865px; border: 1px black solid; position:absolute; overflow:auto;"></div>
+  
+  <div id="library"    style="position:absolute; left:0px;    width:1220px; top:510px; border: 1px black solid; position:relative;">
+    <select onchange="addSelectedToQueryform('examplequery')" size="5" name="examplequery" id="examplequery" style="width:1220px;"><option value=0></option></select>
+  </div>
+  
+  <div id="mjpeg" style="position:absolute; left:00px;  top:700px; width:320px; height:240px; border: 1px black solid;"></div>
+  
+  <div id="chart" style="position:absolute; left:330px;  top:700px; width:860px; height:210px; border: 1px black solid; padding:15px;"></div>
+  
+  
+  
+  
+</body>
+</html>
