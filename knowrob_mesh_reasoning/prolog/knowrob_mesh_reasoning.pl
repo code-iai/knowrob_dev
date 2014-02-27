@@ -179,7 +179,8 @@ object_main_plane(Obj, Part) :-
   findall(A-P, (rdf_has(Obj, knowrob:properPhysicalParts, P),
                 rdf_triple(rdf:type, P, knowrob:'FlatPhysicalSurface'),
                 rdf_triple(knowrob:areaOfObject, P, AL),
-                strip_literal_type(AL, A)), Planes),
+                strip_literal_type(AL, Aatom),
+                term_to_atom(A, Aatom)), Planes),
   list_to_set(Planes, Planes_unique),
   keysort(Planes_unique, PlanesAsc),
   last(PlanesAsc, _-Part).
