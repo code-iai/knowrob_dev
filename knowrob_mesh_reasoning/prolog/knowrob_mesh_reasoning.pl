@@ -125,7 +125,8 @@ object_main_cone(Inst, MainCone) :-
   % read volume for each of them
   findall(V-P, (member(P, Parts),
                 rdf_triple(knowrob:volumeOfObject, P, Vlit),
-                strip_literal_type(Vlit, V)), PartVol),
+                strip_literal_type(Vlit, Vatom),
+                term_to_atom(V, Vatom)), PartVol),
 
   % sort list by volume and pick last element (largest volume)
   keysort(PartVol, PartVolSorted),
