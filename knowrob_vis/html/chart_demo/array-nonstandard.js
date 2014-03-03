@@ -1,3 +1,5 @@
+// inspired by http://www.2ality.com/2013/12/array-prototype-find.html
+
     Array.prototype.find = function (predicate, thisValue) {
         var arr = Object(this);
         if (typeof predicate !== 'function') {
