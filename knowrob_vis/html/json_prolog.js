@@ -96,7 +96,7 @@ function JsonProlog(){
           for (var i = 0; i < level; i++){indent += "  "}
           for (var key in solution) {
             if (solution.hasOwnProperty(key)) {
-              if (solution[key] instanceof Array) {
+              if (solution[key] instanceof Array || solution[key] instanceof Object) {
                 ret += indent + key + " = [\n";
                 console.log("array!");
                 ret = parseSolution(solution[key], level + 1, ret);

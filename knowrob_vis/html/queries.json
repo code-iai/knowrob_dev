@@ -1,6 +1,7 @@
 {
   "query": [
     {"q": "", "text": "----- init -----"},
+    {"q": "register_ros_package(knowrob_mongo),\nregister_ros_package(mod_srdl),\nregister_ros_package(mod_execution_trace),\nvisualisation_canvas,\ndiagram_canvas.", "text": "init all"},
     {"q": "register_ros_package(knowrob_mongo).", "text": "register_ros_package(knowrob_mongo)."},
     {"q": "register_ros_package(mod_srdl).", "text": "register_ros_package(mod_srdl)."},
     {"q": "register_ros_package(mod_execution_trace).", "text": "register_ros_package(mod_execution_trace)."},
@@ -32,8 +33,7 @@
     {"q": "owl_individual_of(A, knowrob:'SemanticEnvironmentMap'), rdf_reachable(PART, knowrob:describedInMap, A), rdf_reachable(PART, knowrob:properPhysicalParts, P).", "text": "get all parts and their physical parts of a map"},
     {"q": "findall(P, (owl_individual_of(A, knowrob:'SemanticEnvironmentMap'), rdf_reachable(PART, knowrob:describedInMap, A), rdf_reachable(PART, knowrob:properPhysicalParts, P)), L).", "text": "--all solutions of the above at once"},
     {"q": ", length(L, N).", "text": "---counting the solutions"},
-    {"q": "owl_individual_of(A, knowrob:'SemanticEnvironmentMap'), findall(L, (rdf_reachable(PART, knowrob:describedInMap, A), findall(P, (rdf_reachable(PART, knowrob:properPhysicalParts, P)), L)), LL).", "text": "get a nested list LL with all kitchen parts and their subparts"},
-    {"q": "owl_individual_of(A, knowrob:'SemanticEnvironmentMap'), findall(N, (rdf_reachable(PART, knowrob:describedInMap, A), findall(P, (rdf_reachable(PART, knowrob:properPhysicalParts, P)), L), length(L, N)), VALUES), findall(PART, (rdf_reachable(PART, knowrob:describedInMap, A)), LABELS), add_diagram(id, 'subparts of kitchen parts', barchart, xlabel, ylabel, '500', '500', '12px', [[LABELS,VALUES]]).", "text": "show subpart distribution of kitchen parts in diagram"}
-
+    {"q": "owl_individual_of(A, knowrob:'SemanticEnvironmentMap'),\n\nfindall(L,\n  (rdf_reachable(PART, knowrob:describedInMap, A),\n    findall(P, (rdf_reachable(PART, knowrob:properPhysicalParts, P)), L)\n  ),\n  LL\n).", "text": "get a nested list LL with all kitchen parts and their subparts"},
+    {"q": "owl_individual_of(A, knowrob:'SemanticEnvironmentMap'),\n\nfindall(\n  N,\n  (rdf_reachable(PART, knowrob:describedInMap, A),\n    findall(P, (rdf_reachable(PART, knowrob:properPhysicalParts, P)), L),\n    length(L, N)\n  ),\n  VALUES\n),\n\nfindall(PART, (rdf_reachable(PART, knowrob:describedInMap, A)), LABELS),\n\nadd_diagram(id, 'subparts of kitchen parts', barchart, xlabel, ylabel, '500', '500', '12px', [[LABELS,VALUES]]).", "text": "show subpart distribution of kitchen parts in diagram"}
   ]
 }
