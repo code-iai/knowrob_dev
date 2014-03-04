@@ -18,7 +18,7 @@ function DataVisClient(options) {
   rosTopic.subscribe(function(message) {
     if (chartHandle.findIndex(function (element, index, array) {
           if(element.id == message.id) {return true} else {return false}
-        }, this) == -1) {
+        }, this) == -1 && message.values[0].value2.length != 0) {
 
       var options = {
         data: message.values[0],
