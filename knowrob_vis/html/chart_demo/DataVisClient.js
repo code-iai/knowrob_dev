@@ -18,7 +18,7 @@ function DataVisClient(options) {
   rosTopic.subscribe(function(message) {
     if (chartHandle.findIndex(function (element, index, array) {
           if(element.id == message.id) {return true} else {return false}
-        }) == -1) {
+        }, this) == -1) {
 
       var options = {
         data: message.values[0],
@@ -37,9 +37,9 @@ function DataVisClient(options) {
           handle: new DonutChart(options)
         });
 
-        chartHandle.find(function (element, index, array) {
+        chartHandle.myFind(function (element, index, array) {
             if(element.id == message.id) {return true} else {return false}
-          })
+          }, this)
           .handle.update(message.values[0]);
       } else if (message.type == 1) {
 
@@ -50,26 +50,25 @@ function DataVisClient(options) {
 
         chartHandle.find(function (element, index, array) {
             if(element.id == message.id) {return true} else {return false}
-          })
+          }, this)
           .handle.update(message.values[0]);
       }
 
     } else if (message.values[0].value2.length == 0) {
-
       chartHandle.find(function (element, index, array) {
           if(element.id == message.id) {return true} else {return false}
-        })
+        }, this)
         .handle.remove();
       
       chartHandle.splice(chartHandle.findIndex(function (element, index, array) {
           if(element.id == message.id) {return true} else {return false}
-        }), 1);
+        }, this), 1);
 
     } else {
 
       chartHandle.find(function (element, index, array) {
           if(element.id == message.id) {return true} else {return false}
-        })
+        }, this)
         .handle.update(message.values[0]);
     }
     //console.log(chartHandle);
