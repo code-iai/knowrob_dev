@@ -117,8 +117,8 @@
         document.query_form.history.scrollTop = document.query_form.history.scrollHeight;
 
         // reset select
-        var select = document.getElementById('examplequery');
-        select.selectedIndex = 0;
+        //var select = document.getElementById('examplequery');
+        //select.selectedIndex = 0;
       } else if (q.substr(q.length - 1) == ";") {
         nextQueryProlog();
       } else {
@@ -287,7 +287,7 @@
   <div id="designator" style="position:absolute; left:1230px; top:75px; width:400px; height:865px; border: 1px black solid; position:absolute; overflow:auto;"></div>
   
   <div id="library"    style="position:absolute; left:0px;    width:1220px; top:510px; border: 1px black solid; position:relative;">
-    <select onchange="addSelectedToQueryform('examplequery')" size="5" name="examplequery" id="examplequery" style="width:1220px;"><option value=0></option></select>
+    <select onclick="addSelectedToQueryform('examplequery')" size="5" name="examplequery" id="examplequery" style="width:1220px;"><option value=0></option></select>
   </div>
   
   <div id="mjpeg" style="position:absolute; left:00px;  top:700px; width:320px; height:240px; border: 1px black solid;"></div>
