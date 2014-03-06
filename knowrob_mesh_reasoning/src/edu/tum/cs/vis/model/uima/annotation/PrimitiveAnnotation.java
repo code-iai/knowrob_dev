@@ -188,7 +188,7 @@ public abstract class PrimitiveAnnotation<S extends PrimitiveAnnotation> extends
 			totalArea += a;
 		}
 
-		centroid.scale(1f / totalArea);
+		centroid.scale(1f / totalArea); // MT: screws up computation of centroid
 
 		return centroid;
 
