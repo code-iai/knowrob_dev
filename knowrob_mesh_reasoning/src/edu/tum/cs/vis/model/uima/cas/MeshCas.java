@@ -335,13 +335,13 @@ public class MeshCas extends JCas implements Serializable {
 				} else if(a instanceof ContainerAnnotation) {
 					((ContainerAnnotation) a).writeToOWL(obj_inst, manager, factory, pm, ontology, model.getScale());
 
-				} else if(a instanceof SphereAnnotation) {
+				} else if(a instanceof SphereAnnotation && ((SphereAnnotation) a).getSphere().getFitError() > -1) {
 					((SphereAnnotation) a).writeToOWL(obj_inst, manager, factory, pm, ontology, model.getScale());
 
-				} else if(a instanceof PlaneAnnotation) {
+				} else if(a instanceof PlaneAnnotation && ((PlaneAnnotation) a).getPlane().getFitError() > -1) {
 					((PlaneAnnotation) a).writeToOWL(obj_inst, manager, factory, pm, ontology, model.getScale());
 
-				} else if(a instanceof ConeAnnotation) {
+				} else if(a instanceof ConeAnnotation && ((ConeAnnotation) a).getCone().getFitError() > -1) {
 					((ConeAnnotation) a).writeToOWL(obj_inst, manager, factory, pm, ontology, model.getScale());
 				}
 			}
