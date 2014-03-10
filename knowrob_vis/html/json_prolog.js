@@ -1,7 +1,8 @@
 
-function JsonProlog(){
+function JsonProlog(options){
 
   var that = this;
+  this.raw = options.raw || false;
   this.finished = false;
 
   var ros = new ROSLIB.Ros({
@@ -108,7 +109,11 @@ function JsonProlog(){
           }
           return ret;
         }
-        var ret = parseSolution(solution, 0, "");
+        if (that.raw == true) {
+          var ret = solution;
+        } else {
+          var ret = parseSolution(solution, 0, "");
+        }
 
         console.log(solution);
         callback(ret);
