@@ -69,6 +69,8 @@ public class DiagramVisualization {
 			data.type = DataVis.TYPE_PIECHART;
 		} else if(type.equals("barchart")) {
 			data.type = DataVis.TYPE_BARCHART;
+		} else if(type.equals("treechart")) {
+			data.type = DataVis.TYPE_TREECHART;
 		}
 
 		for(String[][] val_list : values) {

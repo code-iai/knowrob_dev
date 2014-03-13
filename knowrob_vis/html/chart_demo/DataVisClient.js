@@ -41,6 +41,7 @@ function DataVisClient(options) {
             if(element.id == message.id) {return true} else {return false}
           }, this)
           .handle.update(message.values[0]);
+
       } else if (message.type == 1) {
 
         chartHandle.push({
@@ -52,6 +53,18 @@ function DataVisClient(options) {
             if(element.id == message.id) {return true} else {return false}
           }, this)
           .handle.update(message.values[0]);
+
+      } else if (message.type == 2) {
+        //console.log("new tree node");
+        chartHandle.push({
+          id: message.id,
+          handle: new TreeDiagram(options)
+        });
+
+        chartHandle.find(function (element, index, array) {
+            if(element.id == message.id) {return true} else {return false}
+          }, this)
+          .handle.update(message.values);
       }
 
     } else if (message.values[0].value2.length == 0) {
@@ -65,11 +78,17 @@ function DataVisClient(options) {
         }, this), 1);
 
     } else {
-
-      chartHandle.find(function (element, index, array) {
-          if(element.id == message.id) {return true} else {return false}
-        }, this)
-        .handle.update(message.values[0]);
+      if (message.type == 2) {
+        chartHandle.find(function (element, index, array) {
+            if(element.id == message.id) {return true} else {return false}
+          }, this)
+          .handle.update(message.values);
+      } else {
+        chartHandle.find(function (element, index, array) {
+            if(element.id == message.id) {return true} else {return false}
+          }, this)
+          .handle.update(message.values[0]);
+      }
     }
     //console.log(chartHandle);
   });
