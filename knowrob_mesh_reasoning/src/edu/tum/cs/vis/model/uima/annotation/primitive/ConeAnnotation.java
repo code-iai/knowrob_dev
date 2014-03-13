@@ -166,7 +166,11 @@ public final class ConeAnnotation extends PrimitiveAnnotation<ConeAnnotation> im
 	@Override
 	public Matrix4f getPoseMatrix() {
 
-		return cone.getPoseMatrix();
+		Matrix4f mat = cone.getPoseMatrix();
+		Vector3f pos = new Vector3f(); 
+		mat.get(pos);
+		mat.setTranslation(model.getUnscaled(pos));
+		return mat;
 	}
 
 	/* (non-Javadoc)
@@ -224,7 +228,7 @@ public final class ConeAnnotation extends PrimitiveAnnotation<ConeAnnotation> im
 	}
 	
 	
-	public OWLIndividual writeToOWL(OWLIndividual obj_inst, OWLOntologyManager manager, OWLDataFactory factory, DefaultPrefixManager pm, OWLOntology ontology) {
+	public OWLIndividual writeToOWL(OWLIndividual obj_inst, OWLOntologyManager manager, OWLDataFactory factory, DefaultPrefixManager pm, OWLOntology ontology, float scale) {
 
 		OWLClass part_class = factory.getOWLClass("knowrob:Cone", pm);
 		OWLNamedIndividual part_inst = factory.getOWLNamedIndividual(OWLThing.getUniqueID("knowrob:Cone"), pm);

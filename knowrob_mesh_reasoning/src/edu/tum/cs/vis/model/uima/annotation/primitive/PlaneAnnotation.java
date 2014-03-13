@@ -138,7 +138,11 @@ public final class PlaneAnnotation extends PrimitiveAnnotation<PlaneAnnotation> 
 	 */
 	@Override
 	public Matrix4f getPoseMatrix() {
-		return plane.getPoseMatrix();
+		Matrix4f mat = plane.getPoseMatrix();
+		Vector3f pos = new Vector3f(); 
+		mat.get(pos);
+		mat.setTranslation(model.getUnscaled(pos));
+		return mat;
 	}
 
 	/* (non-Javadoc)
@@ -166,9 +170,10 @@ public final class PlaneAnnotation extends PrimitiveAnnotation<PlaneAnnotation> 
 	 * @param factory OWL data factory
 	 * @param pm Prefix manager
 	 * @param ontology Ontology to which the assertions shall be added
+	 * @param scale 
 	 * @return Reference to an OWLIndividual for this annotation
 	 */
-	public OWLIndividual writeToOWL(OWLIndividual obj_inst, OWLOntologyManager manager, OWLDataFactory factory, DefaultPrefixManager pm, OWLOntology ontology) {
+	public OWLIndividual writeToOWL(OWLIndividual obj_inst, OWLOntologyManager manager, OWLDataFactory factory, DefaultPrefixManager pm, OWLOntology ontology, float scale) {
 
 		OWLClass part_class = factory.getOWLClass("knowrob:FlatPhysicalSurface", pm);
 		OWLNamedIndividual part_inst = factory.getOWLNamedIndividual(OWLThing.getUniqueID("knowrob:FlatPhysicalSurface"), pm);
