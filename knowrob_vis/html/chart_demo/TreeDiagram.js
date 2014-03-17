@@ -55,16 +55,23 @@ function TreeDiagram(options){
 
   svg.call(tip);
 
-
+  // removes this chart
+  this.remove = function() {
+    svg.remove();
+  }
 
   this.update = function(data) {
     var tree = d3.layout.tree()
       .size([height - 20, width - 20]);
 
-    var root = {id: options.data.value1[0],
+    /*var root = {id: options.data.value1[0],
                 parent: "",
                 color: options.data.value1[2],
-                info: options.data.value2};
+                info: options.data.value2};*/
+    var root = {id: data[0].value1[0],
+                parent: "",
+                color: data[0].value1[2],
+                info: data[0].value2};
 
     var nodes = tree(root);
 
@@ -75,24 +82,24 @@ function TreeDiagram(options){
 
     for (var i = 0; i < data.length; i++) {
 
-    var n = {id: data[i].value1[0],
-             parent: data[i].value1[1],
-             color: data[i].value1[2],
-             info: data[i].value2};
+      var n = {id: data[i].value1[0],
+               parent: data[i].value1[1],
+               color: data[i].value1[2],
+               info: data[i].value2};
 
-    if (nodes.find(function (element, index, array) {
-          if(element.id == n.id) {return true} else {return false}
-        }) == undefined) {
+      if (nodes.find(function (element, index, array) {
+            if(element.id == n.id) {return true} else {return false}
+          }) == -1){//undefined) {
 
-    var p = nodes[nodes.findIndex(function (element, index, array) {
-          if(element.id == n.parent) {return true} else {return false}
-        })|0];
-    if(p == undefined) p = root;
-    if (p.children) p.children.push(n); else p.children = [n];
-    nodes.push(n);
+      var p = nodes[nodes.findIndex(function (element, index, array) {
+            if(element.id == n.parent) {return true} else {return false}
+          })|0];
+      if(p == undefined) p = root;
+      if (p.children) p.children.push(n); else p.children = [n];
+      nodes.push(n);
 
     
-    }
+      }
     }
     //console.log(nodes);
 
