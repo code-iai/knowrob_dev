@@ -23,10 +23,12 @@ function TreeDiagram(options){
 
   var diagonal = d3.svg.diagonal().projection(function(d) { return [d.y, d.x] });
 
-  var svg = d3.select(where).append("svg")
+  var vis = d3.select(where).append("svg:svg")
       .attr("width", width)
-      .attr("height", height)
-    .append("g")
+      .attr("height", height);
+
+  var svg = vis
+    .append("svg:g")
       .attr("transform", "translate(10,10)");
 
   var node = svg.selectAll(".node"),
@@ -57,7 +59,7 @@ function TreeDiagram(options){
 
   // removes this chart
   this.remove = function() {
-    svg.remove();
+    vis.remove();
   }
 
   this.update = function(data) {
@@ -110,7 +112,7 @@ function TreeDiagram(options){
 
 
     // Add entering nodes in the parent’s old position.
-    node.enter().append("circle")
+    node.enter().append("svg:circle")
         .attr("class", "node")
         .attr("r", 6)
         .attr("fill", function(d,i) {return d.color})
@@ -121,7 +123,7 @@ function TreeDiagram(options){
         .on("mouseout", tip.hide);
 
     // Add entering links in the parent’s old position.
-    link.enter().insert("path", ".node")
+    link.enter().insert("svg:path", ".node")
         .attr("class", "link")
         .attr("fill", "none")
         .attr("stroke", "#000")

@@ -86,10 +86,12 @@ function Control(options) {
     var oldfilequeryErrorsUntilNow = "Time = " + actualTime.toString() + ",Labels = ['MANIPULATION-POSE-UNREACHABLE', 'OBJECT-NOT-FOUND', 'MANIPULATION-FAILED', 'LOCATION-NOT-REACHED', 'OBJECT-LOST', 'MANIPULATION-POSE-OCCUPIED'],findall(N,(member(Error, Labels),findall([E,B], (failure_task(E, C), failure_attribute(E, rdfs:'label', X), [X]=[literal(type(A,B))], B=Error, failure_attribute(E, knowrob:startTime, Y), string_concat('http://ias.cs.tum.edu/kb/cram_log.owl#timepoint_', Etimestring, Y), atom_number(Etimestring, Etime), Etime =< Time), List), length(List, N)),Occurence),add_diagram(errorsuntilnow, 'error distribution until current time', barchart, xlabel, ylabel, '210', '210', '12px', [[Labels,Occurence]])";
 
     var queryErrorsUntilNow = "Time = " + actualTime.toString() + ",Labels = ['ManipulationPoseUnreachable', 'ObjectNotFound', 'ManipulationFailed', 'LocationNotReached', 'ObjectLost', 'ManipulationPoseOccupied'],findall(N, (member(Error, Labels),findall(E, (failure_class(E, C), C=knowrob:Error, failure_attribute(E, knowrob:startTime, Y), string_concat('http://ias.cs.tum.edu/kb/cram_log.owl#timepoint_', Etimestring, Y), atom_number(Etimestring, Etime), Etime =< Time), List), length(List, N)),Occurence),add_diagram(errorsuntilnow, 'error distribution until current time', barchart, xlabel, ylabel, '210', '210', '12px', [[Labels,Occurence]])";
-    
+
+    var queryTaskTreeUntilNow = "Time = " + actualTime.toString() + ", tasktree('http://ias.cs.tum.edu/kb/cram_log.owl#CRAMAction_6gCmeZ3S', List), flatten(List, F), include("+'\\'+"T^(task_start(T, Timestring1), string_concat('http://ias.cs.tum.edu/kb/cram_log.owl#timepoint_', Timestring2, Timestring1), atom_number(Timestring2, Starttime), Starttime =< Time), F, Flat), once(maplist("+'\\'+"X^Node^(((subtask(P, X), Parent = P); Parent = X), ((returned_value(X, Value), Color = red); Color = green), Node = [[X, Parent, Color],[X, Parent, Color]]), Flat, Nodes)), add_diagram(tree, title, treechart, xlabel, ylabel, '960', '500', '12px', Nodes)"
 
     console.log("update world!");
 
+    // overall error statistic
     var prolog = new JsonProlog({raw: true});
     prolog.jsonQuery(oldfilequeryErrorOverall, function(result){
       console.log("update all error diagram!");
@@ -97,9 +99,18 @@ function Control(options) {
 
     prolog.finishClient();
 
+    // error statistic until now
     var prolog = new JsonProlog({raw: true});
     prolog.jsonQuery(oldfilequeryErrorsUntilNow, function(result){
       console.log("update errors until now!");
+    });
+
+    prolog.finishClient();
+
+    // task tree until now
+    var prolog = new JsonProlog({raw: true});
+    prolog.jsonQuery(queryTaskTreeUntilNow, function(result){
+      console.log("update task tree until now!");
     });
 
     prolog.finishClient();
