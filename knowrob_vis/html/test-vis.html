@@ -94,7 +94,8 @@
 
       master = new Control({
         sliderHigh: "slider1",
-        initButton: "controlInitButton"
+        initButton: "controlInitButton",
+        timeDisplay: "currentTime"
       });
     };
 
@@ -285,6 +286,7 @@
       onclick="nextQueryProlog();"> -->
       <input id="slider1" type="range" min="0" max="100" value="0">
       <input id="controlInitButton" type="button" value="start slider control">
+      <span id="currentTime">0</span>
 
     </form>
     </div>

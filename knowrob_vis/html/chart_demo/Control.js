@@ -3,6 +3,7 @@ function Control(options) {
   var sliderLow = options.sliderLow || "";
   var sliderHigh = options.sliderHigh;
   var initButton = options.initButton;
+  var timeDisplay = options.timeDisplay;
   var startTime = 0;
   var endTime = 0;
 
@@ -26,8 +27,12 @@ function Control(options) {
       document.getElementById(sliderHigh).value = 0;  
       document.getElementById(sliderHigh).max = range;
       document.getElementById(sliderHigh).onchange = function(x) {
-        console.log(x.explicitOriginalTarget.value);
-        that.update(x.explicitOriginalTarget.value);
+        var time = x.explicitOriginalTarget.value;
+        var minutes = Math.floor(time / 60);
+        var seconds = time - minutes * 60
+        console.log(time);
+        that.update(time);
+        document.getElementById(timeDisplay).innerHTML= minutes.toString() + ":" + seconds.toString();
       };
 
     });
