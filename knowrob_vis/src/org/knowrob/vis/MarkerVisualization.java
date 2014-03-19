@@ -5,6 +5,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.List;
+import java.util.ArrayList;
 
 import javax.vecmath.Matrix4d;
 import javax.vecmath.Quat4d;
@@ -55,6 +57,12 @@ public class MarkerVisualization {
 	private static int id = 0;
 
 
+	/**
+	 *
+	 */
+	private static List<String> trajectoryIds = new ArrayList<String>();
+
+
 
 	/**
 	 * Constructor. Starts the marker publisher in a parallel thread.
@@ -74,6 +82,156 @@ public class MarkerVisualization {
 		// spawn new thread that publishes the markers in the HashMap
 		markerPublisher = new Thread( new PublisherThread() );
 		markerPublisher.start();
+	}
+
+
+	/**
+	 * Show hands and base trajectory in visualization.
+	 *
+	 * @param starttime OWL identifier of a timepoint instance
+	 * @param endtime OWL identifier of a timepoint instance
+	 * @param interval in seconds
+	 */
+	public void showTrajectory(String starttime, String endtime, String interval) {
+
+		String identifier;
+		String timepoint;
+
+		removeTrajectory();
+		trajectoryIds.clear();
+
+		for (int i = Integer.parseInt(starttime.substring(starttime.indexOf("timepoint_") + 10)); i <= Integer.parseInt(endtime.substring(endtime.indexOf("timepoint_") + 10)); i += Integer.parseInt(interval)) {
+
+			timepoint = starttime.substring(0, starttime.indexOf("timepoint_") + 10) + String.valueOf(i);
+
+			// /base_link
+			identifier = "/base_link" + String.valueOf(i);
+
+			// read marker from Prolog
+			Marker m = readLinkMarkerFromProlog("/base_link", timepoint);
+
+			// add marker to map
+			if(m!=null) {
+				trajectoryIds.add(identifier);
+				synchronized (markers) {
+				markers.put(identifier, m);
+				}
+			}
+
+			// /r_wrist_roll_link
+			identifier = "/r_wrist_roll_link" + String.valueOf(i);
+
+			// read marker from Prolog
+			m = readLinkMarkerFromProlog("/r_wrist_roll_link", timepoint);
+
+			// add marker to map
+			if(m!=null) {
+				trajectoryIds.add(identifier);
+				synchronized (markers) {
+				markers.put(identifier, m);
+				}
+			}
+
+			// /l_wrist_roll_link
+			identifier = "/l_wrist_roll_link" + String.valueOf(i);
+
+			// read marker from Prolog
+			m = readLinkMarkerFromProlog("/l_wrist_roll_link", timepoint);
+
+			// add marker to map
+			if(m!=null) {
+				trajectoryIds.add(identifier);
+				synchronized (markers) {
+				markers.put(identifier, m);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Remove trajectory markers
+         */
+	public void removeTrajectory() {
+
+		for (int i = 0; i < trajectoryIds.size(); i++) {
+			// remove the object from the list
+			synchronized (markers) {
+				markers.remove(trajectoryIds.get(i));
+			}
+		}
+	}
+
+	/**
+	 * Read link transform and create a marker from it
+	 *
+	 * @param link TODO explanation
+	 * @param timepoint  OWL identifier of a timepoint instance
+	 * @return Marker with the object information
+	 */
+	Marker readLinkMarkerFromProlog(String link, String timepoint) {
+
+		Marker m = new Marker();
+
+		m.header.frame_id = "/map";
+		m.header.stamp = Time.now();
+		m.ns = "knowrob_vis";
+		m.id = id++;
+
+		m.action = Marker.ADD;
+		m.lifetime = new Duration();
+
+		m.scale.x = 0.05;
+		m.scale.y = 0.05;
+		m.scale.z = 0.05;
+
+		m.type = Marker.CUBE;
+
+		m.color.r = 0.6f;
+		m.color.g = 0.6f;
+		m.color.b = 0.6f;
+		m.color.a = 1.0f;
+
+		try {
+			// read object pose
+			HashMap<String, Vector<String>> res = PrologInterface.executeQuery(
+					"mng_lookup_transform('/map', '"+ link + "', "+ timepoint + ", T), T = [M00, M01, M02, M03, M10, M11, M12, M13, M20, M21, M22, M23, M30, M31, M32, M33]");
+
+			if (res!=null && res.get("M00") != null && res.get("M00").size() > 0 && res.get("M00").get(0)!=null) {
+
+				double[] p = new double[16];
+				Matrix4d poseMat = new Matrix4d(p);
+
+				for(int i=0;i<4;i++) {
+					for(int j=0;j<4;j++) {
+						poseMat.setElement(i, j, Double.valueOf(res.get("M"+i+j).get(0)));
+					}
+				}
+
+				Quat4d q = new Quat4d();
+				q.set(poseMat);
+
+				m.pose.orientation.w = q.w;
+				m.pose.orientation.x = q.x;
+				m.pose.orientation.y = q.y;
+				m.pose.orientation.z = q.z;
+
+				m.pose.position.x = poseMat.m03;
+				m.pose.position.y = poseMat.m13;
+				m.pose.position.z = poseMat.m23;
+
+				// debug
+				//System.err.println("adding " + identifier + " at pose [" + m.pose.position.x + ", " + m.pose.position.y + ", " + m.pose.position.z + "]");
+
+			} else {
+				System.err.println("fail");
+				m.type = Marker.CUBE;
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return m;
 	}
 
 

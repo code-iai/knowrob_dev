@@ -40,6 +40,11 @@
     {"q": "", "text": "----- Logfile statistics -----"},
     {"q": "register_ros_package(knowrob_mongo),\nregister_ros_package(mod_srdl),\nregister_ros_package(mod_execution_trace),\nvisualisation_canvas,\ndiagram_canvas.", "text": "init all"},
     {"q": "owl_parse('path/to/pick-and-place.owl', false, false, true).", "text": "Parse logfile"},
-    {"q": "Labels = ['MANIPULATION-POSE-UNREACHABLE', 'OBJECT-NOT-FOUND', 'MANIPULATION-FAILED', 'LOCATION-NOT-REACHED', 'OBJECT-LOST', 'MANIPULATION-POSE-OCCUPIED'],\nfindall(N,\n  (\n    member(Error, Labels),\n    findall([E,B], (failure_task(E, C), failure_attribute(E, rdfs:'label', X), [X]=[literal(type(A,B))], B=Error), List), length(List, N)\n  ),\nOccurence),\nadd_diagram(iderror, 'error distribution', barchart, xlabel, ylabel, '210', '210', '12px', [[Labels,Occurence]]).", "text": "Show occurences of typical error types in bar or donut chart"}
+    {"q": "Labels = ['MANIPULATION-POSE-UNREACHABLE', 'OBJECT-NOT-FOUND', 'MANIPULATION-FAILED', 'LOCATION-NOT-REACHED', 'OBJECT-LOST', 'MANIPULATION-POSE-OCCUPIED'],\nfindall(N,\n  (\n    member(Error, Labels),\n    findall([E,B], (failure_task(E, C), failure_attribute(E, rdfs:'label', X), [X]=[literal(type(A,B))], B=Error), List), length(List, N)\n  ),\nOccurence),\nadd_diagram(iderror, 'error distribution', barchart, xlabel, ylabel, '210', '210', '12px', [[Labels,Occurence]]).", "text": "Show occurences of typical error types in bar or donut chart"},
+
+    {"q": "", "text": ""},
+    {"q": "", "text": "----- Trajectory -----"},
+    {"q": "register_ros_package(knowrob_mongo),\nregister_ros_package(mod_srdl),\nregister_ros_package(mod_execution_trace),\nvisualisation_canvas,\ndiagram_canvas.", "text": "init all"},
+    {"q": "show_trajectory('knowrob:timepoint_1377780210', 'knowrob:timepoint_1377780235', '1').", "text": "Show trajectories for base and both hands between two timepoints"}
   ]
 }
