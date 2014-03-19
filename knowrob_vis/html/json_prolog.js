@@ -94,16 +94,16 @@ function JsonProlog(options){
 
         function parseSolution (solution, level, ret) {
           var indent = "";
-          for (var i = 0; i < level; i++){indent += "  "}
+          for (var i = 0; i < level; i++){indent += " "}
           for (var key in solution) {
             if (solution.hasOwnProperty(key)) {
               if (solution[key] instanceof Array || solution[key] instanceof Object) {
                 ret += indent + key + " = [\n";
-                console.log("array!");
+                //console.log("array!");
                 ret = parseSolution(solution[key], level + 1, ret);
-                ret += indent + "]\n\n"
+                ret += indent + "]\n"
               } else {
-                ret += indent + key + " = " + solution[key] + "\n\n";
+                ret += indent + key + " = " + solution[key] + "\n";
               }
             }
           }
