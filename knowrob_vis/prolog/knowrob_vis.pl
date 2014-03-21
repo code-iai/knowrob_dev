@@ -44,8 +44,8 @@
       add_diagram/9,
       remove_diagram/1,
       clear_diagram_canvas/0,
-      show_trajectory/3,
-      remove_trajectory/0
+      add_trajectory/4,
+      remove_trajectory/1
     ]).
 
 :- use_module(library('semweb/rdfs')).
@@ -68,7 +68,7 @@
             highlight_object_with_children(r,?),
             add_diagram(+,+,+,+,+,+,+,+,+),
             remove_diagram(+), % TODO: not sure if this is correct
-            show_trajectory(+,+,+).
+            add_trajectory(+,+,+,+).
 
 
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
@@ -295,13 +295,13 @@ clear_diagram_canvas :-
     d_canvas(Canvas),
     jpl_call(Canvas, 'clear', [], _).
 
-%% show_trajectory(+Starttime, +Endtime, +Interval)
+%% add_trajectory(+Tflink, +Starttime, +Endtime, +Interval)
 % TODO description
-show_trajectory(Starttime, Endtime, Interval) :-
+add_trajectory(Tflink, Starttime, Endtime, Interval) :-
     v_canvas(Canvas),
-    jpl_call(Canvas, 'showTrajectory', [Starttime, Endtime, Interval], _).
+    jpl_call(Canvas, 'showTrajectory', [Tflink, Starttime, Endtime, Interval], _).
 
-remove_trajectory :-
+remove_trajectory(Tflink) :-
     v_canvas(Canvas),
-    jpl_call(Canvas, 'removeTrajectory', [], _).
+    jpl_call(Canvas, 'removeTrajectory', [Tflink], _).
 

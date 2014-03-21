@@ -60,7 +60,8 @@ public class MarkerVisualization {
 	/**
 	 *
 	 */
-	private static List<String> trajectoryIds = new ArrayList<String>();
+	protected Map<String, List<String>> trajectories;
+	//private static List<String> trajectoryIds = new ArrayList<String>();
 
 
 
@@ -78,6 +79,7 @@ public class MarkerVisualization {
 
 		markers =  new ConcurrentHashMap<String, Marker>(8, 0.9f, 1);
 		highlighted = new ConcurrentHashMap<String, ColorRGBA>(8, 0.9f, 1);
+		trajectories = new HashMap<String, List<String>>();
 
 		// spawn new thread that publishes the markers in the HashMap
 		markerPublisher = new Thread( new PublisherThread() );
@@ -92,33 +94,35 @@ public class MarkerVisualization {
 	 * @param endtime OWL identifier of a timepoint instance
 	 * @param interval in seconds
 	 */
-	public void showTrajectory(String starttime, String endtime, String interval) {
+	public void showTrajectory(String tflink, String starttime, String endtime, String interval) {
 
 		String identifier;
 		String timepoint;
 
-		removeTrajectory();
-		trajectoryIds.clear();
+		removeTrajectory(tflink);
+		trajectories.put(tflink, new ArrayList<String>());
+		//trajectoryIds.clear();
 
 		for (int i = Integer.parseInt(starttime.substring(starttime.indexOf("timepoint_") + 10)); i <= Integer.parseInt(endtime.substring(endtime.indexOf("timepoint_") + 10)); i += Integer.parseInt(interval)) {
 
 			timepoint = starttime.substring(0, starttime.indexOf("timepoint_") + 10) + String.valueOf(i);
 
 			// /base_link
-			identifier = "/base_link" + String.valueOf(i);
+			identifier = tflink + String.valueOf(i);
 
 			// read marker from Prolog
-			Marker m = readLinkMarkerFromProlog("/base_link", timepoint);
+			Marker m = readLinkMarkerFromProlog(tflink, timepoint);
 
 			// add marker to map
 			if(m!=null) {
-				trajectoryIds.add(identifier);
+				//trajectoryIds.add(identifier);
+				trajectories.get(tflink).add(identifier);
 				synchronized (markers) {
-				markers.put(identifier, m);
+					markers.put(identifier, m);
 				}
 			}
 
-			// /r_wrist_roll_link
+			/*// /r_wrist_roll_link
 			identifier = "/r_wrist_roll_link" + String.valueOf(i);
 
 			// read marker from Prolog
@@ -144,20 +148,22 @@ public class MarkerVisualization {
 				synchronized (markers) {
 				markers.put(identifier, m);
 				}
-			}
+			}*/
 		}
 	}
 
 	/**
 	 * Remove trajectory markers
          */
-	public void removeTrajectory() {
-
-		for (int i = 0; i < trajectoryIds.size(); i++) {
-			// remove the object from the list
-			synchronized (markers) {
-				markers.remove(trajectoryIds.get(i));
+	public void removeTrajectory(String tflink) {
+		if (trajectories.get(tflink) != null){
+			for (int i = 0; i < trajectories.get(tflink).size(); i++) {
+				// remove the object from the list
+				synchronized (markers) {
+					markers.remove(trajectories.get(tflink).get(i));
+				}
 			}
+			trajectories.remove(tflink);
 		}
 	}
 
