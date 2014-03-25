@@ -3,18 +3,23 @@
 <head>
   <meta charset="utf-8" />
   <link rel="stylesheet" media="all" type="text/css" href="http://fonts.googleapis.com/css?family=Open+Sans:400,400italic,700|Oswald|Source+Code+Pro" />
-  <script type="text/javascript" src="http://cdn.robotwebtools.org/threejs/current/three.min.js"></script>
-  <script type="text/javascript" src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
-  <script type="text/javascript" src="http://cdn.robotwebtools.org/ColladaAnimationCompress/current/ColladaLoader2.min.js"></script>
-  <script type="text/javascript" src="http://cdn.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
+  <!--<script type="text/javascript" src="http://cdn.robotwebtools.org/threejs/current/three.min.js"></script>-->
+  <script type="text/javascript" src="chart_demo/three.min.js"></script>
+  <!--<script type="text/javascript" src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>-->
+<script type="text/javascript" src="chart_demo/eventemitter2.min.js"></script>
+  <!--<script type="text/javascript" src="http://cdn.robotwebtools.org/ColladaAnimationCompress/current/ColladaLoader2.min.js"></script>-->
+<script type="text/javascript" src="chart_demo/ColladaLoader2.min.js"></script>
+  <!--<script type="text/javascript" src="http://cdn.robotwebtools.org/roslibjs/current/roslib.min.js"></script>-->
+  <script type="text/javascript" src="chart_demo/roslib.min.js"></script>
   <script type="text/javascript" src="http://cdn.robotwebtools.org/mjpegcanvasjs/current/mjpegcanvas.min.js"></script>
   <script type="text/javascript" src="ros3d.js"></script>
   <script type="text/javascript" src="json_prolog.js"></script>
   <script type="text/javascript" src="MarkerClient.js"></script>
   <link rel="stylesheet" type="text/css" href="screen.css"/>
 
-  <script src="http://d3js.org/d3.v3.min.js"></script>
+  <!--<script src="http://d3js.org/d3.v3.min.js"></script>-->
 
+  <script type="text/javascript" src="chart_demo/d3.v3.min.js"></script>
   <script type="text/javascript" src="chart_demo/DonutChart.js"></script>
   <script type="text/javascript" src="chart_demo/BarChart.js"></script>
   <script type="text/javascript" src="chart_demo/TreeDiagram.js"></script>
@@ -155,6 +160,7 @@
       if(d["parent"] < parent)
         level--;
       
+      if(d["key"].substring(0, 1) != '_') {
       
         if(d["type"]==0) { // string 
           post += "<div class='desig div"+level+"'>\n"
@@ -197,6 +203,7 @@
           post += "</div>\n"
 
         }
+      }
       return post;
     };
     

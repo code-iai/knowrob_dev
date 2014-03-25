@@ -7,6 +7,7 @@ import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.List;
 import java.util.ArrayList;
+import java.text.DecimalFormat;
 
 import javax.vecmath.Matrix4d;
 import javax.vecmath.Quat4d;
@@ -103,12 +104,12 @@ public class MarkerVisualization {
 		trajectories.put(tflink, new ArrayList<String>());
 		//trajectoryIds.clear();
 
-		for (int i = Integer.parseInt(starttime.substring(starttime.indexOf("timepoint_") + 10)); i <= Integer.parseInt(endtime.substring(endtime.indexOf("timepoint_") + 10)); i += Integer.parseInt(interval)) {
+		for (double i = Double.parseDouble(starttime.substring(starttime.indexOf("timepoint_") + 10)); i <= Double.parseDouble(endtime.substring(endtime.indexOf("timepoint_") + 10)); i += Double.parseDouble(interval)) {
 
-			timepoint = starttime.substring(0, starttime.indexOf("timepoint_") + 10) + String.valueOf(i);
+			timepoint = starttime.substring(0, starttime.indexOf("timepoint_"))+ "'" + starttime.substring(starttime.indexOf("timepoint_"), starttime.indexOf("timepoint_") + 10) + new DecimalFormat("###.###").format(i) + "'";//String.valueOf(i);
 
 			// /base_link
-			identifier = tflink + String.valueOf(i);
+			identifier = tflink + new DecimalFormat("###.###").format(i);//String.valueOf(i);
 
 			// read marker from Prolog
 			Marker m = readLinkMarkerFromProlog(tflink, timepoint);
@@ -190,11 +191,11 @@ public class MarkerVisualization {
 		m.scale.y = 0.05;
 		m.scale.z = 0.05;
 
-		m.type = Marker.CUBE;
+		m.type = Marker.ARROW;
 
-		m.color.r = 0.6f;
-		m.color.g = 0.6f;
-		m.color.b = 0.6f;
+		m.color.r = 1.0f;
+		m.color.g = 1.0f;
+		m.color.b = 0.0f;
 		m.color.a = 1.0f;
 
 		try {
