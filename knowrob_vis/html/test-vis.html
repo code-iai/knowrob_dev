@@ -155,6 +155,7 @@
       if(d["parent"] < parent)
         level--;
       
+      if(d["key"].substring(0, 1) != '_') {
       
         if(d["type"]==0) { // string 
           post += "<div class='desig div"+level+"'>\n"
@@ -197,6 +198,7 @@
           post += "</div>\n"
 
         }
+      }
       return post;
     };
     
