@@ -106,7 +106,7 @@ public class MarkerVisualization {
 
 		for (double i = Double.parseDouble(starttime.substring(starttime.indexOf("timepoint_") + 10)); i <= Double.parseDouble(endtime.substring(endtime.indexOf("timepoint_") + 10)); i += Double.parseDouble(interval)) {
 
-			timepoint = starttime.substring(0, starttime.indexOf("timepoint_"))+ "'" + starttime.substring(starttime.indexOf("timepoint_"), starttime.indexOf("timepoint_") + 10) + new DecimalFormat("###.###").format(i) + "'";//String.valueOf(i);
+			timepoint = "'" + starttime.substring(0, starttime.indexOf("timepoint_")) + starttime.substring(starttime.indexOf("timepoint_"), starttime.indexOf("timepoint_") + 10) + new DecimalFormat("###.###").format(i) + "'";//String.valueOf(i);
 			//timepoint = starttime;
 			// /base_link
 			identifier = tflink + new DecimalFormat("###.###").format(i);//String.valueOf(i);
