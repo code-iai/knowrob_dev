@@ -49,7 +49,7 @@
     {"q": "", "text": ""},
     {"q": "", "text": "----- Trajectory -----"},
     {"q": "register_ros_package(knowrob_mongo),\nregister_ros_package(mod_srdl),\nregister_ros_package(mod_execution_trace),\nvisualisation_canvas,\ndiagram_canvas.", "text": "init all"},
-    {"q": "add_trajectory('/base_link', 'knowrob:timepoint_1377780210', 'knowrob:timepoint_1377780235', '1').", "text": "Show trajectories for given tf-link between two timepoints"},
+    {"q": "add_trajectory('/base_link', knowrob:'timepoint_1377780210', knowrob:'timepoint_1377780235', '1').", "text": "Show trajectories for given tf-link between two timepoints"},
 
     {"q": "", "text": ""},
     {"q": "", "text": "----- Task Decomposition -----"},
