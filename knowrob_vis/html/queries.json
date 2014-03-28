@@ -63,6 +63,12 @@
     {"q": "", "text": ""},
     {"q": "", "text": "----- Belief of the Robot -----"},
     {"q": "task_goal(A,'GRASP'),task_end(A,End),mng_robot_pose_at_time(pr2:'PR2Robot1','/map',End,Pose),add_object_with_children(pr2:'PR2Robot1',End).", "text": " Where was the robat localized at the time of grasp?"},
-    {"q": "rdf_transaction((task_end(T,E),task_class(T,'http://ias.cs.tum.edu/kb/knowrob.owl#UIMAPerception'),returned_value(T, Obj),belief_at(loc(Obj,Loc), E))).", "text": "Where was an object located at a certain time?"}
+    {"q": "rdf_transaction((task_end(T,E),task_class(T,'http://ias.cs.tum.edu/kb/knowrob.owl#UIMAPerception'),returned_value(T, Obj),belief_at(loc(Obj,Loc), E))).", "text": "Where was an object located at a certain time?"},
+
+    {"q": "", "text": ""},
+    {"q": "", "text": "----- Task Tree -----"},
+    {"q": "assert((\n  tasktree(Task, List):-\n    findall(Subsub,\n      (\n        subtask(Task, Sub),\n        tasktree(Sub, Subsub)\n      ),\n      Sublist),\n    List = [Task, Sublist]\n)).", "text": "Assert tasktree rule (needed for following query, only invoke once)"},
+    {"q": "owl_parse('path/to/log/pick-and-place.owl', false, false, true).", "text": "load owl file"},
+    {"q": "Root = 'http://ias.cs.tum.edu/kb/cram_log.owl#CRAMAction_m2XW5s7U',\ntasktree(Root, List), flatten(List, Flat), once(maplist( \\X^Node^(((subtask(P, X), Parent = P); Parent = X), ((returned_value(X, Value), Color = red); Color = green),\natom_concat('Name: ', X, Namestring),\natom_concat('Parent: ', Parent, Parentstring),\nNode = [[X, Parent, Color],[Namestring, Parentstring, Color]]), Flat, Nodes)), add_diagram(tree, title, treechart, xlabel, ylabel, '960', '500', '12px', Nodes).", "text": "Show tasks and subtasks as a tree (adjust root node)"}
   ]
 }
