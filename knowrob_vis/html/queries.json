@@ -43,7 +43,7 @@
     {"q": "Labels = ['ManipulationPoseUnreachable', 'ObjectNotFound', 'ManipulationFailed', 'LocationNotReached', 'ObjectLost', 'ManipulationPoseOccupied'],findall(N, (\nmember(Error, Labels),\n    findall(E, (failure_class(E, C), string_concat('http://ias.cs.tum.edu/kb/knowrob.owl#', Error, C)), List), length(List, N)\n  ),\nOccurence),\nadd_diagram(iderror, 'error distribution', barchart, xlabel, ylabel, '210', '210', '12px', [[Labels,Occurence]]).", "text": "Show occurences of typical error types in bar or donut chart - new file format!"},
     {"q": "Labels = ['MANIPULATION-POSE-UNREACHABLE', 'OBJECT-NOT-FOUND', 'MANIPULATION-FAILED', 'LOCATION-NOT-REACHED', 'OBJECT-LOST', 'MANIPULATION-POSE-OCCUPIED'],\nfindall(N,\n  (\n    member(Error, Labels),\n    findall([E,B], (failure_task(E, C), failure_attribute(E, rdfs:'label', X), [X]=[literal(type(A,B))], B=Error), List), length(List, N)\n  ),\nOccurence),\nadd_diagram(iderror, 'error distribution', barchart, xlabel, ylabel, '210', '210', '12px', [[Labels,Occurence]]).", "text": "Show occurences of typical error types in bar or donut chart"},
     {"q": "Labels = ['Failed Instances', 'Successful Instances'], bagof(Err, (task_class(Task, knowrob:'PerformOnProcessModule'),  failure_task(Err, Task)), Errors), length(Errors, NumErr), bagof(Task, task_class(Task, knowrob:'PerformOnProcessModule'), Tasks), length(Tasks, NumT), NumSuccess is NumT- NumErr, add_diagram(iderror, 'error distribution', barchart, xlabel, ylabel, '210', '210', '12px', [[Labels,[NumErr, NumSuccess]]]).", "text": "Show occurences of errors in a certain task type bar or donut chart"},
-    {"q": "aggregate_all(sum(D) / count, (task(T),task_class(T, knowrob:'UIMAPerception'), duration_of_a_task(T,D)), D1), Avg is D1, Labels = ['Duration in seconds'], add_diagram(iderror, 'error distribution', barchart, xlabel, ylabel, '210', '210', '12px', [[Labels,[Avg]]]).", "text": " How long did a task of a certain type take on average?"},
+    {"q": "aggregate_all(sum(D) / count, (task(T),task_class(T, knowrob:'UIMAPerception'),duration_of_a_task(T,D)), D1), Avg is D1, Labels = ['Duration in seconds'], add_diagram(iderror, 'error distribution', barchart, xlabel, ylabel, '210', '210', '12px', [[Labels,[Avg]]]).", "text": " How long did a task of a certain type take on average?"},
     {"q": "findall(FailClass,(task_class(T, knowrob:'PerformOnProcessModule'), failure_task(F, T), failure_class(F, FailClass)), FailReasons).", "text": " Which were common problems for a certain task type?"},
 
     {"q": "", "text": ""},
@@ -63,6 +63,6 @@
     {"q": "", "text": ""},
     {"q": "", "text": "----- Belief of the Robot -----"},
     {"q": "task_end(T,E), task_class(T,'http://ias.cs.tum.edu/kb/knowrob.owl#CRAMAchieve'), belief_at(robot('/base_link', L), E).", "text": " Where was the robat localized at a certain time?"},
-    {"q": "task_end(T,E), task_class(T,'http://ias.cs.tum.edu/kb/knowrob.owl#UIMAPerception'), returned_value(T, Obj), belief_at(loc(Obj,Loc), E).", "text": "Where was an object located at a certain time?"}
+    {"q": "rdf_transaction((task_end(T,E),task_class(T,'http://ias.cs.tum.edu/kb/knowrob.owl#UIMAPerception'),returned_value(T, Obj),belief_at(loc(Obj,Loc), E))).", "text": "Where was an object located at a certain time?"}
   ]
 }
