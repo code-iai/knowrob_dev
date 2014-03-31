@@ -21,7 +21,6 @@
 
 :- register_ros_package(knowrob_common).
 :- register_ros_package(knowrob_cad_parser).
-:- register_ros_package(ias_semantic_map).
 
 :- register_ros_package(knowrob_vis).
 :- use_module(library('knowrob_vis')).
