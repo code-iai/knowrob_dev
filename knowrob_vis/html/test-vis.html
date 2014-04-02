@@ -43,7 +43,7 @@
       // Create the main viewer.
       var viewer = new ROS3D.Viewer({
         divID : 'markers',
-        width : 750,
+        width : 950,
         height : 495,
         antialias : true,
         background : '#ffffff'
@@ -270,22 +270,26 @@
     // append the selected query to the user_query form
     function addSelectedToQueryform(selectid) {
       var select = document.getElementById(selectid);
-      document.query_form.user_query.value += select.options[select.selectedIndex].value;
+      document.query_form.user_query.value = select.options[select.selectedIndex].value;
     }
 
 </script>
 </head>
 
 <body onload="init()" style="position:relative; left:20px;">
-  <h1>KnowRob Web Console</h1>
+  <h1>RoboHow Web Console</h1>
+
+  <div id="logo_right" style="position:absolute; left:1700px; top:5px; width:180px; border: none; ">
+    <img src="logos/robohow-logo.svg" width="180">
+  </div>
   
-  <div id="console" style="position:absolute; left:0;  top:75px; width:460px; height:500px; border: 1px black solid;">
+  <div id="console" style="position:absolute; left:0;  top:75px; width:510px; height:500px; border: 1px black solid;">
     <div style="padding:15px;">
     <form name="query_form" action="post">
 
-      <textarea name="history" readonly  cols="60" rows="23" style="font-family: Source Code Pro,Consolas,monospace; font-size:9pt;background:#ffffff;border: 1px black solid; margin-bottom:5px;"></textarea>
+      <textarea name="history" readonly  cols="66" rows="23" style="font-family: Source Code Pro,Consolas,monospace; font-size:9pt;background:#ffffff;border: 1px black solid; margin-bottom:5px;"></textarea>
       
-      <textarea name="user_query" cols="60" rows="10" style="font-family: Source Code Pro,Consolas,monospace; font-size:9pt;border: 1px black solid; margin-bottom:5px; "></textarea>
+      <textarea name="user_query" cols="66" rows="10" style="font-family: Source Code Pro,Consolas,monospace; font-size:9pt; border: 1px black solid; margin-bottom:5px; "></textarea>
 
       <input type="button" name="q" value="Send query"
       onclick="queryProlog(document.query_form.user_query.value);">
@@ -301,19 +305,33 @@
   </div>
   
   
-  <div id="markers"    style="position:absolute; left:470px;  top:75px; width:750px; border: 1px black solid; "></div>
+  <div id="markers"    style="position:absolute; left:520px;  top:75px; width:950px; border: 1px black solid; "></div>
   
-  <div id="designator" style="position:absolute; left:1230px; top:75px; width:400px; height:865px; border: 1px black solid; position:absolute; overflow:auto;"></div>
+  <div id="designator" style="position:absolute; left:1480px; top:75px; width:400px; height:607px; border: 1px black solid; position:absolute; overflow:auto;"></div>
   
-  <div id="library"    style="position:absolute; left:0px;    width:1220px; top:510px; border: 1px black solid; position:relative;">
-    <select onclick="addSelectedToQueryform('examplequery')" size="5" name="examplequery" id="examplequery" style="width:1220px;"><option value=0></option></select>
+  <div id="library"    style="position:absolute; left:0px; width:510px; top:510px; border: 1px black solid; position:relative;">
+    <select onclick="addSelectedToQueryform('examplequery')" size="23" name="examplequery" id="examplequery" style="width:510px; font-size:12px;"><option value=0></option></select>
+  </div>
+
+  <div id="chart" style="position:absolute; left:520px; top:583px; width:920px; height:316px; border: 1px black solid; padding:15px;"></div>
+  
+  <div id="mjpeg" style="position:absolute; left:1480px; top:689px; width:400px; height:240px; border: 1px black solid; text-align:center;"></div>
+  
+  
+  
+  
+  <div id="footer" style="position:absolute; left:0px; top:950px; width:1800px; border: none; text-align:center; font-family:Open Sans, sans-serif; font-size:10pt;">
+    The development of this system has received funding from the following projects:
+    <br/>
+    <a href="http://www.robohow.eu" class="media" title="http://www.robohow.eu"  rel="nofollow"><img src="logos/robohow-logo.png" class="media" alt="" /></a>
+    <a href="http://www.roboearth.org" class="media" title="http://www.roboearth.org"  rel="nofollow"><img src="logos/roboearth-logo.png" class="media" alt="" /></a>
+    <a href="http://www.sherpa-project.eu" class="media" title="http://www.sherpa-project.eu"  rel="nofollow"><img src="logos/sherpa-logo.png" class="media" alt="" /></a>
+    <a href="http://www.saphari.eu" class="media" title="http://www.saphari.eu"  rel="nofollow"><img src="logos/saphari-logo.png" class="media" alt="" /></a>
+    <a href="http://cordis.europa.eu/fp7/ict/programme/challenge2_en.html" class="media" title="http://cordis.europa.eu/fp7/ict/programme/challenge2_en.html"  rel="nofollow"><img src="logos/fp7-logo.png" class="media" alt="" /></a>
+    </div>
   </div>
   
-  <div id="mjpeg" style="position:absolute; left:00px;  top:700px; width:320px; height:240px; border: 1px black solid;"></div>
-  
-  <div id="chart" style="position:absolute; left:330px;  top:700px; width:860px; height:210px; border: 1px black solid; padding:15px;"></div>
-  
-  
+
   
   
 </body>
