@@ -270,7 +270,7 @@
     // append the selected query to the user_query form
     function addSelectedToQueryform(selectid) {
       var select = document.getElementById(selectid);
-      document.query_form.user_query.value += select.options[select.selectedIndex].value;
+      document.query_form.user_query.value = select.options[select.selectedIndex].value;
     }
 
 </script>
