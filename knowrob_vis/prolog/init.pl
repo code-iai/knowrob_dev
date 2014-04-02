@@ -25,4 +25,5 @@
 :- register_ros_package(knowrob_vis).
 :- use_module(library('knowrob_vis')).
 
-:- use_module(library('lambda')).
+% deactivated: caused errors during launch
+% :- use_module(library('lambda')).
