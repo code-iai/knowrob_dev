@@ -12,6 +12,7 @@
     {"q": "findall([Obj, E], \n ((task_end(T,E), task_class(T,knowrob:'UIMAPerception'), returned_value(T, Obj))), \n Objs),!, member([Obj, E], Objs), belief_at(loc(Obj,Loc), E), \n add_object_as_semantic_instance(Obj, Loc, E, SemanticMapInstance), \n add_object_with_children(SemanticMapInstance).", "text": "Where were the objects perceived during the execution?"},
     {"q": "task(T), task_goal(T, '(OBJECT-PLACED-AT ?OBJ ?LOC)'), task_start(T, S), task_end(T, E), add_trajectory('/base_link', S, E, '1').", "text": "PR2's path during a pick-and-place"},
     {"q": "findall(E, \n ((task_end(T,E), task_goal(T,'PUTDOWN'))), \n Es),!, member(E, Es), \n mng_robot_pose_at_time(pr2:'pr2_base_link','/map',E,Pose),\n add_object_with_children(pr2:'pr2_base_link',E).", "text": "What were the robot poses during PUT-DOWN Actions?"},
+    {"q": "task_start(T,S), task_end(T,E), task_goal(T,'PUTDOWN'), !,\n arm_used_for_manipulation(T, Link), add_trajectory(Link, S, E, '1').", "text": "What is the trajectory of the arm during a PUT-DOWN Action?"},
     {"q": "remove_object_with_children(pr2:'PR2Robot1').", "text": "Stop publishing PR2 markers"},
     {"q": "remove_trajectory('/base_link').", "text": "Stop publishing trajectories to the scene"},
 
@@ -26,6 +27,14 @@
     {"q": "", "text": "----- Task Tree -----"},
     {"q": "assert((\n  tasktree(Task, List):-\n    findall(Subsub,\n      (\n        subtask(Task, Sub),\n        tasktree(Sub, Subsub)\n      ),\n      Sublist),\n    List = [Task, Sublist]\n)).", "text": "Assert tasktree rule (needed for following query, only invoke once)"},
     {"q": "owl_parse('path/to/log/pick-and-place.owl', false, false, true).", "text": "load owl file"},
-    {"q": "Root = 'http://ias.cs.tum.edu/kb/cram_log.owl#CRAMAction_m2XW5s7U',\ntasktree(Root, List), flatten(List, Flat), once(maplist( \\X^Node^(((subtask(P, X), Parent = P); Parent = X), ((returned_value(X, Value), Color = red); Color = green),\natom_concat('Name: ', X, Namestring),\natom_concat('Parent: ', Parent, Parentstring),\nNode = [[X, Parent, Color],[Namestring, Parentstring, Color]]), Flat, Nodes)), add_diagram(tree, title, treechart, xlabel, ylabel, '960', '500', '12px', Nodes).", "text": "Show tasks and subtasks as a tree (adjust root node)"}
+    {"q": "Root = 'http://ias.cs.tum.edu/kb/cram_log.owl#CRAMAction_m2XW5s7U',\ntasktree(Root, List), flatten(List, Flat), once(maplist( \\X^Node^(((subtask(P, X), Parent = P); Parent = X), ((returned_value(X, Value), Color = red); Color = green),\natom_concat('Name: ', X, Namestring),\natom_concat('Parent: ', Parent, Parentstring),\nNode = [[X, Parent, Color],[Namestring, Parentstring, Color]]), Flat, Nodes)), add_diagram(tree, title, treechart, xlabel, ylabel, '960', '500', '12px', Nodes).", "text": "Show tasks and subtasks as a tree (adjust root node)"},
+
+ 
+    {"q": "", "text": ""},
+    {"q": "", "text": "----- Highlighting an object -----"},
+    {"q": "highlight_object_with_children('http://ias.cs.tum.edu/kb/knowrob.owl#Refrigerator67').", "text": "highlight object"},
+    {"q": "reset_highlight.", "text": "reset highlight"}
+
+
   ]
 }
