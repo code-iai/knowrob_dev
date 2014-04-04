@@ -7,13 +7,13 @@
     
     {"q": "", "text": ""},
     {"q": "", "text": "----- Belief of the Robot -----"},
-    {"q": "task(T), task_goal(T, '(OBJECT-PLACED-AT ?OBJ ?LOC)'), task_start(T, S), task_end(T, E), add_trajectory('/base_link', S, E, '0.1').", "text": "PR2's path during a pick-and-place"},
+    {"q": "task(T), task_goal(T, '(OBJECT-PLACED-AT ?OBJ ?LOC)'), task_start(T, S), task_end(T, E), add_trajectory('/base_link', S, E, '0.1').", "text": "PR2's path during a pick-and-place sequence"},
     {"q": "findall([Obj, E], \n ((task_end(T,E), task_class(T,knowrob:'UIMAPerception'), returned_value(T, Obj))), \n Objs),!, member([Obj, E], Objs), belief_at(loc(Obj,Loc), E), \n add_object_as_semantic_instance(Obj, Loc, E, SemanticMapInstance), \n add_object_with_children(SemanticMapInstance).", "text": "Where were the objects perceived during the execution?"},
-    {"q": "findall(E, \n ((task_end(T,E), task_goal(T,'PUTDOWN'))), \n Es),!, member(E, Es), \n mng_robot_pose_at_time(pr2:'pr2_base_link','/map',E,Pose),\n add_object_with_children(pr2:'pr2_base_link',E).", "text": "What were the robot poses during PUT-DOWN Actions?"},
+    {"q": "findall(E,((task_end(T,E), task_goal(T,'PUTDOWN'))), Es),!, member(E, Es), \n mng_robot_pose_at_time(pr2:'PR2Robot1','/map',E,Pose),\n add_robot_as_basic_semantic_instance(Pose, E, SemanticMapInstance), \nadd_object_with_children(SemanticMapInstance), \nhighlight_object(SemanticMapInstance).", "text": "What were the robot poses during PUT-DOWN Actions?"},
     {"q": "task_goal(A,'GRASP'),task_end(A,End), !,\n mng_robot_pose_at_time(pr2:'PR2Robot1','/map',End,Pose),\n add_object_with_children(pr2:'PR2Robot1',End).", "text": " Where was the robot localized at the time of grasp?"},
     {"q": "task_start(T,S), task_end(T,E), task_goal(T,'PUTDOWN'), !,\n arm_used_for_manipulation(T, Link), add_trajectory(Link, S, E, '0.1').", "text": "What is the trajectory of the arm during a PUT-DOWN Action?"},
     {"q": "remove_object_with_children(pr2:'PR2Robot1').", "text": "Stop publishing PR2 markers"},
-    {"q": "remove_trajectory('/base_link'), remove_trajectory('/l_wrist_roll_link'), remove_trajectory('/r_wrist_roll_link').", "text": "Stop publishing trajectories to the scene"},
+    {"q": "remove_trajectory('/base_link'), \n remove_trajectory('/l_wrist_roll_link'), \n remove_trajectory('/r_wrist_roll_link').", "text": "Stop publishing trajectories to the scene"},
 
     
     {"q": "", "text": ""},
