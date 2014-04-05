@@ -2,7 +2,9 @@
   "query": [
     {"q": "", "text": "----- init -----"},
     {"q": "visualisation_canvas, diagram_canvas.", "text": "initialize canvases"},
-    {"q": "owl_parse('/var/roslog/current-experiment/cram_log.owl', false, false, true).", "text": "parse owl file"},
+    {"q": "load_experiment('/var/roslog/current-experiment/cram_log.owl', false, false, true).", "text": "load current experiment"},
+    {"q": "load_experiment('/var/roslog/first-part-demo/cram_log.owl', false, false, true).", "text": "load pick and place part"},
+    {"q": "load_experiment('/var/roslog/pouring-part-demo/cram_log.owl', false, false, true).", "text": "load pouring part"},
     {"q": "owl_individual_of(A, knowrob:'SemanticEnvironmentMap'), !, add_object_with_children(A).", "text": "load semantic map"},
     
     {"q": "", "text": ""},
@@ -18,15 +20,17 @@
     
     {"q": "", "text": ""},
     {"q": "", "text": "----- Logfile statistics -----"},
-    {"q": "Labels = ['ManipulationPoseUnreachable', 'ObjectNotFound', 'ManipulationFailed', 'LocationNotReached', 'ObjectLost', 'ManipulationPoseOccupied'],findall(N, (\nmember(Error, Labels),\n    findall(E, (failure_class(E, C), string_concat('http://ias.cs.tum.edu/kb/knowrob.owl#', Error, C)), List), length(List, N)\n  ),\nOccurence),\nadd_diagram(iderror, 'error distribution', barchart, xlabel, ylabel, '210', '210', '12px', [[Labels,Occurence]]).", "text": "Show occurences of typical error types in bar or donut chart"},
+	
+    {"q": "findall(Type-Num, (owl_subclass_of(T, knowrob:'CRAMFailure'),\n rdf_split_url(_, Type, T),findall(F, failure_class(F, T), Failures),\n length(Failures, Num)), Distrib),pairs_keys_values(Distrib, Types, Nums),\n add_diagram(errordist, 'Error distribution', piechart, xlabel, ylabel, '350', '350', '11px', [[Types, Nums]]).", "text": "Show occurences of typical error types in the chart"},
     {"q": "findall(FailClass,(task_class(T, knowrob:'PerformOnProcessModule'), failure_task(F, T), failure_class(F, FailClass)), FailReasons).", "text": " Which were common problems for a certain task type?"},
      
 
     {"q": "", "text": ""},
-    {"q": "", "text": "----- Task Tree -----"},
-    {"q": "assert((\n  tasktree(Task, List):-\n    findall(Subsub,\n      (\n        subtask(Task, Sub),\n        tasktree(Sub, Subsub)\n      ),\n      Sublist),\n    List = [Task, Sublist]\n)).", "text": "Assert tasktree rule (needed for following query, only invoke once)"},
-    {"q": "owl_parse('path/to/log/pick-and-place.owl', false, false, true).", "text": "load owl file"},
-    {"q": "Root = 'http://ias.cs.tum.edu/kb/cram_log.owl#CRAMAction_m2XW5s7U',\ntasktree(Root, List), flatten(List, Flat), once(maplist( \\X^Node^(((subtask(P, X), Parent = P); Parent = X), ((returned_value(X, Value), Color = red); Color = green),\natom_concat('Name: ', X, Namestring),\natom_concat('Parent: ', Parent, Parentstring),\nNode = [[X, Parent, Color],[Namestring, Parentstring, Color]]), Flat, Nodes)), add_diagram(tree, title, treechart, xlabel, ylabel, '960', '500', '12px', Nodes).", "text": "Show tasks and subtasks as a tree (adjust root node)"},
+    {"q": "", "text": "----- Human experiments -----"},
+    {"q": "register_ros_package(mongo_prolog).", "text": "Init mongo_prolog"},
+    {"q": "mongo_prolog:action_trajectory(flip).", "text": "Flipping trajectory"},
+    {"q": "mongo_prolog:action_trajectory(pour).", "text": "Pouring trajectory"},
+    {"q": "mongo_prolog:remove_trajectory.", "text": "Remove trajectory"},
 
  
     {"q": "", "text": ""},
