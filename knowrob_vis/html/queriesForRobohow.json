@@ -2,9 +2,9 @@
   "query": [
     {"q": "", "text": "----- init -----"},
     {"q": "visualisation_canvas, diagram_canvas.", "text": "initialize canvases"},
-    {"q": "load_experiment('/var/roslog/current-experiment/cram_log.owl', false, false, true).", "text": "load current experiment"},
-    {"q": "load_experiment('/var/roslog/first-part-demo/cram_log.owl', false, false, true).", "text": "load pick and place part"},
-    {"q": "load_experiment('/var/roslog/pouring-part-demo/cram_log.owl', false, false, true).", "text": "load pouring part"},
+    {"q": "load_experiment('/var/roslog/current-experiment/cram_log.owl').", "text": "load current experiment"},
+    {"q": "load_experiment('/var/roslog/first-part-demo/cram_log.owl').", "text": "load pick and place part"},
+    {"q": "load_experiment('/var/roslog/pouring-part-demo/cram_log.owl').", "text": "load pouring part"},
     {"q": "owl_individual_of(A, knowrob:'SemanticEnvironmentMap'), !, add_object_with_children(A).", "text": "load semantic map"},
     
     {"q": "", "text": ""},
