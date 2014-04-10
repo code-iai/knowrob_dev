@@ -20,6 +20,7 @@ import ros.communication.Duration;
 import ros.communication.Time;
 import ros.pkg.std_msgs.msg.ColorRGBA;
 import ros.pkg.visualization_msgs.msg.Marker;
+import ros.pkg.visualization_msgs.msg.MarkerArray;
 import edu.tum.cs.ias.knowrob.owl.OWLThing;
 import edu.tum.cs.ias.knowrob.prolog.PrologInterface;
 
@@ -40,6 +41,8 @@ public class MarkerVisualization {
 	public static NodeHandle n;
 	Thread markerPublisher;
 
+	Publisher<MarkerArray> pub;
+	
 	/**
 	 * Store the markers to be published
 	 */
@@ -82,6 +85,12 @@ public class MarkerVisualization {
 		highlighted = new ConcurrentHashMap<String, ColorRGBA>(8, 0.9f, 1);
 		trajectories = new HashMap<String, List<String>>();
 
+		try {
+			pub = n.advertise("visualization_marker_array", new MarkerArray(), 1000);
+		} catch (RosException e) {
+			e.printStackTrace();
+		}
+		
 		// spawn new thread that publishes the markers in the HashMap
 		markerPublisher = new Thread( new PublisherThread() );
 		markerPublisher.start();
@@ -102,13 +111,10 @@ public class MarkerVisualization {
 
 		removeTrajectory(tflink);
 		trajectories.put(tflink, new ArrayList<String>());
-		//trajectoryIds.clear();
 
 		for (double i = Double.parseDouble(starttime.substring(starttime.indexOf("timepoint_") + 10)); i <= Double.parseDouble(endtime.substring(endtime.indexOf("timepoint_") + 10)); i += Double.parseDouble(interval)) {
 
 			timepoint = "'" + starttime.substring(0, starttime.indexOf("timepoint_")) + starttime.substring(starttime.indexOf("timepoint_"), starttime.indexOf("timepoint_") + 10) + new DecimalFormat("###.###").format(i) + "'";//String.valueOf(i);
-			//timepoint = starttime;
-			// /base_link
 			identifier = tflink + new DecimalFormat("###.###").format(i);//String.valueOf(i);
 
 			// read marker from Prolog
@@ -116,40 +122,12 @@ public class MarkerVisualization {
 
 			// add marker to map
 			if(m!=null) {
-				//trajectoryIds.add(identifier);
 				trajectories.get(tflink).add(identifier);
 				synchronized (markers) {
 					markers.put(identifier, m);
 				}
 			}
 
-			/*// /r_wrist_roll_link
-			identifier = "/r_wrist_roll_link" + String.valueOf(i);
-
-			// read marker from Prolog
-			m = readLinkMarkerFromProlog("/r_wrist_roll_link", timepoint);
-
-			// add marker to map
-			if(m!=null) {
-				trajectoryIds.add(identifier);
-				synchronized (markers) {
-				markers.put(identifier, m);
-				}
-			}
-
-			// /l_wrist_roll_link
-			identifier = "/l_wrist_roll_link" + String.valueOf(i);
-
-			// read marker from Prolog
-			m = readLinkMarkerFromProlog("/l_wrist_roll_link", timepoint);
-
-			// add marker to map
-			if(m!=null) {
-				trajectoryIds.add(identifier);
-				synchronized (markers) {
-				markers.put(identifier, m);
-				}
-			}*/
 		}
 	}
 
@@ -167,80 +145,6 @@ public class MarkerVisualization {
 			trajectories.remove(tflink);
 		}
 	}
-
-	/**
-	 * Read link transform and create a marker from it
-	 *
-	 * @param link TODO explanation
-	 * @param timepoint  OWL identifier of a timepoint instance
-	 * @return Marker with the object information
-	 */
-	Marker readLinkMarkerFromProlog(String link, String timepoint) {
-
-		Marker m = new Marker();
-
-		m.header.frame_id = "/map";
-		m.header.stamp = Time.now();
-		m.ns = "knowrob_vis";
-		m.id = id++;
-
-		m.action = Marker.ADD;
-		m.lifetime = new Duration();
-
-		m.scale.x = 0.05;
-		m.scale.y = 0.05;
-		m.scale.z = 0.05;
-
-		m.type = Marker.ARROW;
-
-		m.color.r = 1.0f;
-		m.color.g = 1.0f;
-		m.color.b = 0.0f;
-		m.color.a = 1.0f;
-
-		try {
-			// read object pose
-			HashMap<String, Vector<String>> res = PrologInterface.executeQuery(
-					"mng_lookup_transform('/map', '"+ link + "', "+ timepoint + ", T), T = [M00, M01, M02, M03, M10, M11, M12, M13, M20, M21, M22, M23, M30, M31, M32, M33]");
-
-			if (res!=null && res.get("M00") != null && res.get("M00").size() > 0 && res.get("M00").get(0)!=null) {
-
-				double[] p = new double[16];
-				Matrix4d poseMat = new Matrix4d(p);
-
-				for(int i=0;i<4;i++) {
-					for(int j=0;j<4;j++) {
-						poseMat.setElement(i, j, Double.valueOf(res.get("M"+i+j).get(0)));
-					}
-				}
-
-				Quat4d q = new Quat4d();
-				q.set(poseMat);
-
-				m.pose.orientation.w = q.w;
-				m.pose.orientation.x = q.x;
-				m.pose.orientation.y = q.y;
-				m.pose.orientation.z = q.z;
-
-				m.pose.position.x = poseMat.m03;
-				m.pose.position.y = poseMat.m13;
-				m.pose.position.z = poseMat.m23;
-
-				// debug
-				//System.err.println("adding " + identifier + " at pose [" + m.pose.position.x + ", " + m.pose.position.y + ", " + m.pose.position.z + "]");
-
-			} else {
-				System.err.println("fail");
-				m.type = Marker.CUBE;
-			}
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-		return m;
-	}
-
 
 	/**
 	 * Add object 'identifier' to the visualization.
@@ -277,6 +181,8 @@ public class MarkerVisualization {
 		// read children and add them too
 		for(String child : readChildren(identifier))
 			addObject(child, timepoint);
+		
+		publishMarkers();
 	}
 
 
@@ -398,12 +304,10 @@ public class MarkerVisualization {
 	public void highlightWithChildren(String identifier, boolean highlight) {
 
 		// remove this object
-//		System.err.println("highlighting " + identifier);
 		highlight(identifier, highlight);
 
 		// remove children and highlight them too
 		for(String child : readChildren(identifier)) {
-//			System.err.println("highlighting " + child);
 			highlight(child, highlight);
 		}
 	}
@@ -617,6 +521,80 @@ public class MarkerVisualization {
 		return m;
 	}
 
+	/**
+	 * Read link transform and create a marker from it
+	 *
+	 * @param link TODO explanation
+	 * @param timepoint  OWL identifier of a timepoint instance
+	 * @return Marker with the object information
+	 */
+	Marker readLinkMarkerFromProlog(String link, String timepoint) {
+
+		Marker m = new Marker();
+
+		m.header.frame_id = "/map";
+		m.header.stamp = Time.now();
+		m.ns = "knowrob_vis";
+		m.id = id++;
+
+		m.action = Marker.ADD;
+		m.lifetime = new Duration();
+
+		m.scale.x = 0.05;
+		m.scale.y = 0.05;
+		m.scale.z = 0.05;
+
+		m.type = Marker.ARROW;
+
+		m.color.r = 1.0f;
+		m.color.g = 1.0f;
+		m.color.b = 0.0f;
+		m.color.a = 1.0f;
+
+		try {
+			// read object pose
+			HashMap<String, Vector<String>> res = PrologInterface.executeQuery(
+					"mng_lookup_transform('/map', '"+ link + "', "+ timepoint + ", T), T = [M00, M01, M02, M03, M10, M11, M12, M13, M20, M21, M22, M23, M30, M31, M32, M33]");
+
+			if (res!=null && res.get("M00") != null && res.get("M00").size() > 0 && res.get("M00").get(0)!=null) {
+
+				double[] p = new double[16];
+				Matrix4d poseMat = new Matrix4d(p);
+
+				for(int i=0;i<4;i++) {
+					for(int j=0;j<4;j++) {
+						poseMat.setElement(i, j, Double.valueOf(res.get("M"+i+j).get(0)));
+					}
+				}
+
+				Quat4d q = new Quat4d();
+				q.set(poseMat);
+
+				m.pose.orientation.w = q.w;
+				m.pose.orientation.x = q.x;
+				m.pose.orientation.y = q.y;
+				m.pose.orientation.z = q.z;
+
+				m.pose.position.x = poseMat.m03;
+				m.pose.position.y = poseMat.m13;
+				m.pose.position.z = poseMat.m23;
+
+				// debug
+				//System.err.println("adding " + identifier + " at pose [" + m.pose.position.x + ", " + m.pose.position.y + ", " + m.pose.position.z + "]");
+
+			} else {
+				System.err.println("fail");
+				m.type = Marker.CUBE;
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return m;
+	}
+
+
 
 	/**
 	 * Thread that publishes the current state of the marker set
@@ -631,28 +609,31 @@ public class MarkerVisualization {
 		public void run() {
 
 			try {
-				Publisher<Marker> pub = n.advertise("visualization_marker", new Marker(), 100);
-
 				while(n.isValid()) {
-
-					synchronized (markers) {
-						for(String mrk : markers.keySet())
-							pub.publish(markers.get(mrk));
-					}
-					n.spinOnce();
-					Thread.sleep(2000);
+					publishMarkers();
+					Thread.sleep(10000);
 				}
 
 				pub.shutdown();
 
-			} catch (RosException e) {
-				e.printStackTrace();
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
 		}
 	}
 
+	public void publishMarkers() {
+		synchronized (markers) {
+			
+			MarkerArray arr = new MarkerArray();
+			
+			for(Marker mrk : markers.values()) {
+				arr.markers.add(mrk);
+			}
+			pub.publish(arr);
+		}
+		n.spinOnce();
+	}
 
 	public static void main(String args[]) {
 

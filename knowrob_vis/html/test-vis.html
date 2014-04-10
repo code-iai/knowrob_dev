@@ -16,6 +16,7 @@
   <script type="text/javascript" src="ros3d.js"></script>
   <script type="text/javascript" src="json_prolog.js"></script>
   <script type="text/javascript" src="MarkerClient.js"></script>
+  <script type="text/javascript" src="MarkerArrayClient.js"></script>
   <link rel="stylesheet" type="text/css" href="screen.css"/>
 
   <!--<script src="http://d3js.org/d3.v3.min.js"></script>-->
@@ -66,6 +67,14 @@
         tfClient : tfClient,
         topic : '/visualization_marker',
         rootObject : viewer.scene
+      });
+      
+      // Setup the marker array client.
+      var markerArrayClient = new ROS3D.MarkerArrayClient({
+        ros : ros,
+        tfClient : tfClient,
+        topic : '/visualization_marker_array',
+        markerClient : markerClient
       });
 
       var listener = new ROSLIB.Topic({
