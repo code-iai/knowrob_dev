@@ -39,8 +39,6 @@ public class MarkerVisualization {
 
 	static Ros ros;
 	public static NodeHandle n;
-	Thread markerPublisher;
-
 	Publisher<MarkerArray> pub;
 	
 	/**
@@ -86,63 +84,9 @@ public class MarkerVisualization {
 		trajectories = new HashMap<String, List<String>>();
 
 		try {
-			pub = n.advertise("visualization_marker_array", new MarkerArray(), 1000);
+			pub = n.advertise("visualization_marker_array", new MarkerArray(), 1000, true);
 		} catch (RosException e) {
 			e.printStackTrace();
-		}
-		
-		// spawn new thread that publishes the markers in the HashMap
-		markerPublisher = new Thread( new PublisherThread() );
-		markerPublisher.start();
-	}
-
-
-	/**
-	 * Show hands and base trajectory in visualization.
-	 *
-	 * @param starttime OWL identifier of a timepoint instance
-	 * @param endtime OWL identifier of a timepoint instance
-	 * @param interval in seconds
-	 */
-	public void showTrajectory(String tflink, String starttime, String endtime, String interval) {
-
-		String identifier;
-		String timepoint;
-
-		removeTrajectory(tflink);
-		trajectories.put(tflink, new ArrayList<String>());
-
-		for (double i = Double.parseDouble(starttime.substring(starttime.indexOf("timepoint_") + 10)); i <= Double.parseDouble(endtime.substring(endtime.indexOf("timepoint_") + 10)); i += Double.parseDouble(interval)) {
-
-			timepoint = "'" + starttime.substring(0, starttime.indexOf("timepoint_")) + starttime.substring(starttime.indexOf("timepoint_"), starttime.indexOf("timepoint_") + 10) + new DecimalFormat("###.###").format(i) + "'";//String.valueOf(i);
-			identifier = tflink + new DecimalFormat("###.###").format(i);//String.valueOf(i);
-
-			// read marker from Prolog
-			Marker m = readLinkMarkerFromProlog(tflink, timepoint);
-
-			// add marker to map
-			if(m!=null) {
-				trajectories.get(tflink).add(identifier);
-				synchronized (markers) {
-					markers.put(identifier, m);
-				}
-			}
-
-		}
-	}
-
-	/**
-	 * Remove trajectory markers
-         */
-	public void removeTrajectory(String tflink) {
-		if (trajectories.get(tflink) != null){
-			for (int i = 0; i < trajectories.get(tflink).size(); i++) {
-				// remove the object from the list
-				synchronized (markers) {
-					markers.remove(trajectories.get(tflink).get(i));
-				}
-			}
-			trajectories.remove(tflink);
 		}
 	}
 
@@ -153,16 +97,8 @@ public class MarkerVisualization {
 	 * @param timepoint  OWL identifier of a timepoint instance
 	 */
 	public void addObject(String identifier, String timepoint) {
-
-		// read marker from Prolog
-		Marker m = readMarkerFromProlog(identifier, timepoint);
-
-		// add marker to map
-		if(m!=null) {
-			synchronized (markers) {
-				markers.put(identifier, m);
-			}
-		}
+		addMarker(identifier, timepoint);
+		publishMarkers();
 	}
 
 
@@ -176,15 +112,14 @@ public class MarkerVisualization {
 	public void addObjectWithChildren(String identifier, String timepoint) {
 
 		// add this object
-		addObject(identifier, timepoint);
+		addMarker(identifier, timepoint);
 
 		// read children and add them too
 		for(String child : readChildren(identifier))
-			addObject(child, timepoint);
+			addMarker(child, timepoint);
 		
 		publishMarkers();
 	}
-
 
 
 	/**
@@ -198,6 +133,8 @@ public class MarkerVisualization {
 		synchronized (markers) {
 			markers.remove(identifier);
 		}
+
+		publishMarkers();
 	}
 
 	/**
@@ -208,11 +145,13 @@ public class MarkerVisualization {
 	public void removeObjectWithChildren(String identifier) {
 
 		// remove this object
-		removeObject(identifier);
+		markers.remove(identifier);
 
 		// remove children and remove them too
 		for(String child : readChildren(identifier))
-			removeObject(child);
+			markers.remove(child);
+		
+		publishMarkers();
 	}
 
 
@@ -223,6 +162,7 @@ public class MarkerVisualization {
 		synchronized (markers) {
 			markers.clear();
 		}
+		publishMarkers();
 	}
 
 
@@ -292,6 +232,7 @@ public class MarkerVisualization {
 				}
 			}
 		}
+		publishMarkers();
 	}
 
 
@@ -310,6 +251,7 @@ public class MarkerVisualization {
 		for(String child : readChildren(identifier)) {
 			highlight(child, highlight);
 		}
+		publishMarkers();
 	}
 
 
@@ -327,8 +269,59 @@ public class MarkerVisualization {
 				}
 			}
 		}
+		publishMarkers();
 	}
 
+
+
+	/**
+	 * Show hands and base trajectory in visualization.
+	 *
+	 * @param starttime OWL identifier of a timepoint instance
+	 * @param endtime OWL identifier of a timepoint instance
+	 * @param interval in seconds
+	 */
+	public void showTrajectory(String tflink, String starttime, String endtime, String interval) {
+
+		String identifier;
+		String timepoint;
+
+		removeTrajectory(tflink);
+		trajectories.put(tflink, new ArrayList<String>());
+
+		for (double i = Double.parseDouble(starttime.substring(starttime.indexOf("timepoint_") + 10)); i <= Double.parseDouble(endtime.substring(endtime.indexOf("timepoint_") + 10)); i += Double.parseDouble(interval)) {
+
+			timepoint = "'" + starttime.substring(0, starttime.indexOf("timepoint_")) + starttime.substring(starttime.indexOf("timepoint_"), starttime.indexOf("timepoint_") + 10) + new DecimalFormat("###.###").format(i) + "'";//String.valueOf(i);
+			identifier = tflink + new DecimalFormat("###.###").format(i);//String.valueOf(i);
+
+			// read marker from Prolog
+			Marker m = readLinkMarkerFromProlog(tflink, timepoint);
+
+			// add marker to map
+			if(m!=null) {
+				trajectories.get(tflink).add(identifier);
+				synchronized (markers) {
+					markers.put(identifier, m);
+				}
+			}
+
+		}
+	}
+
+	/**
+	 * Remove trajectory markers
+         */
+	public void removeTrajectory(String tflink) {
+		if (trajectories.get(tflink) != null){
+			for (int i = 0; i < trajectories.get(tflink).size(); i++) {
+				// remove the object from the list
+				synchronized (markers) {
+					markers.remove(trajectories.get(tflink).get(i));
+				}
+			}
+			trajectories.remove(tflink);
+		}
+	}
 
 
 	// // // // // // // // // // // // // // // // // // // // // // // // // // //
@@ -349,53 +342,45 @@ public class MarkerVisualization {
 		n = ros.createNodeHandle();
 
 	}
+	
+
+	/**
+	 * Create a MarkerArray from the internal 'markers' buffer and publish 
+	 * it to the visualization_marker_array topic.
+	 */
+	public void publishMarkers() {
+		synchronized (markers) {
+			
+			MarkerArray arr = new MarkerArray();
+			
+			for(Marker mrk : markers.values()) {
+				arr.markers.add(mrk);
+			}
+			pub.publish(arr);
+		}
+		n.spinOnce();
+	}
 
 
 	/**
-	 * Read children of an object instance that are either linked
-	 * by the 'properPhysicalParts' property or (inversely) by the
-	 * 'describedInMap' property.
-	 *
-	 * @param parent The parent whose children are to the returned, as OWL identifier
-	 * @return Array of OWL identifiers of all children
+	 * Helper method: create Marker instance and add it to the internal buffer
+	 * 
+	 * @param identifier
+	 * @param timepoint
 	 */
-	private String[] readChildren(String parent) {
+	protected void addMarker(String identifier, String timepoint) {
+		
+		// read marker from Prolog
+		Marker m = readMarkerFromProlog(identifier, timepoint);
 
-		HashSet<String> children = new HashSet<String>();
-
-		// if parent is map, read map objects; otherwise, the rdf_reachable returns the parent itself
-
-		HashMap<String, Vector<String>> mapParts = PrologInterface.executeQuery(
-				"rdf_reachable(PART, knowrob:describedInMap, '"+parent+"')");
-
-		if(mapParts != null && mapParts.get("PART") != null) {
-			for(int i=0;i<mapParts.get("PART").size();i++) {
-				if(!mapParts.get("PART").get(i).equals(parent)) {
-
-					// add object to children set
-					children.add(OWLThing.removeSingleQuotes(mapParts.get("PART").get(i)));
-
-
-					// read all physical parts of all child objects
-					HashMap<String, Vector<String>> parts = PrologInterface.executeQuery(
-							"rdf_reachable("+mapParts.get("PART").get(i)+", knowrob:properPhysicalParts, P);" +
-							"rdf_reachable("+mapParts.get("PART").get(i)+", 'http://ias.cs.tum.edu/kb/srdl2-comp.owl#subComponent', P);" +
-							"rdf_reachable("+mapParts.get("PART").get(i)+", 'http://ias.cs.tum.edu/kb/srdl2-comp.owl#successorInKinematicChain', P)");
-
-					if(parts != null && parts.get("P") != null) {
-
-						for(int j=0;j<parts.get("P").size();j++) {
-							if(!parts.get("P").get(j).toString().equals(mapParts.get("PART").get(i))) {
-								children.add(OWLThing.removeSingleQuotes(parts.get("P").get(j)));
-							}
-						}
-					}
-				}
+		// add marker to map
+		if(m!=null) {
+			synchronized (markers) {
+				markers.put(identifier, m);
 			}
 		}
-		return children.toArray(new String[]{});
 	}
-
+	
 
 	/**
 	 * Read object information from Prolog and create a marker from it
@@ -597,43 +582,50 @@ public class MarkerVisualization {
 
 
 	/**
-	 * Thread that publishes the current state of the marker set
-	 * to the visualization_marker topic.
+	 * Read children of an object instance that are either linked
+	 * by the 'properPhysicalParts' property or (inversely) by the
+	 * 'describedInMap' property.
 	 *
-	 * @author tenorth@cs.uni-bremen.de
-	 *
+	 * @param parent The parent whose children are to the returned, as OWL identifier
+	 * @return Array of OWL identifiers of all children
 	 */
-	public class PublisherThread implements Runnable {
+	private String[] readChildren(String parent) {
 
-		@Override
-		public void run() {
+		HashSet<String> children = new HashSet<String>();
 
-			try {
-				while(n.isValid()) {
-					publishMarkers();
-					Thread.sleep(10000);
+		// if parent is map, read map objects; otherwise, the rdf_reachable returns the parent itself
+
+		HashMap<String, Vector<String>> mapParts = PrologInterface.executeQuery(
+				"rdf_reachable(PART, knowrob:describedInMap, '"+parent+"')");
+
+		if(mapParts != null && mapParts.get("PART") != null) {
+			for(int i=0;i<mapParts.get("PART").size();i++) {
+				if(!mapParts.get("PART").get(i).equals(parent)) {
+
+					// add object to children set
+					children.add(OWLThing.removeSingleQuotes(mapParts.get("PART").get(i)));
+
+
+					// read all physical parts of all child objects
+					HashMap<String, Vector<String>> parts = PrologInterface.executeQuery(
+							"rdf_reachable("+mapParts.get("PART").get(i)+", knowrob:properPhysicalParts, P);" +
+							"rdf_reachable("+mapParts.get("PART").get(i)+", 'http://ias.cs.tum.edu/kb/srdl2-comp.owl#subComponent', P);" +
+							"rdf_reachable("+mapParts.get("PART").get(i)+", 'http://ias.cs.tum.edu/kb/srdl2-comp.owl#successorInKinematicChain', P)");
+
+					if(parts != null && parts.get("P") != null) {
+
+						for(int j=0;j<parts.get("P").size();j++) {
+							if(!parts.get("P").get(j).toString().equals(mapParts.get("PART").get(i))) {
+								children.add(OWLThing.removeSingleQuotes(parts.get("P").get(j)));
+							}
+						}
+					}
 				}
-
-				pub.shutdown();
-
-			} catch (InterruptedException e) {
-				e.printStackTrace();
 			}
 		}
+		return children.toArray(new String[]{});
 	}
 
-	public void publishMarkers() {
-		synchronized (markers) {
-			
-			MarkerArray arr = new MarkerArray();
-			
-			for(Marker mrk : markers.values()) {
-				arr.markers.add(mrk);
-			}
-			pub.publish(arr);
-		}
-		n.spinOnce();
-	}
 
 	public static void main(String args[]) {
 
