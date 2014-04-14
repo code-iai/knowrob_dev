@@ -306,6 +306,7 @@ public class MarkerVisualization {
 			}
 
 		}
+		publishMarkers();
 	}
 
 	/**
@@ -321,6 +322,7 @@ public class MarkerVisualization {
 			}
 			trajectories.remove(tflink);
 		}
+		publishMarkers();
 	}
 
 
