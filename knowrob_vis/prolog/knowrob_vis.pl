@@ -190,7 +190,7 @@ remove_object_with_children(Identifier) :-
 % @param Interval   Sampling interval, describing the 
 %
 add_trajectory(Link, Starttime, Endtime) :-
-  add_trajectory(Link, Starttime, Endtime, '1.0').
+  add_trajectory(Link, Starttime, Endtime, 1.0).
 
 add_trajectory(Link, Starttime, Endtime, Interval) :-
     v_canvas(Canvas),
@@ -347,7 +347,7 @@ add_diagram(Id, Title, Type, Xlabel, Ylabel, Width, Height, Fontsize, ValueList)
 % @param ValueList  List of data ranges, each of the form [[a,b],['1','2']]
 %
 add_piechart(Id, Title, ValueList) :-
-    add_diagram(Id, Title, 'piechart', '', '', '300', '300', '12px', ValueList).
+    add_diagram(Id, Title, 'piechart', '', '', 300, 300, '12px', ValueList).
 
 
 %% add_barchart(+Id, +Title, +ValueList) is nondet.
@@ -359,7 +359,7 @@ add_piechart(Id, Title, ValueList) :-
 % @param ValueList  List of data ranges, each of the form [[a,b],['1','2']]
 %
 add_barchart(Id, Title, ValueList) :-
-    add_diagram(Id, Title, 'barchart', '', '', '300', '300', '12px', ValueList).
+    add_diagram(Id, Title, 'barchart', '', '', 300, 300, '12px', ValueList).
 
     
 %% remove_diagram(+Id) is det.

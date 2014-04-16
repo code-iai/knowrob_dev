@@ -53,7 +53,7 @@ public class DiagramVisualization {
 	 * Add diagram to the visualization.
 	 *
 	 */
-	public void addDiagram(String id, String title, String type, String xlabel, String ylabel,String width, String height, String fontsize, String[][][] values) {
+	public void addDiagram(String id, String title, String type, String xlabel, String ylabel, int width, int height, String fontsize, String[][][] values) {
 
 		DataVis data = new DataVis();
 
@@ -61,8 +61,8 @@ public class DiagramVisualization {
 		data.title = title;
 		data.xlabel = xlabel;
 		data.ylabel = ylabel;
-		data.width = Integer.parseInt(width);
-		data.height = Integer.parseInt(height);
+		data.width = width;
+		data.height = height;
 		data.fontsize = fontsize;
 
 		if(type.equals("piechart")) {
