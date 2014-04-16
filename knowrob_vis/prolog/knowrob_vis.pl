@@ -3,7 +3,6 @@
   Description:
     Module providing visualisation capabilities
 
-
   Copyright (C) 2013 by Moritz Tenorth
 
   This program is free software; you can redistribute it and/or modify
@@ -42,8 +41,11 @@
       reset_highlight/0,
       diagram_canvas/0,
       add_diagram/9,
+      add_barchart/3,
+      add_piechart/3,
       remove_diagram/1,
       clear_diagram_canvas/0,
+      add_trajectory/3,
       add_trajectory/4,
       remove_trajectory/1
     ]).
@@ -68,7 +70,8 @@
             highlight_object_with_children(r,?),
             add_diagram(+,+,+,+,+,+,+,+,+),
             remove_diagram(+), % TODO: not sure if this is correct
-            add_trajectory(+,r,r,+).
+            add_trajectory(r,r,r),
+            add_trajectory(r,r,r,+).
 
 
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
@@ -102,7 +105,7 @@ clear_canvas :-
 
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
 %
-% Add / remove objects
+% Add / remove objects and trajectories
 %
 
 %% add_object(+Identifier) is nondet.
@@ -173,6 +176,47 @@ remove_object(Identifier) :-
 remove_object_with_children(Identifier) :-
     v_canvas(Canvas),
     jpl_call(Canvas, 'removeObjectWithChildren', [Identifier], _).
+
+
+%% add_trajectory(+Link, +Starttime, +Endtime) is det.
+%% add_trajectory(+Link, +Starttime, +Endtime, +Interval) is det.
+%
+% Reads a trajectory from logged tf data and visualizes it in the
+% Web-based canvas.
+%
+% @param Link     OWL individual or tf identifier of the link for which the trajectory is to be shown
+% @param Starttime  Time stamp identifier for the beginning of the trajectory
+% @param Endtime    Time stamp identifier for the end of the trajectory
+% @param Interval   Sampling interval, describing the 
+%
+add_trajectory(Link, Starttime, Endtime) :-
+  add_trajectory(Link, Starttime, Endtime, '1.0').
+
+add_trajectory(Link, Starttime, Endtime, Interval) :-
+    v_canvas(Canvas),
+
+    ((rdf_has(Link, 'http://ias.cs.tum.edu/kb/srdl2-comp.owl#urdfName', literal(Tf)),
+      atomic_list_concat(['/', Tf], TfLink)) ;
+     (TfLink = Link)),!,
+    
+    jpl_call(Canvas, 'showTrajectory', [TfLink, Starttime, Endtime, Interval], _).
+
+
+%% remove_trajectory(+Link) is det.
+%
+% Removes all trajectories for the link 'TfLink' from the visualization. 
+%
+% @param Link     Tf identifier of the link for which the trajectory is to be removed
+% 
+remove_trajectory(Link) :-
+    v_canvas(Canvas),
+    
+    ((rdf_has(Link, 'http://ias.cs.tum.edu/kb/srdl2-comp.owl#urdfName', literal(Tf)),
+      atomic_list_concat(['/', Tf], TfLink)) ;
+     (TfLink = Link)),!,
+     
+    jpl_call(Canvas, 'removeTrajectory', [TfLink], _).
+
 
 
 
@@ -261,7 +305,6 @@ reset_highlight :-
 %
 
 
-
 %% diagram_canvas is det.
 %
 % Launch the diagram data publisher
@@ -276,32 +319,64 @@ diagram_canvas(Canvas) :-
     d_canvas(Canvas).
 
 
-%% add_diagram(+Identifier, +Time) is nondet.
+%% add_diagram(+Id, +Title, +Type, +Xlabel, +Ylabel, +Width, +Height, +Fontsize, +ValueList) is nondet.
 %
 % Add object to the scene with its position at time 'Time'
 %
-% @param Identifier Object identifier, eg. "http://ias.cs.tum.edu/kb/ias_semantic_map.owl#F360-Containers-revised-walls"
+% @param Identifier Unique string identifier for this diagram
+% @param Title      Title of this chart
+% @param Type       Type of the diagram (piechart, barchart or treechart)
+% @param Xlabel     Label for the X axis
+% @param Ylabel     Label for the Y axis
+% @param Width      Width of the diagram in px
+% @param Height     Height of the diagram in px
+% @param Fontsize   Fontsize for the labels
+% @param ValueList  List of data ranges, each of the form [[a,b],['1','2']]
 %
 add_diagram(Id, Title, Type, Xlabel, Ylabel, Width, Height, Fontsize, ValueList) :-
     d_canvas(Canvas),
     lists_to_arrays(ValueList, ValueArr),
     jpl_call(Canvas, 'addDiagram', [Id, Title, Type, Xlabel, Ylabel, Width, Height, Fontsize, ValueArr], _),!.
 
+%% add_piechart(+Id, +Title, +ValueList) is nondet.
+%
+% Simplified predicate for adding a piechart with default values
+%
+% @param Identifier Unique string identifier for this diagram
+% @param Title      Title of this chart
+% @param ValueList  List of data ranges, each of the form [[a,b],['1','2']]
+%
+add_piechart(Id, Title, ValueList) :-
+    add_diagram(Id, Title, 'piechart', '', '', '300', '300', '12px', ValueList).
+
+
+%% add_barchart(+Id, +Title, +ValueList) is nondet.
+%
+% Simplified predicate for adding a barchart with default values
+%
+% @param Identifier Unique string identifier for this diagram
+% @param Title      Title of this chart
+% @param ValueList  List of data ranges, each of the form [[a,b],['1','2']]
+%
+add_barchart(Id, Title, ValueList) :-
+    add_diagram(Id, Title, 'barchart', '', '', '300', '300', '12px', ValueList).
+
+    
+%% remove_diagram(+Id) is det.
+%
+% Remove the diagram specified by 'id'
+%
+% @param Id Unique string identifier for the chart to be removed
+% 
 remove_diagram(Id) :-
     d_canvas(Canvas),
     jpl_call(Canvas, 'removeDiagram', [Id], _),!.
 
+%% clear_diagram_canvas is det.
+%
+% Remove all diagrams from the canvas.
+% 
 clear_diagram_canvas :-
     d_canvas(Canvas),
     jpl_call(Canvas, 'clear', [], _).
-
-%% add_trajectory(+Tflink, +Starttime, +Endtime, +Interval)
-% TODO description
-add_trajectory(Tflink, Starttime, Endtime, Interval) :-
-    v_canvas(Canvas),
-    jpl_call(Canvas, 'showTrajectory', [Tflink, Starttime, Endtime, Interval], _).
-
-remove_trajectory(Tflink) :-
-    v_canvas(Canvas),
-    jpl_call(Canvas, 'removeTrajectory', [Tflink], _).
 
