@@ -12,6 +12,8 @@ import java.text.DecimalFormat;
 import javax.vecmath.Matrix4d;
 import javax.vecmath.Quat4d;
 
+import org.knowrob.tfmemory.TFMemory;
+
 import ros.NodeHandle;
 import ros.Publisher;
 import ros.Ros;
@@ -19,8 +21,10 @@ import ros.RosException;
 import ros.communication.Duration;
 import ros.communication.Time;
 import ros.pkg.std_msgs.msg.ColorRGBA;
+import ros.pkg.tf.msg.tfMessage;
 import ros.pkg.visualization_msgs.msg.Marker;
 import ros.pkg.visualization_msgs.msg.MarkerArray;
+import tfjava.StampedTransform;
 import edu.tum.cs.ias.knowrob.owl.OWLThing;
 import edu.tum.cs.ias.knowrob.prolog.PrologInterface;
 
@@ -539,41 +543,26 @@ public class MarkerVisualization {
 		m.color.a = 1.0f;
 
 		try {
-			// read object pose
-			HashMap<String, Vector<String>> res = PrologInterface.executeQuery(
-					"mng_lookup_transform('/map', '"+ link + "', "+ timepoint + ", T), T = [M00, M01, M02, M03, M10, M11, M12, M13, M20, M21, M22, M23, M30, M31, M32, M33]");
+			
+			TFMemory tf = TFMemory.getInstance();
+			
+			String ts = timepoint.split("timepoint_")[1];
+			double posix_ts = Double.valueOf(ts.substring(0, ts.length()-1));
+			
+			Time time = new Time();
+			time.secs = (int)posix_ts;
+			time.nsecs = (int) (1E9 * (posix_ts - ((int) posix_ts)));
+			
+			StampedTransform tr = tf.lookupTransform("/map", link, time);
+			m.pose.position.x = tr.getTranslation().x;
+			m.pose.position.y = tr.getTranslation().y;
+			m.pose.position.z = tr.getTranslation().z;
 
-			if (res!=null && res.get("M00") != null && res.get("M00").size() > 0 && res.get("M00").get(0)!=null) {
-
-				double[] p = new double[16];
-				Matrix4d poseMat = new Matrix4d(p);
-
-				for(int i=0;i<4;i++) {
-					for(int j=0;j<4;j++) {
-						poseMat.setElement(i, j, Double.valueOf(res.get("M"+i+j).get(0)));
-					}
-				}
-
-				Quat4d q = new Quat4d();
-				q.set(poseMat);
-
-				m.pose.orientation.w = q.w;
-				m.pose.orientation.x = q.x;
-				m.pose.orientation.y = q.y;
-				m.pose.orientation.z = q.z;
-
-				m.pose.position.x = poseMat.m03;
-				m.pose.position.y = poseMat.m13;
-				m.pose.position.z = poseMat.m23;
-
-				// debug
-				//System.err.println("adding " + identifier + " at pose [" + m.pose.position.x + ", " + m.pose.position.y + ", " + m.pose.position.z + "]");
-
-			} else {
-				System.err.println("fail");
-				m.type = Marker.CUBE;
-			}
-
+			m.pose.orientation.w = tr.getRotation().w;
+			m.pose.orientation.x = tr.getRotation().x;
+			m.pose.orientation.y = tr.getRotation().y;
+			m.pose.orientation.z = tr.getRotation().z;
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
