@@ -62,8 +62,8 @@
 
     {"q": "", "text": ""},
     {"q": "", "text": "----- Belief of the Robot -----"},
-    {"q": "task_goal(A,'GRASP'),task_end(A,End), !,\n	mng_robot_pose_at_time(pr2:'PR2Robot1','/map',End,Pose),\n	add_object_with_children(pr2:'PR2Robot1',End).", "text": " Where was the robot localized at the time of grasp?"},
-    {"q": "findall([Obj, E], \n	((task_end(T,E), task_class(T,knowrob:'UIMAPerception'), returned_value(T, Obj))), \n	 Objs),!, member([Obj, E], Objs), belief_at(loc(Obj,Loc), E), \n	add_object_as_semantic_instance(Obj, Loc, E, SemanticMapInstance), \n	add_object_with_children(SemanticMapInstance).", "text": "Where were the objects perceived during the execution?"},
+    {"q": "task_goal(A,'GRASP'),task_end(A,End), !,\n mng_robot_pose_at_time(pr2:'PR2Robot1','/map',End,Pose),\n add_object_with_children(pr2:'PR2Robot1',End).", "text": " Where was the robot localized at the time of grasp?"},
+    {"q": "findall([Obj, E], \n ((task_end(T,E), task_class(T,knowrob:'UIMAPerception'), returned_value(T, Obj))), \n  Objs),!, member([Obj, E], Objs), belief_at(loc(Obj,Loc), E), \n add_object_as_semantic_instance(Obj, Loc, E, SemanticMapInstance), \n add_object_with_children(SemanticMapInstance).", "text": "Where were the objects perceived during the execution?"},
     {"q": "task(T), task_goal(T, '(OBJECT-PLACED-AT ?OBJ ?LOC)'), task_start(T, S), task_end(T, E), add_trajectory('/base_link', S, E, '1').", "text": "PR2's path during the execution"},
     {"q": "remove_object_with_children(pr2:'PR2Robot1').", "text": "Stop publishing PR2 markers"},
     {"q": "remove_trajectory('/base_link').", "text": "Stop publishing trajectories to the scene"},
