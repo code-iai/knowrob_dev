@@ -27,10 +27,19 @@ public class MeshReasoningTest {
 
 //		String path = "/home/tenorth/work/ros/groovy/rosbuild_ws/stacks/knowrob_addons/knowrob_cad_models/models/drinking-vessels/cup2.dae";
 //		String path = "/home/tenorth/work/ros/groovy/rosbuild_ws/stacks/knowrob_addons/knowrob_cad_models/models/kitchen-tools/spatula.kmz";
-		String path = "/home/andrei/Documents/Programming/gsoc_docs/models/tools/paintbrush2.kmz";
+//		String path = "/home/andrei/Documents/Programming/gsoc_docs/models/tools/paintbrush2.kmz";
 //		String path = "/home/tenorth/work/ros/groovy/rosbuild_ws/stacks/knowrob_addons/knowrob_cad_models/models/food-drinks/mondamin-pancake-mix.dae";
 		
-
+//		String path = "C:\\Users\\rxstoi\\work\\ros\\vis\\models-stefan\\drinking-vessels\\cup2.dae";
+//		String path = "C:\\Users\\rxstoi\\work\\ros\\vis\\models-stefan\\kitchen-tools\\spatula.kmz";
+//		String path = "C:\\Users\\rxstoi\\work\\ros\\vis\\models-stefan\\tools\\paintbrush2.kmz";
+		String path = "C:\\Users\\rxstoi\\work\\ros\\vis\\models-stefan\\food-drinks\\mondamin-pancake-mix.dae";
+//		String path = "C:\\Users\\rxstoi\\work\\ros\\vis\\models-stefan\\from-3dnet\\hammer\\5b4574dd6fec612e3d2dd82a57bb3bd7.ply";
+//		String path = "C:\\Users\\rxstoi\\work\\ros\\vis\\models-stefan\\from-3dnet\\hammer\\94dbb6874c576ee428bcb63ced82086c.ply";
+//		String path = "C:\\Users\\rxstoi\\work\\ros\\vis\\models\\primitive\\CylinderPart.dae";
+//		String path = "C:\\Users\\rxstoi\\work\\ros\\vis\\models\\primitive\\cone.dae";
+//		String path = "C:\\Users\\rxstoi\\work\\ros\\vis\\models\\primitive\\cylinder.dae";
+		
 		MeshReasoning mr = MeshReasoning.initMeshReasoning(true);
 
 		mr.analyseByPath(path);

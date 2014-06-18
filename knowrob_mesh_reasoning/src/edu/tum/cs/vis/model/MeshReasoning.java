@@ -7,6 +7,7 @@
  ******************************************************************************/
 package edu.tum.cs.vis.model;
 
+//import java.io.File;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -47,6 +48,7 @@ import edu.tum.cs.vis.model.util.PrimitiveAnnotationAreaComparator;
 import edu.tum.cs.vis.model.util.Triangle;
 import edu.tum.cs.vis.model.util.Vertex;
 import edu.tum.cs.vis.model.util.algorithm.CurvatureCalculation;
+import edu.tum.cs.vis.model.util.algorithm.ModelProcessing;
 import edu.tum.cs.vis.model.view.MeshReasoningView;
 import edu.tum.cs.vis.model.view.MeshReasoningViewControl;
 
@@ -213,7 +215,8 @@ public class MeshReasoning {
 
 		// normalize model for further reasoning
 		model.normalize();
-
+		System.out.println("no. tr:" + model.getTriangles().size());
+		
 		// list of current running analyzers used in mesh reasoning view
 		ArrayList<MeshAnalyser> analyser;
 		if (mrv != null) {
@@ -238,7 +241,6 @@ public class MeshReasoning {
 				cas.setModelFile(pkgPath + filePath);
 		}
 		
-
 		// in ply (and also collada) files there may be double sided triangles
 		logger.debug("Checking for double sided triangles ...");
 		logger.debug("Removed " + model.removeDoubleSidedTriangles() + " triangles. Took: "
@@ -259,6 +261,25 @@ public class MeshReasoning {
 				+ ", Triangles: " + model.getTriangles().size() + ")");
 
 		// File f = model.exportVerticesAsTxt();
+
+		// here proceed with sharp edge detection
+		ModelProcessing processor = new ModelProcessing(model);
+		logger.debug("Checking for sharp edges in the model");
+		processor.sharpEdgeDetection();
+		model = processor.getModel();
+
+		System.out.println("no. tr after edge det:" + model.getTriangles().size());
+		
+		// recalculate vertex normals if new points were introduced in the model
+
+		logger.debug("Re-calculating vertex normals ...");
+		// model.updateVertexSharing();
+
+		model.updateVertexNormals();
+		logger.debug("Model re-initialized. Took: "
+				+ PrintUtil.prettyMillis(System.currentTimeMillis() - start) + " (Vertices: "
+				+ model.getVertices().size() + ", Lines: " + model.getLines().size()
+				+ ", Triangles: " + model.getTriangles().size() + ")");
 
 		if (imageGeneratorSettings != null) {
 			imageGeneratorSettings.waitSetup();

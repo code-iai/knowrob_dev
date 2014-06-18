@@ -40,7 +40,7 @@ import edu.tum.cs.vis.model.util.Vertex;
  */
 abstract class ACCUM {
 	/**
-	 * The accumulaor functor
+	 * The accumulator functor
 	 */
 	@SuppressWarnings("javadoc")
 	public abstract void a(final Model m, HashMap<Vertex, Curvature> curvatures, Vertex v0,
@@ -104,6 +104,7 @@ public class CurvatureCalculation {
 				c.getPrincipleDirectionMax().sub(v);
 			}
 		}
+		
 		for (Iterator<Vertex> it = m.getVertices().iterator(); it.hasNext();) {
 			Vertex v = it.next();
 
@@ -113,7 +114,7 @@ public class CurvatureCalculation {
 				it.remove();
 				continue;
 			}
-
+			
 			Vector3f tmp = new Vector3f();
 			tmp.cross(c.getPrincipleDirectionMax(), v.getNormalVector());
 			tmp.normalize();
@@ -158,8 +159,8 @@ public class CurvatureCalculation {
 			diagonalize_curv(c.getPrincipleDirectionMax(), c.getPrincipleDirectionMin(),
 					c.getCurvatureMax(), c.getCurvatureMinMax(), c.getCurvatureMin(), m
 							.getVertices().get(i).getNormalVector(), pdirRet, kRet);
-			c.setPrincipleDirectionMax(pdirRet[0]);
-			c.setPrincipleDirectionMin(pdirRet[1]);
+			c.setPrincipleDirectionMax(pdirRet[1]);
+			c.setPrincipleDirectionMin(pdirRet[0]);
 			c.setCurvatureMax(kRet[0]);
 			c.setCurvatureMin(kRet[1]);
 		}
@@ -181,7 +182,9 @@ public class CurvatureCalculation {
 		Vector3f t = new Vector3f(e[0]);
 		t.normalize();
 		Vector3f n = new Vector3f();
-		n.cross(e[0], e[1]);
+		//n.cross(e[0], e[1]);
+		n.cross(e[1], e[0]);
+		//n.normalize();
 		Vector3f b = new Vector3f();
 		b.cross(n, t);
 		b.normalize();
@@ -226,7 +229,6 @@ public class CurvatureCalculation {
 		// Push it back out to the vertices
 		for (int j = 0; j < 3; j++) {
 			Vertex vj = tri.getPosition()[j];
-
 			float c1, c12, c2;
 			float ret[] = proj_curv(t, b, m[0], m[1], m[2], curvatures.get(vj)
 					.getPrincipleDirectionMax(), curvatures.get(vj).getPrincipleDirectionMin());
@@ -266,7 +268,7 @@ public class CurvatureCalculation {
 			return;
 		calculateVoronoiArea(m);
 		calculateCurvature(curvatures, m);
-		setCurvatureHueSaturation(curvatures, m, 0.05f);
+		setCurvatureHueSaturation(curvatures, m, 0.5f);
 	}
 
 	/**
@@ -310,7 +312,7 @@ public class CurvatureCalculation {
 
 		ThreadPool.executeInPool(threads);
 	}
-
+	
 	/**
 	 * Calculate voronoi area for triangle and its vertices
 	 * 
@@ -481,7 +483,7 @@ public class CurvatureCalculation {
 		Vertex vert = m.getVertices().get(v);
 		if (vert.getNeighbors().size() == 0) {
 			// flt.set(0, 0, 0);
-			accum.a(m, curvatures, vert, flt, 1.0f, vert);
+			accum.a(m, curvatures, vert, flt, .5f, vert);
 			return;
 		}
 
@@ -495,6 +497,7 @@ public class CurvatureCalculation {
 		LinkedList<Vertex> boundary = new LinkedList<Vertex>();
 		boundary.addAll(vert.getNeighbors());
 		while (boundary.size() > 0) {
+//			System.out.println(boundary.size());
 			Vertex n = boundary.pop();
 			if (flags.get(n) != null && flags.get(n) == flag_curr_val)
 				continue;
