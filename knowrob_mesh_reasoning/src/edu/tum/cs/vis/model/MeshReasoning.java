@@ -215,7 +215,6 @@ public class MeshReasoning {
 
 		// normalize model for further reasoning
 		model.normalize();
-		System.out.println("no. tr:" + model.getTriangles().size());
 		
 		// list of current running analyzers used in mesh reasoning view
 		ArrayList<MeshAnalyser> analyser;
@@ -229,8 +228,7 @@ public class MeshReasoning {
 		
 		// remember model path (e.g. for saving cache files)
 		if (path.indexOf("://") <= 0) { // Is local file
-			cas.setModelFile(path);
-			
+			cas.setModelFile(path);	
 		} else if (path.startsWith("package://")) {
 			int st = path.indexOf('/') + 2;
 			int end = path.indexOf('/', st);
@@ -262,25 +260,27 @@ public class MeshReasoning {
 
 		// File f = model.exportVerticesAsTxt();
 
+//		this.printVertices(model.getVertices());
+		
 		// here proceed with sharp edge detection
 		ModelProcessing processor = new ModelProcessing(model);
-		logger.debug("Checking for sharp edges in the model");
+		logger.debug("Checking for sharp edges in the model ...");
 		processor.sharpEdgeDetection();
-		model = processor.getModel();
-
-		System.out.println("no. tr after edge det:" + model.getTriangles().size());
+//		this.printVertices(model.getVertices());
 		
 		// recalculate vertex normals if new points were introduced in the model
-
-		logger.debug("Re-calculating vertex normals ...");
-		// model.updateVertexSharing();
-
-		model.updateVertexNormals();
-		logger.debug("Model re-initialized. Took: "
-				+ PrintUtil.prettyMillis(System.currentTimeMillis() - start) + " (Vertices: "
-				+ model.getVertices().size() + ", Lines: " + model.getLines().size()
-				+ ", Triangles: " + model.getTriangles().size() + ")");
-
+		if (processor.getNumAddedTriangles() != 0) {
+			logger.debug("Added " + processor.getNumAddedTriangles() + " triangles");
+			logger.debug("Re-calculating vertex normals ...");
+			model.updateVertexNormals();
+			logger.debug("Model re-initialized. Took: "
+					+ PrintUtil.prettyMillis(System.currentTimeMillis() - start) + " (Vertices: "
+					+ model.getVertices().size() + ", Lines: " + model.getLines().size()
+					+ ", Triangles: " + model.getTriangles().size() + ")");
+		} else {
+			logger.debug("No triangles added. Proceeding with curvature computation ...");
+		}
+		
 		if (imageGeneratorSettings != null) {
 			imageGeneratorSettings.waitSetup();
 
@@ -311,9 +311,15 @@ public class MeshReasoning {
 		logger.debug("Calculating curvature ...");
 		long curvatureStartTime = System.currentTimeMillis();
 		CurvatureCalculation.calculateCurvatures(cas.getCurvatures(), model);
+		for (int i = 0 ; i < model.getVertices().size() ; ++i) {
+			System.out.println("--> " + i);
+			System.out.println(cas.getCurvature(model.getVertices().get(i)));
+		}
 		long curvatureDuration = System.currentTimeMillis() - curvatureStartTime;
 		logger.debug("Ended. Took: " + PrintUtil.prettyMillis(curvatureDuration));
 
+		//processor.KMeansVCClassification(cas.getCurvatures());
+		
 		if (imageGeneratorSettings != null && imageGeneratorSettings.isSaveCurvatureColor()) {
 			// wait until model is saved
 			mrv.setDrawCurvatureColor(true);
@@ -789,4 +795,18 @@ public class MeshReasoning {
 		frame.setTitle(title);
 	}
 
+	private void printVertices(List<Vertex> vertices) {
+		for (int i = 0 ; i < vertices.size() ; ++i) {
+			System.out.println("v.id: " + i);
+			System.out.println("-> " + vertices.get(i));
+			if (vertices.get(i).isSharpVertex()) {
+				System.out.println("sharp");
+			}
+			else {
+				System.out.println("not sharp");
+			}
+		}
+		System.out.println("\n");
+	}
+	
 }
