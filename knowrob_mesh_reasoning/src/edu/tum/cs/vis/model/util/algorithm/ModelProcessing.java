@@ -253,7 +253,7 @@ public class ModelProcessing{
 		model.getVertices().add(newVertex);
 		Triangle[] newTriangle = new Triangle[3];
 		for (int i = 0 ; i < 3 ; ++i) {
-			newTriangle[i] = new Triangle(t.getPosition()[i],newVertex,t.getPosition()[(i+1)%3]);
+			newTriangle[i] = new Triangle(t.getPosition()[i],t.getPosition()[(i+1)%3],newVertex);
 			newTriangle[i].setAppearance(t.getAppearance());
 			newTriangle[i].setNormalVector(t.getNormalVector());
 		}
@@ -271,7 +271,7 @@ public class ModelProcessing{
 				Triangle n = neighbors.get(j);
 				int cont = 0;
 				for (Vertex v : n.getPosition()) {
-					if ((v.sameCoordinates(newTriangle[i].getPosition()[0])) || (v.sameCoordinates(newTriangle[i].getPosition()[2]))) {
+					if ((v.sameCoordinates(newTriangle[i].getPosition()[0])) || (v.sameCoordinates(newTriangle[i].getPosition()[1]))) {
 						cont++;
 					}
 				}
