@@ -39,19 +39,19 @@ public class ModelImageGenerator {
 	/**
 	 * Source folder which contains all the models. Traversed recursively.
 	 */
-	public static final String			MODEL_DIR			= "/home/stefan/work/models";
+	public static String			MODEL_DIR			= "";
 	/**
 	 * Output folder for images. The folder structure of the source folder is recreated in this
 	 * folder.
 	 */
-	public static final String			IMAGE_DIR			= "/home/stefan/work/model_images";
+	public static String			IMAGE_DIR			= "";
 
 	/**
 	 * Recreate images also for already created ones. This means that already existing images will
 	 * be overwritten (useful if algorithm has changed and new images for all model, not only new
 	 * ones, should be created).
 	 */
-	public static final boolean			ALSO_EXISTING_ONES	= true;
+	public static final boolean			ALSO_EXISTING_ONES	= false;
 
 	// static ImageGeneratorSettings settings;
 
@@ -135,7 +135,7 @@ public class ModelImageGenerator {
 		ImageGeneratorSettings imageGeneratorSettings = new ImageGeneratorSettings(new File(
 				inputFolder), new File(outputFolder));
 		final MeshReasoning mr = MeshReasoning.initMeshReasoning(true, imageGeneratorSettings);
-		mr.setFrameTitle(filename);
+//		mr.setFrameTitle(filename);
 		mr.analyseByPath(path);
 	}
 
@@ -149,6 +149,23 @@ public class ModelImageGenerator {
 
 		DOMConfigurator.configureAndWatch("log4j.xml", 60 * 1000);
 
+		if(args.length == 0) {
+			System.err.println("Usage: \n" +
+					"  java -jar img-gen.jar <model dir> [<image dir>]");
+			return;
+		} else {
+			
+			if(args.length > 0)  {
+				MODEL_DIR = args[0];
+			} 
+			if (args.length > 1) {
+				IMAGE_DIR = args[1];
+			} else {
+				IMAGE_DIR = MODEL_DIR;
+			}
+		} 
+		
+		
 		processStartTime = System.currentTimeMillis();
 		File dir = new File(MODEL_DIR);
 		if (!dir.exists()) {
@@ -252,7 +269,7 @@ public class ModelImageGenerator {
 	 * 
 	 */
 	public static void recursiveTraversal(File fileObject) {
-		if (fileObject.isDirectory()) {
+		if (fileObject.isDirectory() && !fileObject.isHidden()) {
 			logger.debug("Next directory: " + fileObject.getAbsolutePath());
 			File allFiles[] = fileObject.listFiles();
 			for (File aFile : allFiles) {

@@ -11,7 +11,7 @@
 
   <depend package="rosjava_jni"/>
 <!--   <depend package="mod_vis"/> -->
-  <depend package="knowrob_cad_parser"/>
+<!--   <depend package="knowrob_cad_parser"/> -->
   <depend package="json_prolog"/>
   <depend package="visualization_msgs"/>
   <depend package="knowrob_mongo"/>

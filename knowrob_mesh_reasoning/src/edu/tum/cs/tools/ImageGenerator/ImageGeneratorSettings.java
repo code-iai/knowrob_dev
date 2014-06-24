@@ -127,7 +127,7 @@ public class ImageGeneratorSettings {
 	/**
 	 * Save model image colored by curvature. postfix: curvature
 	 */
-	private boolean																	saveCurvatureColor				= true;
+	private boolean																	saveCurvatureColor				= false;
 
 	/**
 	 * Use white background (black otherwise).

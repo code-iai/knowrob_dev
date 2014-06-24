@@ -239,24 +239,24 @@ public class MeshReasoning {
 		}
 		
 
-		// in ply (and also collada) files there may be double sided triangles
-		logger.debug("Checking for double sided triangles ...");
-		logger.debug("Removed " + model.removeDoubleSidedTriangles() + " triangles. Took: "
-				+ PrintUtil.prettyMillis(System.currentTimeMillis() - start));
+//		// in ply (and also collada) files there may be double sided triangles
+//		logger.debug("Checking for double sided triangles ...");
+//		logger.debug("Removed " + model.removeDoubleSidedTriangles() + " triangles. Took: "
+//				+ PrintUtil.prettyMillis(System.currentTimeMillis() - start));
 
-		NeighborAnalyser na = new NeighborAnalyser();
-		analyser.add(na);
-		Thread.yield();
-		na.process(cas);
-
-		logger.debug("Checking for vertex sharing and calculating vertex normals ...");
-		model.updateVertexSharing();
-
-		model.updateVertexNormals();
-		logger.debug("Model initialized. Took: "
-				+ PrintUtil.prettyMillis(System.currentTimeMillis() - start) + " (Vertices: "
-				+ model.getVertices().size() + ", Lines: " + model.getLines().size()
-				+ ", Triangles: " + model.getTriangles().size() + ")");
+//		NeighborAnalyser na = new NeighborAnalyser();
+//		analyser.add(na);
+//		Thread.yield();
+//		na.process(cas);
+//
+//		logger.debug("Checking for vertex sharing and calculating vertex normals ...");
+//		model.updateVertexSharing();
+//
+//		model.updateVertexNormals();
+//		logger.debug("Model initialized. Took: "
+//				+ PrintUtil.prettyMillis(System.currentTimeMillis() - start) + " (Vertices: "
+//				+ model.getVertices().size() + ", Lines: " + model.getLines().size()
+//				+ ", Triangles: " + model.getTriangles().size() + ")");
 
 		// File f = model.exportVerticesAsTxt();
 
@@ -286,31 +286,31 @@ public class MeshReasoning {
 		}
 
 		// Create analyzers and start them
-
-		logger.debug("Calculating curvature ...");
-		long curvatureStartTime = System.currentTimeMillis();
-		CurvatureCalculation.calculateCurvatures(cas.getCurvatures(), model);
-		long curvatureDuration = System.currentTimeMillis() - curvatureStartTime;
-		logger.debug("Ended. Took: " + PrintUtil.prettyMillis(curvatureDuration));
-
-		if (imageGeneratorSettings != null && imageGeneratorSettings.isSaveCurvatureColor()) {
-			// wait until model is saved
-			mrv.setDrawCurvatureColor(true);
-			imageGeneratorSettings.waitSaved("curvature");
-			mrv.setDrawCurvatureColor(false);
-		}
-
-		PrimitiveAnalyser pa = new PrimitiveAnalyser();
-		analyser.add(pa);
-		ContainerAnalyser ca = new ContainerAnalyser();
-		analyser.add(ca);
-		ComplexHandleAnalyser cha = new ComplexHandleAnalyser();
-		analyser.add(cha);
-
-		Thread.yield();
-		pa.process(cas, imageGeneratorSettings);
-		ca.process(cas, imageGeneratorSettings);
-		cha.process(cas, imageGeneratorSettings);
+//
+//		logger.debug("Calculating curvature ...");
+//		long curvatureStartTime = System.currentTimeMillis();
+//		CurvatureCalculation.calculateCurvatures(cas.getCurvatures(), model);
+//		long curvatureDuration = System.currentTimeMillis() - curvatureStartTime;
+//		logger.debug("Ended. Took: " + PrintUtil.prettyMillis(curvatureDuration));
+//
+//		if (imageGeneratorSettings != null && imageGeneratorSettings.isSaveCurvatureColor()) {
+//			// wait until model is saved
+//			mrv.setDrawCurvatureColor(true);
+//			imageGeneratorSettings.waitSaved("curvature");
+//			mrv.setDrawCurvatureColor(false);
+//		}
+//
+//		PrimitiveAnalyser pa = new PrimitiveAnalyser();
+//		analyser.add(pa);
+//		ContainerAnalyser ca = new ContainerAnalyser();
+//		analyser.add(ca);
+//		ComplexHandleAnalyser cha = new ComplexHandleAnalyser();
+//		analyser.add(cha);
+//
+//		Thread.yield();
+//		pa.process(cas, imageGeneratorSettings);
+//		ca.process(cas, imageGeneratorSettings);
+//		cha.process(cas, imageGeneratorSettings);
 
 		if (imageGeneratorSettings != null && imageGeneratorSettings.isCloseAfterFinish()) {
 			logger.debug("Closing ...");
@@ -542,9 +542,9 @@ public class MeshReasoning {
 		// If no view settings exist yet, allow to align model and then continue by pressing Ctrl+S
 		imageGeneratorSettings.setSaveView(true);
 		imageGeneratorSettings.setSavePlainModel(true);
-		imageGeneratorSettings.setSaveCurvatureColor(true);
+		// imageGeneratorSettings.setSaveCurvatureColor(true);
 		imageGeneratorSettings.setCloseAfterFinish(true);
-		imageGeneratorSettings.addAnalyserToSave(PrimitiveAnalyser.class, "segmented");
+		// imageGeneratorSettings.addAnalyserToSave(PrimitiveAnalyser.class, "segmented");
 		// don't show window
 		imageGeneratorSettings.setRunBackground(true);
 
@@ -554,119 +554,119 @@ public class MeshReasoning {
 		final MeshReasoning mr = this;
 
 		imageGeneratorSettings.clearAnalyserActions();
-		imageGeneratorSettings.addAnalyserAction(PrimitiveAnalyser.class,
-				new ImageGeneratorAction() {
-
-					@Override
-					public void trigger(ImageGeneratorSettings localSettings) {
-						mr.clearHightlight();
-						@SuppressWarnings("rawtypes")
-						PrimitiveAnnotation[] cones = mr.findAnnotationsCone().toArray(
-								new PrimitiveAnnotation[0]);
-						Arrays.sort(cones, new PrimitiveAnnotationAreaComparator());
-						int max = 3;
-						for (int i = 0; i < max && i < cones.length; i++) {
-							mr.highlightAnnotation(cones[i]);
-							try {
-								Thread.sleep(200);
-							} catch (InterruptedException e) {// do nothing
-							}
-							// wait til selected
-							localSettings.waitSaved("cones" + (i + 1));
-							mr.clearHightlight();
-						}
-					}
-				});
-		imageGeneratorSettings.addAnalyserAction(PrimitiveAnalyser.class,
-				new ImageGeneratorAction() {
-
-					@Override
-					public void trigger(ImageGeneratorSettings localSettings) {
-						mr.clearHightlight();
-						@SuppressWarnings("rawtypes")
-						PrimitiveAnnotation[] planes = mr.findAnnotationsPlane().toArray(
-								new PrimitiveAnnotation[0]);
-						Arrays.sort(planes, new PrimitiveAnnotationAreaComparator());
-						int max = 3;
-						for (int i = 0; i < max && i < planes.length; i++) {
-							mr.highlightAnnotation(planes[i]);
-							try {
-								Thread.sleep(200);
-							} catch (InterruptedException e) {// do nothing
-							} // wait til selected
-							localSettings.waitSaved("planes" + (i + 1));
-							mr.clearHightlight();
-						}
-					}
-				});
-		imageGeneratorSettings.addAnalyserAction(PrimitiveAnalyser.class,
-				new ImageGeneratorAction() {
-
-					@Override
-					public void trigger(ImageGeneratorSettings localSettings) {
-						mr.clearHightlight();
-						@SuppressWarnings("rawtypes")
-						PrimitiveAnnotation[] spheres = mr.findAnnotationsSphere().toArray(
-								new PrimitiveAnnotation[0]);
-						Arrays.sort(spheres, new PrimitiveAnnotationAreaComparator());
-						int max = 3;
-						for (int i = 0; i < max && i < spheres.length; i++) {
-							mr.highlightAnnotation(spheres[i]);
-							try {
-								Thread.sleep(200);
-							} catch (InterruptedException e) {// do nothing
-							} // wait til selected
-							localSettings.waitSaved("spheres" + (i + 1));
-							mr.clearHightlight();
-						}
-					}
-				});
-
-		imageGeneratorSettings.addAnalyserAction(ContainerAnalyser.class,
-				new ImageGeneratorAction() {
-
-					@Override
-					public void trigger(ImageGeneratorSettings localSettings) {
-						mr.clearHightlight();
-						ContainerAnnotation[] container = mr.findAnnotations(
-								ContainerAnnotation.class).toArray(new ContainerAnnotation[0]);
-						Arrays.sort(container, new ContainerAnnotationVolumeComarator());
-						int max = 3;
-						for (int i = 0; i < max && i < container.length; i++) {
-							mr.highlightAnnotation(container[i]);
-							try {
-								Thread.sleep(200);
-							} catch (InterruptedException e) {// do nothing
-							} // wait til selected
-							localSettings.waitSaved("container" + (i + 1));
-							mr.clearHightlight();
-						}
-					}
-				});
-
-		imageGeneratorSettings.addAnalyserAction(ComplexHandleAnalyser.class,
-				new ImageGeneratorAction() {
-
-					@Override
-					public void trigger(ImageGeneratorSettings localSettings) {
-						mr.clearHightlight();
-						HandleAnnotation[] handles = mr.getHandle(
-								HandleComparator.DEFAULT_RADIUS_MIN,
-								HandleComparator.DEFAULT_RADIUS_MAX,
-								HandleComparator.DEFAULT_LENGTH_MIN,
-								HandleComparator.DEFAULT_LENGTH_MAX);
-						int max = 3;
-						for (int i = 0; i < max && i < handles.length; i++) {
-							mr.highlightAnnotation((DrawableAnnotation) handles[i]);
-							try {
-								Thread.sleep(200);
-							} catch (InterruptedException e) {// do nothing
-							} // wait til selected
-							localSettings.waitSaved("handle" + (i + 1));
-							mr.clearHightlight();
-						}
-					}
-				});
+//		imageGeneratorSettings.addAnalyserAction(PrimitiveAnalyser.class,
+//				new ImageGeneratorAction() {
+//
+//					@Override
+//					public void trigger(ImageGeneratorSettings localSettings) {
+//						mr.clearHightlight();
+//						@SuppressWarnings("rawtypes")
+//						PrimitiveAnnotation[] cones = mr.findAnnotationsCone().toArray(
+//								new PrimitiveAnnotation[0]);
+//						Arrays.sort(cones, new PrimitiveAnnotationAreaComparator());
+//						int max = 3;
+//						for (int i = 0; i < max && i < cones.length; i++) {
+//							mr.highlightAnnotation(cones[i]);
+//							try {
+//								Thread.sleep(200);
+//							} catch (InterruptedException e) {// do nothing
+//							}
+//							// wait til selected
+//							localSettings.waitSaved("cones" + (i + 1));
+//							mr.clearHightlight();
+//						}
+//					}
+//				});
+//		imageGeneratorSettings.addAnalyserAction(PrimitiveAnalyser.class,
+//				new ImageGeneratorAction() {
+//
+//					@Override
+//					public void trigger(ImageGeneratorSettings localSettings) {
+//						mr.clearHightlight();
+//						@SuppressWarnings("rawtypes")
+//						PrimitiveAnnotation[] planes = mr.findAnnotationsPlane().toArray(
+//								new PrimitiveAnnotation[0]);
+//						Arrays.sort(planes, new PrimitiveAnnotationAreaComparator());
+//						int max = 3;
+//						for (int i = 0; i < max && i < planes.length; i++) {
+//							mr.highlightAnnotation(planes[i]);
+//							try {
+//								Thread.sleep(200);
+//							} catch (InterruptedException e) {// do nothing
+//							} // wait til selected
+//							localSettings.waitSaved("planes" + (i + 1));
+//							mr.clearHightlight();
+//						}
+//					}
+//				});
+//		imageGeneratorSettings.addAnalyserAction(PrimitiveAnalyser.class,
+//				new ImageGeneratorAction() {
+//
+//					@Override
+//					public void trigger(ImageGeneratorSettings localSettings) {
+//						mr.clearHightlight();
+//						@SuppressWarnings("rawtypes")
+//						PrimitiveAnnotation[] spheres = mr.findAnnotationsSphere().toArray(
+//								new PrimitiveAnnotation[0]);
+//						Arrays.sort(spheres, new PrimitiveAnnotationAreaComparator());
+//						int max = 3;
+//						for (int i = 0; i < max && i < spheres.length; i++) {
+//							mr.highlightAnnotation(spheres[i]);
+//							try {
+//								Thread.sleep(200);
+//							} catch (InterruptedException e) {// do nothing
+//							} // wait til selected
+//							localSettings.waitSaved("spheres" + (i + 1));
+//							mr.clearHightlight();
+//						}
+//					}
+//				});
+//
+//		imageGeneratorSettings.addAnalyserAction(ContainerAnalyser.class,
+//				new ImageGeneratorAction() {
+//
+//					@Override
+//					public void trigger(ImageGeneratorSettings localSettings) {
+//						mr.clearHightlight();
+//						ContainerAnnotation[] container = mr.findAnnotations(
+//								ContainerAnnotation.class).toArray(new ContainerAnnotation[0]);
+//						Arrays.sort(container, new ContainerAnnotationVolumeComarator());
+//						int max = 3;
+//						for (int i = 0; i < max && i < container.length; i++) {
+//							mr.highlightAnnotation(container[i]);
+//							try {
+//								Thread.sleep(200);
+//							} catch (InterruptedException e) {// do nothing
+//							} // wait til selected
+//							localSettings.waitSaved("container" + (i + 1));
+//							mr.clearHightlight();
+//						}
+//					}
+//				});
+//
+//		imageGeneratorSettings.addAnalyserAction(ComplexHandleAnalyser.class,
+//				new ImageGeneratorAction() {
+//
+//					@Override
+//					public void trigger(ImageGeneratorSettings localSettings) {
+//						mr.clearHightlight();
+//						HandleAnnotation[] handles = mr.getHandle(
+//								HandleComparator.DEFAULT_RADIUS_MIN,
+//								HandleComparator.DEFAULT_RADIUS_MAX,
+//								HandleComparator.DEFAULT_LENGTH_MIN,
+//								HandleComparator.DEFAULT_LENGTH_MAX);
+//						int max = 3;
+//						for (int i = 0; i < max && i < handles.length; i++) {
+//							mr.highlightAnnotation((DrawableAnnotation) handles[i]);
+//							try {
+//								Thread.sleep(200);
+//							} catch (InterruptedException e) {// do nothing
+//							} // wait til selected
+//							localSettings.waitSaved("handle" + (i + 1));
+//							mr.clearHightlight();
+//						}
+//					}
+//				});
 
 		/**
 		 * Analyser actions end
