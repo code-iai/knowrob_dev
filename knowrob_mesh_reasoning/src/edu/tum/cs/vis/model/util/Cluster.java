@@ -99,4 +99,12 @@ public class Cluster {
 		centroid[0] /= clusterVertices.size();
 		centroid[1] /= clusterVertices.size();
 	}
+	
+	@Override
+	public String toString() {
+		String print = "Cluster ID " + this.id + "\n";
+		print = print + "Centroid: (" + this.centroid[0] + ", " + this.centroid[1] + ")\n";
+		print = print + "Vertices: " + this.clusterVertices.size() + "\n";
+		return print;
+	}
 }

@@ -8,8 +8,8 @@
 
 package edu.tum.cs.vis.model.util;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 import edu.tum.cs.vis.model.util.Triangle;
 
@@ -43,13 +43,13 @@ public class Region {
 	/**
 	 * A list of all the triangles inside the region
 	 */
-	private Set<Triangle>			triangles = new HashSet<Triangle>();
+	private List<Triangle>			triangles = new ArrayList<Triangle>();
 	
 	/**
 	 * A list of all the triangles on the boundary 
 	 * of the region
 	 */
-	private Set<Triangle>			boundaryTriangles = new HashSet<Triangle>();
+	private List<Triangle>			boundaryTriangles = new ArrayList<Triangle>();
 	
 	/**
 	 * Constructor for a region that takes only the region id
@@ -78,7 +78,7 @@ public class Region {
 	 */
 	public Region(final int newId, final Triangle initSeedTr) {
 		this.id = newId;
-		this.area = initSeedTr.getArea();
+		this.addTriangleToRegion(initSeedTr);
 		this.curvatureMinMax[0] = initSeedTr.getCurvatureValues()[0];
 		this.curvatureMinMax[1] = initSeedTr.getCurvatureValues()[1];
 	}
@@ -100,15 +100,22 @@ public class Region {
 	/**
 	 * Getter for a region's triangles
 	 */
-	public Set<Triangle> getTriangles() {
+	public List<Triangle> getTriangles() {
 		return this.triangles;
 	}
 	
 	/**
 	 * Getter for a region's triangle boundary
 	 */
-	public Set<Triangle> getBoundaryTriangles() {
+	public List<Triangle> getBoundaryTriangles() {
 		return this.boundaryTriangles;
+	}
+	
+	/**
+	 * Getter for the curvature values associated with the region
+	 */
+	public float[] getCurvatureMinMaxOfRegion() {
+		return this.curvatureMinMax;
 	}
 	
 	/**
@@ -132,6 +139,14 @@ public class Region {
 	}
 	
 	/**
+	 * Subtracts the area of a specified triangle
+	 * from the area of the region
+	 */
+	public void updateAreaOfRegion(final Triangle tr, final boolean toRemove) {
+		area -= tr.getArea();
+	}
+	
+	/**
 	 * Adds triangle to the list of triangles 
 	 * included in the region. The addition is
 	 * performed only if the triangle was not
@@ -140,9 +155,11 @@ public class Region {
 	 * nothing.
 	 */
 	public void addTriangleToRegion(final Triangle newTr) {
-		if (triangles.add(newTr)) {
-			updateAreaOfRegion(newTr);
-			addTriangleToRegionBoundary(newTr);
+		if (!triangles.contains(newTr)) {
+			triangles.add(newTr);
+			newTr.setRegionLabel(id);
+			this.updateAreaOfRegion(newTr);
+			this.addTriangleToRegionBoundary(newTr);
 		}
 	}
 	
@@ -158,7 +175,7 @@ public class Region {
 	 */
 	public void addTriangleToRegionBoundary(final Triangle newTr) {
 		if (!triangles.containsAll(newTr.getNeighbors())) {
-			Set<Triangle> toRemove = new HashSet<Triangle>();
+			List<Triangle> toRemove = new ArrayList<Triangle>();
 			// check for old triangles that are not on boundary
 			// of current updated region
 			for (Triangle tr : boundaryTriangles) {
@@ -174,6 +191,65 @@ public class Region {
 	}
 	
 	/**
-	 * Removes triangle from region and updates
+	 * Removes triangle from region and updates the list 
+	 * of triangles and the boundary ones
 	 */
+	public void removeTriangleFromRegion(final Triangle toRemove) {
+		if (triangles.remove(toRemove)) {
+			updateAreaOfRegion(toRemove,true);
+			if (boundaryTriangles.remove(toRemove)) {
+				System.out.println("Triangle " + toRemove.toString() + " also removed from the boundary region");
+				this.updateRegionBoundary();
+			}
+		}
+		// unset region label
+		toRemove.setRegionLabel(-1);
+	}
+	
+	/**
+	 * Updates the boundary region based on the existing
+	 * triangles inside the region itself
+	 */
+	public void updateRegionBoundary() {
+		for (Triangle tr : triangles) {
+			if (!triangles.containsAll(tr.getNeighbors())) {
+				boundaryTriangles.add(tr);
+			} else {
+				boundaryTriangles.remove(tr);
+			}
+		}
+	}
+	
+	/**
+	 * Builds the region starting from the initial 
+	 * triangle seed used to initialize the region
+	 */
+	public void buildUpRegion() {
+		for (int i = 0 ; i < triangles.size() ; ++i) {
+			Triangle tr = triangles.get(i);
+			Edge[] nonSharpEdges = tr.getNonSharpEdges();
+			for (int j = 0 ; j < nonSharpEdges.length ; ++j) {
+				Triangle neighbor = tr.getNeighborOfEdge(nonSharpEdges[j]);
+				if (neighbor == null) {
+//					System.out.println(tr.getNeighbors().size());
+//					System.out.println("null @: " + i + " " + j);
+					continue;
+				}
+				Vertex oppositeVertex = neighbor.getOppositeVertexFromEdge(nonSharpEdges[j]);
+				if ((oppositeVertex.isSharpVertex()) || ((oppositeVertex.getClusterCurvatureVal()[0] == curvatureMinMax[0]) 
+						&& (oppositeVertex.getClusterCurvatureVal()[1] == curvatureMinMax[1]))) {
+					this.addTriangleToRegion(neighbor);
+				}
+			}
+		}
+	}
+	
+	@Override
+	public String toString() {
+		String print = "Region ID " + id + "\n";
+		print = print + "Curvatures: KMin = " + curvatureMinMax[0] + ", KMax = " + curvatureMinMax[1] + "\n";
+		print = print + "Triangles: " + triangles.size() + "\n";
+		print = print + "Boundary Triangles: " + boundaryTriangles.size() + "\n";
+		return print;
+	}
 }
