@@ -29,6 +29,7 @@ import org.apache.commons.math3.linear.RealVector;
 import edu.tum.cs.ias.knowrob.utils.ThreadPool;
 import edu.tum.cs.vis.model.Model;
 import edu.tum.cs.vis.model.util.Curvature;
+import edu.tum.cs.vis.model.util.Edge;
 import edu.tum.cs.vis.model.util.Triangle;
 import edu.tum.cs.vis.model.util.Vertex;
 
@@ -176,14 +177,14 @@ public class CurvatureCalculation {
 	 */
 	static void calculateCurvatureForTriangle(HashMap<Vertex, Curvature> curvatures, Triangle tri) {
 		// Edges
-		Vector3f e[] = tri.getEdges();
+		Edge e[] = tri.getEdges();
 
 		// N-T-B coordinate system per face
-		Vector3f t = new Vector3f(e[0]);
+		Vector3f t = new Vector3f(e[0].getEdgeValue());
 		t.normalize();
 		Vector3f n = new Vector3f();
 		//n.cross(e[0], e[1]);
-		n.cross(e[1], e[0]);
+		n.cross(e[1].getEdgeValue(), e[0].getEdgeValue());
 		//n.normalize();
 		Vector3f b = new Vector3f();
 		b.cross(n, t);
@@ -195,8 +196,8 @@ public class CurvatureCalculation {
 		double w[][] = { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } };
 		for (int j = 0; j < 3; j++) {
 
-			float u = e[j].dot(t);
-			float v = e[j].dot(b);
+			float u = e[j].getEdgeValue().dot(t);
+			float v = e[j].getEdgeValue().dot(b);
 			w[0][0] += u * u;
 			w[0][1] += u * v;
 			// w[1][1] += v*v + u*u;
@@ -321,20 +322,20 @@ public class CurvatureCalculation {
 	 */
 	static void calculateVoronoiAreaForTriangle(Triangle t) {
 		// Edges
-		Vector3f e[] = t.getEdges();
+		Edge e[] = t.getEdges();
 
 		// Compute corner weights
 		Vector3f tmp = new Vector3f();
-		tmp.cross(e[0], e[1]);
+		tmp.cross(e[0].getEdgeValue(), e[1].getEdgeValue());
 		float area = 0.5f * tmp.length();
-		float l2[] = { e[0].lengthSquared(), e[1].lengthSquared(), e[2].lengthSquared() };
+		float l2[] = { e[0].getEdgeValue().lengthSquared(), e[1].getEdgeValue().lengthSquared(), e[2].getEdgeValue().lengthSquared() };
 		float ew[] = { l2[0] * (l2[1] + l2[2] - l2[0]), l2[1] * (l2[2] + l2[0] - l2[1]),
 				l2[2] * (l2[0] + l2[1] - l2[2]) };
 		t.setCornerarea(new Vector3f());
 		boolean ok = false;
 		if (ew[0] <= 0.0f) {
-			float d1 = e[0].dot(e[2]);
-			float d2 = e[0].dot(e[1]);
+			float d1 = e[0].getEdgeValue().dot(e[2].getEdgeValue());
+			float d2 = e[0].getEdgeValue().dot(e[1].getEdgeValue());
 			if (d1 != 0 && d2 != 0) {
 				t.getCornerarea().y = -0.25f * l2[2] * area / d1;
 				t.getCornerarea().z = -0.25f * l2[1] * area / d2;
@@ -342,8 +343,8 @@ public class CurvatureCalculation {
 				ok = true;
 			}
 		} else if (ew[1] <= 0.0f) {
-			float d1 = e[1].dot(e[0]);
-			float d2 = e[1].dot(e[2]);
+			float d1 = e[1].getEdgeValue().dot(e[0].getEdgeValue());
+			float d2 = e[1].getEdgeValue().dot(e[2].getEdgeValue());
 			if (d1 != 0 && d2 != 0) {
 				t.getCornerarea().z = -0.25f * l2[0] * area / d1;
 				t.getCornerarea().x = -0.25f * l2[2] * area / d2;
@@ -352,8 +353,8 @@ public class CurvatureCalculation {
 			}
 		} else if (ew[2] <= 0.0f) {
 
-			float d1 = e[2].dot(e[1]);
-			float d2 = e[2].dot(e[0]);
+			float d1 = e[2].getEdgeValue().dot(e[1].getEdgeValue());
+			float d2 = e[2].getEdgeValue().dot(e[0].getEdgeValue());
 			if (d1 != 0 && d2 != 0) {
 				t.getCornerarea().x = -0.25f * l2[1] * area / d1;
 				t.getCornerarea().y = -0.25f * l2[0] * area / d2;
@@ -593,7 +594,7 @@ public class CurvatureCalculation {
 	 * @param m
 	 *            model needed to calculate hue saturation scale
 	 */
-	private static void setCurvatureHueSaturation(HashMap<Vertex, Curvature> curvatures, Model m,
+	public static void setCurvatureHueSaturation(HashMap<Vertex, Curvature> curvatures, Model m,
 			float smoothSigma) {
 		if (smoothSigma > 0.0f) {
 			float scaledSigma = smoothSigma * m.feature_size();
