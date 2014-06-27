@@ -46,6 +46,11 @@ public class NeighborAnalyser extends MeshAnalyser {
 	 * in this list to process them afterwards.
 	 */
 	List<Triangle>			allTriangles;
+	
+	/**
+	 * Stores initial number of triangles
+	 */
+	int 					initialNumOfTriangles;
 
 	@Override
 	public Logger getLogger() {
@@ -62,7 +67,8 @@ public class NeighborAnalyser extends MeshAnalyser {
 
 		trianglesElaborated.set(0);
 		allTriangles = cas.getModel().getTriangles();
-
+		initialNumOfTriangles = allTriangles.size();
+		
 		final int interval = 100;
 
 		final Lock lock = new ReentrantLock();
@@ -107,7 +113,6 @@ public class NeighborAnalyser extends MeshAnalyser {
 
 			});
 		}
-
 		ThreadPool.executeInPool(threads);
 		updateProgress();
 	}
@@ -115,6 +120,6 @@ public class NeighborAnalyser extends MeshAnalyser {
 	@Override
 	public void updateProgress() {
 		if (allTriangles != null)
-			setProgress((float) trianglesElaborated.get() / (float) allTriangles.size() * 100.0f);
+			setProgress((float) trianglesElaborated.get() / (float) initialNumOfTriangles * 100.0f);
 	}
 }
