@@ -32,6 +32,7 @@ import edu.tum.cs.vis.model.uima.annotation.primitive.PrimitiveType;
 import edu.tum.cs.vis.model.uima.annotation.primitive.SphereAnnotation;
 import edu.tum.cs.vis.model.uima.cas.MeshCas;
 import edu.tum.cs.vis.model.util.Curvature;
+import edu.tum.cs.vis.model.util.Region;
 import edu.tum.cs.vis.model.util.Triangle;
 import edu.tum.cs.vis.model.util.Vertex;
 
@@ -552,6 +553,12 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 	 * list of all triangles of cad model
 	 */
 	List<Triangle>									allTriangles;
+	
+	/**
+	 * list of all regions of cad model
+	 */
+	List<Region>									allRegions;
+
 	/**
 	 * Number of triangles already elaborated/processed. Used for indicating current progress
 	 */
@@ -753,7 +760,8 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 	public void processStart(final MeshCas cas) {
 		allVertices = cas.getModel().getVertices();
 		allTriangles = cas.getModel().getTriangles();
-
+		allRegions = cas.getModel().getRegions();
+		
 		// set primitive type for all vertices
 		List<Callable<Void>> threads = new LinkedList<Callable<Void>>();
 
@@ -787,29 +795,30 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 		final Set<Triangle> alreadyInAnnotation = new HashSet<Triangle>();
 
 		final Set<Triangle> toElaborate = new HashSet<Triangle>();
-
-		for (Triangle t : allTriangles) {
-			if (alreadyInAnnotation.contains(t))
-				continue;
-			PlaneAnnotation found = analyseTrianglePlane(cas, t, alreadyInAnnotation);
-			if (found != null) {
-				if (found.getMesh().getTriangles().size() <= 20) {
-					// Plane too small, maybe part of cylinder.
-					// give another chance in analyseTriangle
-					toElaborate.addAll(found.getMesh().getTriangles());
-					alreadyInAnnotation.removeAll(toElaborate);
-				} else {
-
-					synchronized (cas.getAnnotations()) {
-						cas.addAnnotation(found);
+		for (Region r : allRegions) {
+			for (Triangle t : r.getTriangles()) {
+				if (alreadyInAnnotation.contains(t))
+					continue;
+				PlaneAnnotation found = analyseTrianglePlane(cas, t, alreadyInAnnotation);
+				if (found != null) {
+					if (found.getMesh().getTriangles().size() <= 20) {
+						// Plane too small, maybe part of cylinder.
+						// give another chance in analyseTriangle
+						toElaborate.addAll(found.getMesh().getTriangles());
+						alreadyInAnnotation.removeAll(toElaborate);
+					} else {
+	
+						synchronized (cas.getAnnotations()) {
+							cas.addAnnotation(found);
+						}
+						itemsElaborated.incrementAndGet();
 					}
-					itemsElaborated.incrementAndGet();
+				} else {
+					toElaborate.add(t);
 				}
-			} else {
-				toElaborate.add(t);
 			}
 		}
-
+		
 		for (PlaneAnnotation pa : cas.findAnnotations(PlaneAnnotation.class)) {
 			// there may be some triangles added to toElaborate but afterwards added into a
 			// annotation because of region grow
