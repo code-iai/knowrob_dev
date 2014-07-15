@@ -12,7 +12,10 @@ import java.lang.Math;
 
 import org.apache.log4j.Logger;
 
+import java.awt.Color;
+
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -22,7 +25,9 @@ import java.util.concurrent.Callable;
 
 import javax.vecmath.Vector3f;
 
+import edu.tum.cs.util.PrintUtil;
 import edu.tum.cs.vis.model.Model;
+import edu.tum.cs.vis.model.util.Appearance;
 import edu.tum.cs.vis.model.util.Cluster;
 import edu.tum.cs.vis.model.util.Curvature;
 import edu.tum.cs.vis.model.util.Edge;
@@ -46,32 +51,48 @@ public class ModelProcessing{
 	/**
 	 * Model to be processed
 	 */
-	protected Model				model;
+	protected Model						model;
 	
 //	/**
 //	 * Flag that shows if sharp edge detection has been done
 //	 */
-//	private boolean 			modelSharpEdgeDetectionCheck = false;
+//	private boolean 					modelSharpEdgeDetectionCheck = false;
 	
 	/**
 	 * Flag that shows if the classification of the curvatures has been done
 	 */
-	private boolean				modelKMeansCurvatureClassification = false;
+	private boolean						modelKMeansCurvatureClassification = false;
 	
 	/**
 	 * Defines the number of clusters used for classifying the vertices
-	 */
-	private static int			NUM_OF_CLUSTERS = 5;
+	 */	
+	private static int					NUM_OF_CLUSTERS = 30;
 	
 	/**
 	 * Defines upper iteration limit for the KMeans algorithm
 	 */
-	private static int			UPPER_ITERATION_LIMIT = 100;
+	private final static int			UPPER_ITERATION_LIMIT = 100;
 	
-//	/**
-//	 * Number of added triangles to the model
-//	 */
-//	private int 				numAddedTriangles = 0;
+	/**
+	 * Defines upper iteration limit for the region merging
+	 */
+	private static int			UPPER_ITERATION_LIMIT_GROWING = 180;
+	
+	/**
+	 * Defines the minimal area for small regions merging step
+	 */
+	private final static float			AREA_MIN_LIMIT = 5e-2f;
+	
+	/**
+	 * Define minimum distance threshold for the region merging which stops the merging
+	 */
+	private final static float			MIN_DISTANCE_THRESHOLD = 5e-12f;
+	
+	/**
+	 * Defines the value of the area weighting on the distance calculation
+	 * of the merging process
+	 */
+	private final static float			EPSILON = 1e-5f;
 	
 	/**
 	 * Default constructor of the ModelProcessing class
@@ -367,10 +388,10 @@ public class ModelProcessing{
 	 * curvature classification
 	 */
 	public void KMeansVCClassification(HashMap<Vertex,Curvature> curvatures) {
-		if (NUM_OF_CLUSTERS >= model.getVertices().size() / 4) {
+		if (NUM_OF_CLUSTERS >= model.getVertices().size() / 10) {
 			logger.debug("Number of vertices in the model smaller than number of clusters chosen");
 			int temp = NUM_OF_CLUSTERS;
-			NUM_OF_CLUSTERS = temp / 2;
+			NUM_OF_CLUSTERS = temp / 5;
 			logger.debug("Number of clusters has been reduced from " +
 			temp + " to " + NUM_OF_CLUSTERS);
 		}
@@ -454,6 +475,7 @@ public class ModelProcessing{
 					isRunning = true;
 				}
 			}
+			iteration++;
 		}
 		this.modelKMeansCurvatureClassification = true;
 		
@@ -467,11 +489,13 @@ public class ModelProcessing{
 				c.setCurvatureMax(clusters[i].getCentroid()[1]);
 			}
 		}
-		CurvatureCalculation.setCurvatureHueSaturation(curvatures, model, 0.5f);
 		
-		for (int i = 0 ; i < NUM_OF_CLUSTERS ; ++i) {
-			System.out.println(clusters[i]);
-		}
+		// compute new coloring used for primitive fitting
+		CurvatureCalculation.setCurvatureHueSaturation(curvatures, model, 1f);
+		
+//		for (int i = 0 ; i < NUM_OF_CLUSTERS ; ++i) {
+//			System.out.println(clusters[i]);
+//		}
 		
 		logger.debug("Classified " + classifiedVertices + " vertices out of " + model.getVertices().size() + " into " + NUM_OF_CLUSTERS + " clusters");
 	}
@@ -493,76 +517,483 @@ public class ModelProcessing{
 	}
 	
 	/**
+	 * Method to colorize the traingles of the mesh randomly
+	 * according to their regions
+	 * 
+	 * @param regions 
+	 * 			to be colorized
+	 */
+	private void colorizeRegions(List<Region> regions) {
+		int min = 0;
+		int max = 255;
+		for (int i = 0 ; i < regions.size() ; ++i) {
+			Region r = regions.get(i);
+			Appearance a = new Appearance();
+			int R,G,B;
+			R = min + (int)(Math.random() * ((max - min) + 1));
+			G = min + (int)(Math.random() * ((max - min) + 1));
+			B = min + (int)(Math.random() * ((max - min) + 1));
+			Color c = new Color(R,G,B);
+			for (Triangle t : r.getTriangles()) {
+				a.setColorFill(c);
+//				a.setColorLine(c);
+				t.setAppearance(a);
+			}
+		}
+	}
+	
+	private void computeAdjacencyDistances(final float[][] adjacencyMatrix, final Region r) {
+		List<Region> regions = model.getRegions();
+		for (int j = 0 ; j < regions.size() ; ++j) {
+			Region n = regions.get(j);
+			if (!r.isNeighbor(n)) {
+				continue;
+			}
+			float[] curvatureDistanceBoundary = {0.0f, 0.0f};
+			float curvatureDistance = 0.0f;
+			float commonBorder = 0.0f;
+			float neighborhoodDistance = 0.0f;
+			float sizeDistance = 0.0f;
+			float distance = 0.0f;
+			List<Edge> commonEdges = r.getCommonEdges(n);
+			if (commonEdges.size() == 1) {
+				curvatureDistanceBoundary[0] = (commonEdges.get(0).getVerticesOfEdge()[0].getClusterCurvatureVal()[0] 
+						+ commonEdges.get(0).getVerticesOfEdge()[1].getClusterCurvatureVal()[0]) / 2.0f;
+				curvatureDistanceBoundary[1] = (commonEdges.get(0).getVerticesOfEdge()[0].getClusterCurvatureVal()[1] 
+						+ commonEdges.get(0).getVerticesOfEdge()[1].getClusterCurvatureVal()[1]) / 2.0f;
+				commonBorder += commonEdges.get(0).getEdgeValue().length();
+			}
+			else {
+				HashMap<Vertex,Integer> edgesVerticesAdjacency = new HashMap<Vertex,Integer>();
+				int cont = 0;
+				for (Edge e : commonEdges) {
+					if (!edgesVerticesAdjacency.containsKey(e.getVerticesOfEdge()[0])) {
+						edgesVerticesAdjacency.put(e.getVerticesOfEdge()[0], 1);
+					}
+					else {
+						edgesVerticesAdjacency.put(e.getVerticesOfEdge()[0], edgesVerticesAdjacency.get(e.getVerticesOfEdge()[0]) + 1);
+					}
+					if (!edgesVerticesAdjacency.containsKey(e.getVerticesOfEdge()[1])) {
+						edgesVerticesAdjacency.put(e.getVerticesOfEdge()[1], 1);
+					}
+					else {
+						edgesVerticesAdjacency.put(e.getVerticesOfEdge()[1], edgesVerticesAdjacency.get(e.getVerticesOfEdge()[1]) + 1);
+					}
+					commonBorder += e.getEdgeValue().length();
+				}
+				for (Vertex v : edgesVerticesAdjacency.keySet()) {
+					if (edgesVerticesAdjacency.get(v) == 2) {
+						curvatureDistanceBoundary[0] += v.getClusterCurvatureVal()[0];
+						curvatureDistanceBoundary[1] += v.getClusterCurvatureVal()[1];
+						cont++;
+					}
+				}
+				curvatureDistanceBoundary[0] /= (float)cont;
+				curvatureDistanceBoundary[1] /= (float)cont;
+			}
+			// compute curvature distance: cD = ||c_reg_r - cDB|| + ||c_reg_n - cDB||
+			curvatureDistance = (float)((Math.sqrt(Math.pow(r.getCurvatureMinMaxOfRegion()[0] - curvatureDistanceBoundary[0], 2) 
+					+ Math.pow(r.getCurvatureMinMaxOfRegion()[1] - curvatureDistanceBoundary[1], 2))) + 
+					(Math.sqrt(Math.pow(n.getCurvatureMinMaxOfRegion()[0] - curvatureDistanceBoundary[0], 2) 
+					+ Math.pow(n.getCurvatureMinMaxOfRegion()[1] - curvatureDistanceBoundary[1], 2))) + 
+					(Math.sqrt(Math.pow(n.getCurvatureMinMaxOfRegion()[0] - r.getCurvatureMinMaxOfRegion()[0], 2) 
+					+ Math.pow(n.getCurvatureMinMaxOfRegion()[1] - r.getCurvatureMinMaxOfRegion()[1], 2))));
+			if (curvatureDistance == 0.0f) {
+				curvatureDistance = EPSILON;
+			}
+			// compute neighborhood distance: nD = min(per_r,per_n) / per_common;
+			neighborhoodDistance = Math.min(r.getPerimeterOfRegion(), n.getPerimeterOfRegion()) / commonBorder;
+			// size distance: sD = 
+			if (r.getAreaOfRegion() < AREA_MIN_LIMIT || n.getAreaOfRegion() < AREA_MIN_LIMIT) {
+				sizeDistance = EPSILON;
+			}
+			else {
+				sizeDistance = 1.0f;
+			}
+			distance = curvatureDistance * neighborhoodDistance * sizeDistance;
+			// add distance to region adjacency matrix (which is symmetric)
+			adjacencyMatrix[r.getRegionId()][n.getRegionId()] = distance;
+			adjacencyMatrix[n.getRegionId()][r.getRegionId()] = distance;
+		}
+	}
+	
+	private void computeAdjacencyDistances(final float[][] adjacencyMatrix) {
+		List<Region> regions = model.getRegions();
+		for (int i = 0 ; i < regions.size() ; ++i) {
+			Region r = regions.get(i);
+			for (int j = 0 ; j <= i ; ++j) {
+				Region n = regions.get(j);
+				if (!r.isNeighbor(n)) {
+					continue;
+				}
+				float[] curvatureDistanceBoundary = {0.0f, 0.0f};
+				float curvatureDistance = 0.0f;
+				float commonBorder = 0.0f;
+				float neighborhoodDistance = 0.0f;
+				float sizeDistance = 0.0f;
+				float distance = 0.0f;
+				List<Edge> commonEdges = r.getCommonEdges(n);
+				if (commonEdges.size() == 1) {
+					curvatureDistanceBoundary[0] = (commonEdges.get(0).getVerticesOfEdge()[0].getClusterCurvatureVal()[0] 
+							+ commonEdges.get(0).getVerticesOfEdge()[1].getClusterCurvatureVal()[0]) / 2.0f;
+					curvatureDistanceBoundary[1] = (commonEdges.get(0).getVerticesOfEdge()[0].getClusterCurvatureVal()[1] 
+							+ commonEdges.get(0).getVerticesOfEdge()[1].getClusterCurvatureVal()[1]) / 2.0f;
+					commonBorder += commonEdges.get(0).getEdgeValue().length();
+				}
+				else {
+					HashMap<Vertex,Integer> edgesVerticesAdjacency = new HashMap<Vertex,Integer>();
+					int cont = 0;
+					for (Edge e : commonEdges) {
+						if (!edgesVerticesAdjacency.containsKey(e.getVerticesOfEdge()[0])) {
+							edgesVerticesAdjacency.put(e.getVerticesOfEdge()[0], 1);
+						}
+						else {
+							edgesVerticesAdjacency.put(e.getVerticesOfEdge()[0], edgesVerticesAdjacency.get(e.getVerticesOfEdge()[0]) + 1);
+						}
+						if (!edgesVerticesAdjacency.containsKey(e.getVerticesOfEdge()[1])) {
+							edgesVerticesAdjacency.put(e.getVerticesOfEdge()[1], 1);
+						}
+						else {
+							edgesVerticesAdjacency.put(e.getVerticesOfEdge()[1], edgesVerticesAdjacency.get(e.getVerticesOfEdge()[1]) + 1);
+						}
+						commonBorder += e.getEdgeValue().length();
+					}
+					for (Vertex v : edgesVerticesAdjacency.keySet()) {
+						if (edgesVerticesAdjacency.get(v) == 2) {
+							curvatureDistanceBoundary[0] += v.getClusterCurvatureVal()[0];
+							curvatureDistanceBoundary[1] += v.getClusterCurvatureVal()[1];
+							cont++;
+						}
+					}
+					curvatureDistanceBoundary[0] /= (float)cont;
+					curvatureDistanceBoundary[1] /= (float)cont;
+				}
+				// compute curvature distance: cD = ||c_reg_r - cDB|| + ||c_reg_n - cDB||
+				curvatureDistance = (float)((Math.sqrt(Math.pow(r.getCurvatureMinMaxOfRegion()[0] - curvatureDistanceBoundary[0], 2) 
+						+ Math.pow(r.getCurvatureMinMaxOfRegion()[1] - curvatureDistanceBoundary[1], 2))) + 
+						(Math.sqrt(Math.pow(n.getCurvatureMinMaxOfRegion()[0] - curvatureDistanceBoundary[0], 2) 
+						+ Math.pow(n.getCurvatureMinMaxOfRegion()[1] - curvatureDistanceBoundary[1], 2))) + 
+						(Math.sqrt(Math.pow(n.getCurvatureMinMaxOfRegion()[0] - r.getCurvatureMinMaxOfRegion()[0], 2) 
+						+ Math.pow(n.getCurvatureMinMaxOfRegion()[1] - r.getCurvatureMinMaxOfRegion()[1], 2))));
+				if (curvatureDistance == 0.0f) {
+					curvatureDistance = EPSILON;
+				}
+				// compute neighborhood distance: nD = min(per_r,per_n) / per_common;
+				neighborhoodDistance = Math.min(r.getPerimeterOfRegion(), n.getPerimeterOfRegion()) / commonBorder;
+				// size distance: sD = 
+				if (r.getAreaOfRegion() < AREA_MIN_LIMIT || n.getAreaOfRegion() < AREA_MIN_LIMIT) {
+					sizeDistance = EPSILON;
+				}
+				else {
+					sizeDistance = 1.0f;
+				}
+				distance = curvatureDistance * neighborhoodDistance * sizeDistance;
+				// add distance to region adjacency matrix (which is symmetric)
+				adjacencyMatrix[r.getRegionId()][n.getRegionId()] = distance;
+				adjacencyMatrix[n.getRegionId()][r.getRegionId()] = distance;
+			}
+		}
+	}
+	
+	/**
+	 * Merges regions r1 and r2 by integrating r2 into r1 and
+	 * recalculating all properties of the r1 instance, while
+	 * deleting the r2 instance from the list of regions existent 
+	 * in the model
+	 * 
+	 * @param r1
+	 * @param r2
+	 */
+	private void mergeRegions(Region r1, Region r2) {
+		for (Triangle t : r2.getTriangles()) {
+			// unset region label and add triangle to r1
+			t.setRegionLabel(-1);
+			r1.addTriangleToRegion(t);
+		}
+		
+		// update boundary
+		r1.updateRegionBoundary();
+		
+		// update curvature values weighted by area
+		float newKMin = 0.0f, newKMax = 0.0f;
+		newKMin = (r1.getAreaOfRegion() * r1.getCurvatureMinMaxOfRegion()[0] + r2.getAreaOfRegion() * r2.getCurvatureMinMaxOfRegion()[0]) 
+				/ (r1.getAreaOfRegion() + r2.getAreaOfRegion());
+		newKMax = (r1.getAreaOfRegion() * r1.getCurvatureMinMaxOfRegion()[1] + r2.getAreaOfRegion() * r2.getCurvatureMinMaxOfRegion()[1]) 
+				/ (r1.getAreaOfRegion() + r2.getAreaOfRegion());
+		r1.setCurvatureMin(newKMin);
+		r1.setCurvatureMax(newKMax);
+		
+		// remove r2 from the regions list
+		model.getRegions().remove(r2);
+		
+		// re-determine the neighboring relations for updated r1
+		r1.updateRegionNeighbors(model.getRegions());
+	}
+	
+	/**
+	 * Reverts the coloring of the triangles to default
+	 * 
+	 * @param regions
+	 */
+	public void resetRegionsColor(List<Region> regions) {
+		for (int i = 0 ; i < model.getTriangles().size() ; ++i) {
+			model.getTriangles().get(i).setAppearance(null);
+		}
+	}
+	
+	/**
 	 * Implements the region growing block for the triangles
 	 * inside the model. Should be called after the classification
 	 * process has ended.
 	 */
-	public List<Region> processRegionGrowing() {
+	public void processRegionGrowing() {
+		logger.debug("Building up regions ...");
+		long duration = System.currentTimeMillis();
+		int trianglesToClassifyToRegions = model.getTriangles().size();
+		int unclassifiedNum = 0;
 		List<Region> regions = new ArrayList<Region>();
-		int contId = 0, cont = 0;
-		List<Triangle> toLoop = new ArrayList<Triangle>();
-		toLoop.addAll(model.getTriangles());
-		for (Triangle tr : model.getTriangles()) {
-			if (tr.updateIsSeedTriangle()) {
-				cont++;
-			}
-		}
-		logger.debug("seed tr. = " + cont);
-		for (Triangle tr : model.getTriangles()) {
+		int contId = 0;
+		
+		logger.debug("Triangles to classify: " + trianglesToClassifyToRegions);
+		logger.debug("Starting with seed triangles ...");
+		for (int i = 0 ; i < model.getTriangles().size() ; ++i) {
+			Triangle tr = model.getTriangles().get(i);
 			if (tr.updateIsSeedTriangle() && tr.getRegionLabel() == -1) {
 				Region newRegion = new Region(contId,tr);
+				if (newRegion.getCurvatureMinMaxOfRegion()[0] == 0.0 && newRegion.getCurvatureMinMaxOfRegion()[1] == 0.0) {
+					System.out.println("0.0 curv @" + tr);
+				}
 				newRegion.buildUpRegion();
 				regions.add(newRegion);
 				contId++;
 			}
 		}
-		if (regions.size() != 0) {
-			int conti = 0;
-			for (Triangle tr : model.getTriangles()) {
-				if (tr.getRegionLabel() == -1) {
-					//fillRegionCrackForTriangle(regions, tr);
-					conti++;
-				}
-			}
-			logger.debug("cont = " + conti);
-		}
-		else {
-			for (Triangle tr : model.getTriangles()) {
-				if (tr.getRegionLabel() == -1) {
-					Region newRegion = new Region(contId,tr);
-					newRegion.buildUpRegion();
-					regions.add(newRegion);
-					contId++;
-				}
+		
+		for (int i = 0 ; i < model.getTriangles().size() ; ++i) {
+			if (model.getTriangles().get(i).getRegionLabel() == -1) {
+				unclassifiedNum++;
 			}
 		}
-		return regions;
+		logger.debug("Classified: " + (trianglesToClassifyToRegions - unclassifiedNum) + " out of: " + trianglesToClassifyToRegions);
+
+		while (unclassifiedNum != 0) {
+			
+			Collections.sort(regions, new Comparator<Region>() {
+				@Override
+				public int compare(Region r1, Region r2) {
+					Float area1 = r1.getAreaOfRegion();
+					Float area2 = r2.getAreaOfRegion();
+					int value = area1.compareTo(area2);
+					return value * (-1);
+				}
+			});
+
+			for (int i = 0 ; i < regions.size() ; ++i) {
+				List<Triangle> neighborsAtRegion = regions.get(i).getOutsideBoundaryUnlabelled();
+				regions.get(i).addTrianglesToRegion(neighborsAtRegion);
+			}
+			
+			unclassifiedNum = 0;
+			for (int i = 0 ; i < model.getTriangles().size() ; ++i) {
+				if (model.getTriangles().get(i).getRegionLabel() == -1) {
+					unclassifiedNum++;
+				}
+			}
+		}
+		
+		Collections.sort(regions, new Comparator<Region>() {
+			@Override
+			public int compare(Region r1, Region r2) {
+				Integer id1 = r1.getRegionId();
+				Integer id2 = r2.getRegionId();
+				return id1.compareTo(id2);
+			}
+		});
+		
+//		int contcom = 0;
+//		for (int i = 0 ; i < model.getTriangles().size() ; ++i) {
+//			Triangle t = model.getTriangles().get(i);
+//			int cont = 0;
+//			for (int j = 0 ; j < regions.size() ; ++j) {
+//				if (regions.get(j).getTriangles().contains(t)) {
+//					cont++;
+//				}
+//			}
+//			if (cont != 1) {
+//				contcom++;
+//			}
+////			logger.debug("cont is:" + cont);
+//		}
+//		
+//		logger.debug("common triangles " + contcom);
+//		logger.debug("Analyzing unvisited triangles ...");
+//		if (regions.size() != 0) {
+//			int conti = 0;
+//			for (Triangle tr : model.getTriangles()) {
+//				if (tr.getRegionLabel() == -1 && tr.isVisited == false) {
+//					fillRegionCrackForTriangle(regions, tr);
+//					conti++;
+//				}
+//			}
+//			logger.debug("Cases visited: " + conti);
+//		}
+////		else {
+////			for (Triangle tr : model.getTriangles()) {
+////				if (tr.getRegionLabel() == -1) {
+////					Region newRegion = new Region(contId,tr);
+////					newRegion.buildUpRegion();
+////					regions.add(newRegion);
+////					contId++;
+////				}
+////			}
+////		}
+//		duration = System.currentTimeMillis() - duration;
+//		logger.debug("Ended. Took: " + PrintUtil.prettyMillis(duration));
+		for (int i = 0 ; i < regions.size() ; ++i) {
+			regions.get(i).updateRegionNeighbors(regions);
+//			System.out.println(regions.get(i));
+		}
+		
+		// mark regions by coloring
+		this.colorizeRegions(regions);
+		
+		// add regions processed to the CAD model
+		model.setRegions(regions);
+		
+		logger.debug("Ended. Took: " + PrintUtil.prettyMillis(System.currentTimeMillis() - duration));
+		logger.debug("Triangles classified: " + (trianglesToClassifyToRegions - unclassifiedNum) + " out of: " + trianglesToClassifyToRegions);
+		logger.debug("CAD model has: " + regions.size() +" classified regions");
 	}
 	
-	/**
-	 * Crack filling recursive algorithm that assigns unlabelled 
-	 * triangles to the maximally spread neighboring region of itself 
-	 * or of its neighbors
-	 * 
-	 * @param regions
-	 * 			built regions of the model mesh
-	 * 
-	 * @param tr
-	 * 			triangle to be filled in one of the regions
-	 */
-	public void fillRegionCrackForTriangle(List<Region> regions, Triangle tr) {
-		float maxArea = 0.0f;
-		int regionLabelId = -1;
-		for (Triangle neighbor : tr.getNeighbors()) {
-			if (neighbor.getRegionLabel() == -1) {
-				fillRegionCrackForTriangle(regions, tr);
-			}
-			if (maxArea < regions.get(neighbor.getRegionLabel()).getAreaOfRegion()) {
-				maxArea = regions.get(neighbor.getRegionLabel()).getAreaOfRegion();
-				regionLabelId = regions.get(neighbor.getRegionLabel()).getRegionId();
+	public void processRegionMerging() {
+		logger.debug("Merging existent regions ...");
+		long duration = System.currentTimeMillis();
+		int regionsToMerge = model.getRegions().size();
+		
+		logger.debug("Regions to merge: " + regionsToMerge);
+		HashMap<Integer, Region> regions = model.getRegionsMap();
+		float[][] adjacencyMatrix = new float[regionsToMerge][regionsToMerge];
+		float Inf = Float.MAX_VALUE;
+		
+		// initialize adjacency matrix entries with maximum distance values
+		for (int i = 0 ; i < adjacencyMatrix.length ; ++i) {
+			for (int j = 0 ; j <= i ; ++j) {
+				adjacencyMatrix[i][j] = Inf;
+				adjacencyMatrix[j][i] = Inf;
 			}
 		}
-		regions.get(regionLabelId).addTriangleToRegion(tr);
+		
+		// compute for the first time adjacency distances
+		computeAdjacencyDistances(adjacencyMatrix);
+		
+		float min = Inf;
+		int rI = 0, rJ = 0, iteration = 0;
+		if (UPPER_ITERATION_LIMIT_GROWING > model.getRegions().size()) {
+			UPPER_ITERATION_LIMIT_GROWING = model.getRegions().size();
+		}
+		while (min > MIN_DISTANCE_THRESHOLD && iteration < UPPER_ITERATION_LIMIT_GROWING) {
+			min = Inf;
+			for (int i = 0 ; i < adjacencyMatrix.length ; ++i) {
+				for (int j = 0 ; j <= i ; ++j) {
+					if (min > adjacencyMatrix[i][j]) {
+						min = adjacencyMatrix[i][j];
+						rI = i;
+						rJ = j;
+					}
+				}
+			}
+			if (min == Inf) {
+				logger.debug("All regions are distinct. Stopping ...");
+				break;
+			}
+			if (model.getRegions().size() == 1) {
+				logger.debug("Only one regions left. Stopping ...");
+				break;
+			}
+			if (regions.get(rJ) == null) {
+				logger.debug("Stopping ...");
+				break;
+			}
+			
+			// merge regions rI and rJ (rJ into rI)
+			mergeRegions(regions.get(rI), regions.get(rJ));
+			iteration++;
+			
+			// disconnect merged region rJ from any other regions
+			for (int i = 0 ; i < adjacencyMatrix.length ; ++i) {
+				adjacencyMatrix[i][rJ] = Inf;
+				adjacencyMatrix[rJ][i] = Inf;
+			}
+			
+			// update neighbors of neighbors of merged regions
+			for (Region nr : regions.get(rJ).getNeighbors()) {
+				nr.updateRegionNeighbors(model.getRegions());				
+			}
+			
+			// remove deprecated merged region rJ
+			regions.remove(rJ);
+			
+			// re-compute necessary entries in the adjacency matrix (only for the existent merged region)
+			computeAdjacencyDistances(adjacencyMatrix, regions.get(rI));
+		}
+		logger.debug("Exiting min distance value: " + min);
+		logger.debug("Merged " + regionsToMerge + " regions into " + model.getRegions().size() + " regions in " + iteration + " iterations");
+		logger.debug("Marking regions by coloring ...");
+		colorizeRegions(model.getRegions());
+		logger.debug("Ended. Took: " + PrintUtil.prettyMillis(System.currentTimeMillis() - duration));
 	}
+	
+	public void updateCurvaturesBasedOnRegions(HashMap<Vertex,Curvature> curvatures) {
+		HashMap<Integer, Region> regions = model.getRegionsMap();
+		for (int i = 0 ; i < model.getTriangles().size() ; ++i) {
+			Triangle t = model.getTriangles().get(i);
+			for (int j = 0 ; j < t.getPosition().length ; ++j) {
+				t.getPosition()[j].setClusterCurvatureVal(regions.get(t.getRegionLabel()).getCurvatureMinMaxOfRegion()[0], 
+						regions.get(t.getRegionLabel()).getCurvatureMinMaxOfRegion()[1]);
+				Curvature c = curvatures.get(t.getPosition()[j]);
+				c.setCurvatureMax(t.getPosition()[j].getClusterCurvatureVal()[0]);
+				c.setCurvatureMin(t.getPosition()[j].getClusterCurvatureVal()[1]);
+				c.setCurvatureMinMax(t.getPosition()[j].getClusterCurvatureVal()[0] * t.getPosition()[j].getClusterCurvatureVal()[0]);
+			}
+		}
+		CurvatureCalculation.setCurvatureHueSaturation(curvatures, model, 0.5f);
+	}
+	
+//	/**
+//	 * Crack filling recursive algorithm that assigns unlabelled 
+//	 * triangles to the maximally spread neighboring region of itself 
+//	 * or of its neighbors
+//	 * 
+//	 * @param regions
+//	 * 			built regions of the model mesh
+//	 * 
+//	 * @param tr
+//	 * 			triangle to be filled in one of the regions
+//	 */
+//	public void fillRegionCrackForTriangle(List<Region> regions, Triangle tr) {
+//		float maxArea = 0.0f;
+//		int regionLabelId = -1;
+//		tr.isVisited = true;
+//		for (Triangle neighbor : tr.getNeighbors()) {
+//			if (neighbor.getRegionLabel() == -1 && neighbor.isVisited == false) {
+//				fillRegionCrackForTriangle(regions, neighbor);
+//			} 
+//			if (neighbor.getRegionLabel() != -1) {
+//				if (maxArea < regions.get(neighbor.getRegionLabel()).getAreaOfRegion()) {
+//					maxArea = regions.get(neighbor.getRegionLabel()).getAreaOfRegion();
+//					regionLabelId = regions.get(neighbor.getRegionLabel()).getRegionId();
+//				}
+//			}
+//		}
+//		if (regionLabelId == -1) {
+//			
+//			Region newRegion = new Region(regions.size(),tr);
+//			regions.add(newRegion);
+//		}
+//		else {
+//
+//			regions.get(regionLabelId).addTriangleToRegion(tr);
+//		}
+//	}
 }
 
