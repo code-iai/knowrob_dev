@@ -51,6 +51,8 @@ public class EdgeAnalyser extends MeshAnalyser {
 	 */
 	private int 				numAddedTriangles;
 	
+	private MeshCas				cas;
+	
 	/**
 	 * Getter for the number of the added triangles
 	 */
@@ -69,7 +71,8 @@ public class EdgeAnalyser extends MeshAnalyser {
 	}
 	
 	@Override
-	public void processStart(MeshCas cas) {
+	public void processStart(MeshCas newCas) {
+		cas = newCas;
 		allTriangles = cas.getModel().getTriangles();
 		allVertices = cas.getModel().getVertices();
 		trianglesProcessed.set(0);
@@ -113,7 +116,9 @@ public class EdgeAnalyser extends MeshAnalyser {
 				trianglesProcessed.decrementAndGet();
 			}
 		}
-		allTriangles.removeAll(toRemove);
+		cas.getModel().getGroup().removeTriangle(toRemove);
+		cas.getModel().reloadVertexList();
+//		allTriangles.remove(toRemove);
 		
 //		this.removeCollinearTriangles();
 	
@@ -151,7 +156,8 @@ public class EdgeAnalyser extends MeshAnalyser {
 				for (int j = 0 ; j < tn.size() ; ++j) {
 					tn.get(j).removeNeighbor(allTrianglesToProcess.get(i));
 				}
-				allTriangles.remove(allTrianglesToProcess.get(i));
+				cas.getModel().getGroup().removeTriangle(allTrianglesToProcess.get(i));
+//				allTriangles.remove(allTrianglesToProcess.get(i));
 				allTrianglesToProcess.remove(allTrianglesToProcess.get(i));
 				rmTriangles++;
 			}
@@ -200,7 +206,7 @@ public class EdgeAnalyser extends MeshAnalyser {
 	}
 	
 	/**
-	 * Finds the two common points of two neighboring trinagles
+	 * Finds the two common points of two neighboring triangles
 	 */
 	private List<Vertex> findSharedVertices(Triangle t, Triangle n) {
 		List<Vertex> v = new ArrayList<Vertex>(4);
@@ -291,7 +297,8 @@ public class EdgeAnalyser extends MeshAnalyser {
 			t.getPosition()[i].addNeighbor(newVertex);
 			newVertex.addNeighbor(t.getPosition()[i]);
 			newTriangle[i].updateCentroid();
-			allTriangles.add(newTriangle[i]);
+			cas.getModel().getGroup().addTriangle(newTriangle[i]);
+//			allTriangles.add(newTriangle[i]);
 		}
 	}
 }
