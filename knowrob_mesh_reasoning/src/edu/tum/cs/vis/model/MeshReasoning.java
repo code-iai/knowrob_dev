@@ -44,6 +44,7 @@ import edu.tum.cs.vis.model.uima.annotation.primitive.PlaneAnnotation;
 import edu.tum.cs.vis.model.uima.annotation.primitive.SphereAnnotation;
 import edu.tum.cs.vis.model.uima.cas.MeshCas;
 import edu.tum.cs.vis.model.util.ContainerAnnotationVolumeComarator;
+import edu.tum.cs.vis.model.util.Curvature;
 import edu.tum.cs.vis.model.util.HandleComparator;
 import edu.tum.cs.vis.model.util.PrimitiveAnnotationAreaComparator;
 import edu.tum.cs.vis.model.util.Region;
@@ -243,7 +244,7 @@ public class MeshReasoning {
 		
 		// in ply (and also collada) files there may be double sided triangles
 		logger.debug("Checking for double sided triangles ...");
-		logger.debug("Removed " + model.removeDoubleSidedTriangles() + " triangles. Took: "
+		logger.debug("Removed " + cas.getModel().removeDoubleSidedTriangles() + " triangles. Took: "
 				+ PrintUtil.prettyMillis(System.currentTimeMillis() - start));
 
 		NeighborAnalyser na = new NeighborAnalyser();
@@ -252,13 +253,13 @@ public class MeshReasoning {
 		na.process(cas);
 
 		logger.debug("Checking for vertex sharing and calculating vertex normals ...");
-		model.updateVertexSharing();
+		cas.getModel().updateVertexSharing();
 
-		model.updateVertexNormals();
+		cas.getModel().updateVertexNormals();
 		logger.debug("Model initialized. Took: "
 				+ PrintUtil.prettyMillis(System.currentTimeMillis() - start) + " (Vertices: "
-				+ model.getVertices().size() + ", Lines: " + model.getLines().size()
-				+ ", Triangles: " + model.getTriangles().size() + ")");
+				+ cas.getModel().getVertices().size() + ", Lines: " + cas.getModel().getLines().size()
+				+ ", Triangles: " + cas.getModel().getTriangles().size() + ")");
 
 		// File f = model.exportVerticesAsTxt();		
 
@@ -266,16 +267,16 @@ public class MeshReasoning {
 		EdgeAnalyser ea = new EdgeAnalyser();
 		analyser.add(ea);
 		Thread.yield();
-		ea.process(cas);
+		ea.process(cas,imageGeneratorSettings);
 		
 		// recalculate vertex normals if new points were introduced in the model
 		if (ea.getNumAddedTriangles() != 0) {
 			logger.debug("Re-calculating vertex normals ...");
-			model.updateVertexNormals();
+			cas.getModel().updateVertexNormals();
 			logger.debug("Took: "
 					+ PrintUtil.prettyMillis(System.currentTimeMillis() - start) + " (Vertices: "
-					+ model.getVertices().size() + ", Lines: " + model.getLines().size()
-					+ ", Triangles: " + model.getTriangles().size() + ")");
+					+ cas.getModel().getVertices().size() + ", Lines: " + cas.getModel().getLines().size()
+					+ ", Triangles: " + cas.getModel().getTriangles().size() + ")");
 		}
 		
 		if (imageGeneratorSettings != null) {
@@ -307,17 +308,13 @@ public class MeshReasoning {
 
 		logger.debug("Calculating curvature ...");
 		long curvatureStartTime = System.currentTimeMillis();
-		CurvatureCalculation.calculateCurvatures(cas.getCurvatures(), model);
-//		for (int i = 0 ; i < model.getVertices().size() ; ++i) {
-//			System.out.println("--> " + i);
-//			System.out.println(cas.getCurvature(model.getVertices().get(i)));
-//		}
+		CurvatureCalculation.calculateCurvatures(cas.getCurvatures(), cas.getModel());
 		long curvatureDuration = System.currentTimeMillis() - curvatureStartTime;
 		logger.debug("Ended. Took: " + PrintUtil.prettyMillis(curvatureDuration));
 
 		// classify vertices by curvature using KMeans
 		logger.debug("Classifying vertices of CAD model by curvature using KMeans ...");
-		ModelProcessing processor = new ModelProcessing(model);
+		ModelProcessing processor = new ModelProcessing(cas.getModel());
 		long KMeansStartTime = System.currentTimeMillis();
 		processor.KMeansVCClassification(cas.getCurvatures());
 		long KMeansDuration = System.currentTimeMillis() - KMeansStartTime;
@@ -330,17 +327,30 @@ public class MeshReasoning {
 			mrv.setDrawCurvatureColor(false);
 		}		
 
-		// Region growing process for already labelled triangles
-		List<Region> regions = processor.processRegionGrowing();
+		// Region growing process for all triangles
+		processor.processRegionGrowing();
+		processor.processRegionMerging();
+		processor.updateCurvaturesBasedOnRegions(cas.getCurvatures());
 		
-		int classifiedTr = 0;
-		for (int i = 0 ; i < regions.size() ; ++i) {
-			System.out.println(regions.get(i).getRegionId() + " KMin = " + regions.get(i).getCurvatureMinMaxOfRegion()[0] 
-					+ " KMax = " + regions.get(i).getCurvatureMinMaxOfRegion()[1] + " " + regions.get(i).getTriangles().size());
-			classifiedTr += regions.get(i).getTriangles().size();
-		}
-		System.out.println("classified: " + classifiedTr + " out of: " + model.getTriangles().size());
-
+		// Region merging process for already existent regions
+//		cas.getModel().setRegions(processor.processRegionMerging());
+		
+//		int classifiedTr = 0;
+//		for (int i = 0 ; i < cas.getModel().getRegions().size() ; ++i) {
+//			System.out.println(cas.getModel().getRegions().get(i).getRegionId() + " KMin = " + cas.getModel().getRegions().get(i).getCurvatureMinMaxOfRegion()[0] 
+//					+ " KMax = " + cas.getModel().getRegions().get(i).getCurvatureMinMaxOfRegion()[1] + " " + cas.getModel().getRegions().get(i).getTriangles().size());
+//			classifiedTr += cas.getModel().getRegions().get(i).getTriangles().size();
+//		}
+//		System.out.println("classified: " + classifiedTr + " out of: " + model.getTriangles().size());
+		
+//		int trRemaining = 0;
+//		for (int i = 0 ; i < model.getTriangles().size() ; ++i) {
+//			if (model.getTriangles().get(i).getRegionLabel() == -1) {
+//				trRemaining++;
+//			}
+//		}
+//		System.out.println("remained: " + trRemaining);
+		
 		PrimitiveAnalyser pa = new PrimitiveAnalyser();
 		analyser.add(pa);
 		ContainerAnalyser ca = new ContainerAnalyser();
@@ -353,6 +363,7 @@ public class MeshReasoning {
 		ca.process(cas, imageGeneratorSettings);
 		cha.process(cas, imageGeneratorSettings);
 
+		logger.info("MeshReasoning completed. Took: " + PrintUtil.prettyMillis(System.currentTimeMillis() - start));
 		if (imageGeneratorSettings != null && imageGeneratorSettings.isCloseAfterFinish()) {
 			logger.debug("Closing ...");
 			System.exit(123);
