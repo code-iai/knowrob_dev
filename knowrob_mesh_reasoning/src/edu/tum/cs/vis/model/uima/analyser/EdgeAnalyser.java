@@ -234,6 +234,8 @@ public class EdgeAnalyser extends MeshAnalyser {
 		Triangle[] newTriangle = new Triangle[3];
 		for (int i = 0 ; i < 3 ; ++i) {
 			newTriangle[i] = new Triangle(t.getPosition()[i],t.getPosition()[(i+1)%3],newVertex);
+			// update now its edges and set normal vector and appearance
+			newTriangle[i].updateEdges();
 			newTriangle[i].setAppearance(t.getAppearance());
 			newTriangle[i].setNormalVector(t.getNormalVector());
 		}

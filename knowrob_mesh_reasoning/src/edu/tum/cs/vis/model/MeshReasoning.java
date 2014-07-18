@@ -227,6 +227,13 @@ public class MeshReasoning {
 			cas = new MeshCas();
 			analyser = new ArrayList<MeshAnalyser>(6);
 		}
+		
+		// make sure all edges of all triangles in the model are initialized
+		for (int i = 0 ; i < model.getTriangles().size() ; ++i){
+			model.getTriangles().get(i).updateEdges();
+		}
+		
+		// set model to MeshCas
 		cas.setModel(model);
 		
 		// remember model path (e.g. for saving cache files)
