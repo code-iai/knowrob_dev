@@ -34,6 +34,7 @@ import edu.tum.cs.vis.model.uima.cas.MeshCas;
 import edu.tum.cs.vis.model.util.Curvature;
 import edu.tum.cs.vis.model.util.DrawSettings;
 import edu.tum.cs.vis.model.util.DrawType;
+import edu.tum.cs.vis.model.util.Edge;
 import edu.tum.cs.vis.model.util.IntersectedTriangle;
 import edu.tum.cs.vis.model.util.Triangle;
 import edu.tum.cs.vis.model.util.Vertex;
@@ -140,6 +141,10 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 	 * draw voronoi area for each vertex?
 	 */
 	private boolean									drawVoronoiArea		= false;
+	/**
+	 * draw sharp edges existent in the model
+	 */
+	private boolean									drawSharpEdges 		= false;
 	/**
 	 * Select only nearest triangle or all intersecting with mouse ray?
 	 */
@@ -352,7 +357,7 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 			}
 		}
 
-		if (drawVertexNormals || drawVertexCurvature || drawVoronoiArea) {
+		if (drawVertexNormals || drawVertexCurvature || drawVoronoiArea || drawSharpEdges) {
 			g.strokeWeight(2f);
 			for (MeshCas c : casList) {
 				synchronized (c.getModel().getVertices()) {
@@ -390,7 +395,21 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 						}
 					}
 				}
-
+				if (drawSharpEdges) {
+					g.stroke(255, 30, 0);
+					synchronized (c.getModel().getTriangles()) {
+					for (Triangle t : c.getModel().getTriangles()) {
+						Edge[] edges = t.getEdges();
+						for (int i = 0 ; i < edges.length ; ++i) {
+							if (edges[i].getIsSharpEdge()) {
+								Vertex v = edges[i].getVerticesOfEdge()[0];
+								Vector3f edge = edges[i].getEdgeValue();
+								g.line(v.x, v.y, v.z, v.x - edge.x, v.y - edge.y, v.z - edge.z);
+							}
+						}
+					}
+				}
+				}
 			}
 		}
 
@@ -494,6 +513,15 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 	 */
 	public boolean isDrawVoronoiArea() {
 		return drawVoronoiArea;
+	}
+	
+	/**
+	 * Should the  sharp edges be drawn?
+	 * 
+	 * @return the drawSharpEdges
+	 */
+	public boolean isDrawSharpEdges() {
+		return drawSharpEdges;
 	}
 
 	/**
@@ -830,6 +858,14 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 	 */
 	public void setDrawVoronoiArea(boolean drawVoronoiArea) {
 		this.drawVoronoiArea = drawVoronoiArea;
+	}
+	
+	/**
+	 * @param drawSharpEdges
+	 * 			  the drwaSharpEdges to set
+	 */
+	public void setDrawSharpEdges(boolean drawSharpEdges) {
+		this.drawSharpEdges = drawSharpEdges;
 	}
 
 	/**

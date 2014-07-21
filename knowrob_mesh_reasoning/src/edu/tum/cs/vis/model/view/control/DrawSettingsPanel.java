@@ -64,6 +64,10 @@ public class DrawSettingsPanel extends JPanel implements ActionListener {
 	 */
 	private final JCheckBox			cbxDrawVoronoiArea;
 	/**
+	 * draw sharp edges
+	 */
+	private final JCheckBox			cbxDrawSharpEdges;
+	/**
 	 * button to set rotation of camera manually
 	 */
 	private final JButton			btnSetRotation;
@@ -121,6 +125,11 @@ public class DrawSettingsPanel extends JPanel implements ActionListener {
 		cbxDrawVoronoiArea.addActionListener(this);
 		cbxDrawVoronoiArea.setSelected(false);
 		this.add(cbxDrawVoronoiArea);
+		
+		cbxDrawSharpEdges = new JCheckBox("Sharp Edges");
+		cbxDrawSharpEdges.addActionListener(this);
+		cbxDrawSharpEdges.setSelected(false);
+		this.add(cbxDrawSharpEdges);
 
 		btnSetRotation = new JButton("Set View");
 		btnSetRotation.addActionListener(this);
@@ -155,6 +164,8 @@ public class DrawSettingsPanel extends JPanel implements ActionListener {
 			view.setDrawCurvatureColor(cbxDrawCurvatureColor.isSelected());
 		else if (e.getSource() == cbxDrawVoronoiArea)
 			view.setDrawVoronoiArea(cbxDrawVoronoiArea.isSelected());
+		else if (e.getSource() == cbxDrawSharpEdges)
+			view.setDrawSharpEdges(cbxDrawSharpEdges.isSelected());
 		else if (e.getSource() == cbxDrawBoundingBox)
 			view.setDrawBoundingBox(cbxDrawBoundingBox.isSelected());
 		else if (e.getSource() == btnSetRotation) {
