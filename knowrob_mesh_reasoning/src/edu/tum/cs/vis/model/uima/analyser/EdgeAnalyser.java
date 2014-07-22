@@ -148,8 +148,8 @@ public class EdgeAnalyser extends MeshAnalyser {
 			Edge[] edges = allTrianglesToProcess.get(i).getEdges();
 			Vector3f crossProd = new Vector3f();
 			crossProd.cross(edges[0].getEdgeValue(), edges[1].getEdgeValue());
-			if (crossProd.length() == 0.0 || edges[0].getEdgeValue().length() == 0.0 || 
-					edges[1].getEdgeValue().length() == 0.0 || edges[2].getEdgeValue().length() == 0.0) {
+			if (crossProd.length() == 0.0f || edges[0].getEdgeValue().length() == 0.0f || 
+					edges[1].getEdgeValue().length() == 0.0f || edges[2].getEdgeValue().length() == 0.0f) {
 				logger.debug("Removing " + allTrianglesToProcess.get(i));
 				List<Triangle> tn = new ArrayList<Triangle>();
 				tn.addAll(allTrianglesToProcess.get(i).getNeighbors());
@@ -175,9 +175,9 @@ public class EdgeAnalyser extends MeshAnalyser {
 		Iterator<Triangle> it = t.getNeighbors().iterator();
 		while (it.hasNext()) {
 			Triangle n = it.next();
-			synchronized (n) {
+			//synchronized (n) {
 			float angleOfNormals = (float)Math.toDegrees(t.getNormalVector().angle(n.getNormalVector()));
-			if ((angleOfNormals >= 75.0) && (angleOfNormals <= 115.0)) {
+			if (angleOfNormals >= 87.5f) {
 				List<Vertex> vShared = findSharedVertices(t,n);
 				Edge edge = new Edge(vShared.get(0), vShared.get(2));
 				vShared.get(0).isSharpVertex(true);
@@ -187,21 +187,21 @@ public class EdgeAnalyser extends MeshAnalyser {
 				t.addSharpEdge(edge);
 				n.addSharpEdge(edge);
 			}
-			}
+			//}
 		}
-		if (t.getNeighbors().size() < 3) {
-			Edge[] edges = t.getEdges();
-			for (int i = 0 ; i < edges.length ; ++i) {
-				Triangle n = t.getNeighborOfEdge(edges[i]);
-				if (n == null) {
-					// mark vertices that define the edge as being sharp
-					t.getPosition()[(i+1) % edges.length].isSharpVertex(true);
-					t.getPosition()[(i+2) % edges.length].isSharpVertex(true);
-					t.addSharpEdge(edges[i]);
-				}
-				
-			}
-		}
+//		if (t.getNeighbors().size() < 3) {
+//			Edge[] edges = t.getEdges();
+//			for (int i = 0 ; i < edges.length ; ++i) {
+//				Triangle n = t.getNeighborOfEdge(edges[i]);
+//				if (n == null) {
+//					// mark vertices that define the edge as being sharp
+//					t.getPosition()[(i+1) % edges.length].isSharpVertex(true);
+//					t.getPosition()[(i+2) % edges.length].isSharpVertex(true);
+//					t.addSharpEdge(edges[i]);
+//				}
+//				
+//			}
+//		}
 		}
 	}
 	
@@ -262,30 +262,6 @@ public class EdgeAnalyser extends MeshAnalyser {
 			}
 		}
 		
-//		
-//		List<Triangle> neighbors = new ArrayList<Triangle>();
-//		neighbors.addAll(t.getNeighbors());
-//		for (int i = 0 ; i < 3 ; ++i) {
-//			for (int j = 0 ; j < neighbors.size() ; ++j) {
-//				logger.debug("j = " + j);
-//				Triangle n = neighbors.get(j);
-//				int cont = 0;
-//				for (Vertex v : n.getPosition()) {
-//					if ((v.sameCoordinates(newTriangle[i].getPosition()[0])) || (v.sameCoordinates(newTriangle[i].getPosition()[1]))) {
-//						cont++;
-//					}
-//				}
-//				// if the neighboring triangle (exact 2 common vertices)
-//				if (cont == 2) {
-//					t.removeNeighbor(n);
-//					neighbors.remove(n);
-//					newTriangle[i].addNeighbor(n);
-//					n.addNeighbor(newTriangle[i]);
-//					break;
-//				}
-//			}
-//		}
-		
 		// add sharp edges if any to the new 3 created triangles
 		for (Edge sharpEdge : t.getSharpEdges()) {
 			for (int i = 0 ; i < 3 ; ++i) {
@@ -300,7 +276,6 @@ public class EdgeAnalyser extends MeshAnalyser {
 			newVertex.addNeighbor(t.getPosition()[i]);
 			newTriangle[i].updateCentroid();
 			cas.getModel().getGroup().addTriangle(newTriangle[i]);
-//			allTriangles.add(newTriangle[i]);
 		}
 	}
 }
