@@ -95,6 +95,11 @@ public class ModelProcessing{
 	private final static float			EPSILON = 1e-5f;
 	
 	/**
+	 * Defines the maximum number for the 32-bit floating point precision (+Inf)
+	 */
+	private final static float			PINF = Float.MAX_VALUE;
+	
+	/**
 	 * Default constructor of the ModelProcessing class
 	 */
 	public ModelProcessing() {
@@ -557,6 +562,12 @@ public class ModelProcessing{
 			float distance = 0.0f;
 			List<Edge> commonEdges = r.getCommonEdges(n);
 			if (commonEdges.size() == 1) {
+				// if common edge is sharp cannot merge the two regions
+				if (commonEdges.get(0).getIsSharpEdge()) {
+					adjacencyMatrix[r.getRegionId()][n.getRegionId()] = PINF;
+					adjacencyMatrix[n.getRegionId()][r.getRegionId()] = PINF;
+					continue;
+				}
 				curvatureDistanceBoundary[0] = (commonEdges.get(0).getVerticesOfEdge()[0].getClusterCurvatureVal()[0] 
 						+ commonEdges.get(0).getVerticesOfEdge()[1].getClusterCurvatureVal()[0]) / 2.0f;
 				curvatureDistanceBoundary[1] = (commonEdges.get(0).getVerticesOfEdge()[0].getClusterCurvatureVal()[1] 
@@ -566,7 +577,14 @@ public class ModelProcessing{
 			else {
 				HashMap<Vertex,Integer> edgesVerticesAdjacency = new HashMap<Vertex,Integer>();
 				int cont = 0;
-				for (Edge e : commonEdges) {
+				for (int k = 0 ; k < commonEdges.size() && distance != PINF ; ++k) {
+					Edge e = commonEdges.get(k);
+					if (e.getIsSharpEdge()) {
+						distance = PINF;
+						adjacencyMatrix[r.getRegionId()][n.getRegionId()] = distance;
+						adjacencyMatrix[n.getRegionId()][r.getRegionId()] = distance;
+						break;
+					}
 					if (!edgesVerticesAdjacency.containsKey(e.getVerticesOfEdge()[0])) {
 						edgesVerticesAdjacency.put(e.getVerticesOfEdge()[0], 1);
 					}
@@ -580,6 +598,9 @@ public class ModelProcessing{
 						edgesVerticesAdjacency.put(e.getVerticesOfEdge()[1], edgesVerticesAdjacency.get(e.getVerticesOfEdge()[1]) + 1);
 					}
 					commonBorder += e.getEdgeValue().length();
+				}
+				if (distance == PINF) {
+					continue;
 				}
 				for (Vertex v : edgesVerticesAdjacency.keySet()) {
 					if (edgesVerticesAdjacency.get(v) == 2) {
@@ -634,6 +655,12 @@ public class ModelProcessing{
 				float distance = 0.0f;
 				List<Edge> commonEdges = r.getCommonEdges(n);
 				if (commonEdges.size() == 1) {
+					// if common edge is sharp cannot merge the two regions
+					if (commonEdges.get(0).getIsSharpEdge()) {
+						adjacencyMatrix[r.getRegionId()][n.getRegionId()] = PINF;
+						adjacencyMatrix[n.getRegionId()][r.getRegionId()] = PINF;
+						continue;
+					}
 					curvatureDistanceBoundary[0] = (commonEdges.get(0).getVerticesOfEdge()[0].getClusterCurvatureVal()[0] 
 							+ commonEdges.get(0).getVerticesOfEdge()[1].getClusterCurvatureVal()[0]) / 2.0f;
 					curvatureDistanceBoundary[1] = (commonEdges.get(0).getVerticesOfEdge()[0].getClusterCurvatureVal()[1] 
@@ -643,7 +670,14 @@ public class ModelProcessing{
 				else {
 					HashMap<Vertex,Integer> edgesVerticesAdjacency = new HashMap<Vertex,Integer>();
 					int cont = 0;
-					for (Edge e : commonEdges) {
+					for (int k = 0 ; k < commonEdges.size() && distance != PINF ; ++k) {
+						Edge e = commonEdges.get(k);
+						if (e.getIsSharpEdge()) {
+							distance = PINF;
+							adjacencyMatrix[r.getRegionId()][n.getRegionId()] = distance;
+							adjacencyMatrix[n.getRegionId()][r.getRegionId()] = distance;
+							break;
+						}
 						if (!edgesVerticesAdjacency.containsKey(e.getVerticesOfEdge()[0])) {
 							edgesVerticesAdjacency.put(e.getVerticesOfEdge()[0], 1);
 						}
@@ -657,6 +691,9 @@ public class ModelProcessing{
 							edgesVerticesAdjacency.put(e.getVerticesOfEdge()[1], edgesVerticesAdjacency.get(e.getVerticesOfEdge()[1]) + 1);
 						}
 						commonBorder += e.getEdgeValue().length();
+					}
+					if (distance == PINF) {
+						continue;
 					}
 					for (Vertex v : edgesVerticesAdjacency.keySet()) {
 						if (edgesVerticesAdjacency.get(v) == 2) {
@@ -760,9 +797,9 @@ public class ModelProcessing{
 			Triangle tr = model.getTriangles().get(i);
 			if (tr.updateIsSeedTriangle() && tr.getRegionLabel() == -1) {
 				Region newRegion = new Region(contId,tr);
-				if (newRegion.getCurvatureMinMaxOfRegion()[0] == 0.0 && newRegion.getCurvatureMinMaxOfRegion()[1] == 0.0) {
-					System.out.println("0.0 curv @" + tr);
-				}
+//				if (newRegion.getCurvatureMinMaxOfRegion()[0] == 0.0 && newRegion.getCurvatureMinMaxOfRegion()[1] == 0.0) {
+//					System.out.println("0.0 curv @" + tr);
+//				}
 				newRegion.buildUpRegion();
 				regions.add(newRegion);
 				contId++;
@@ -790,7 +827,17 @@ public class ModelProcessing{
 
 			for (int i = 0 ; i < regions.size() ; ++i) {
 				List<Triangle> neighborsAtRegion = regions.get(i).getOutsideBoundaryUnlabelled();
-				regions.get(i).addTrianglesToRegion(neighborsAtRegion);
+				for (Triangle t : neighborsAtRegion) {
+					Edge edge = regions.get(i).getCommonEdge(t);
+					// if common edge is not sharp add triangle to region
+					if (edge == null) {
+						continue;
+					}
+					if (!edge.getIsSharpEdge()) {
+						regions.get(i).addTriangleToRegion(t);
+					}
+				}
+//				regions.get(i).addTrianglesToRegion(neighborsAtRegion);
 			}
 			
 			unclassifiedNum = 0;
@@ -873,26 +920,26 @@ public class ModelProcessing{
 		logger.debug("Regions to merge: " + regionsToMerge);
 		HashMap<Integer, Region> regions = model.getRegionsMap();
 		float[][] adjacencyMatrix = new float[regionsToMerge][regionsToMerge];
-		float Inf = Float.MAX_VALUE;
+
 		
 		// initialize adjacency matrix entries with maximum distance values
 		for (int i = 0 ; i < adjacencyMatrix.length ; ++i) {
 			for (int j = 0 ; j <= i ; ++j) {
-				adjacencyMatrix[i][j] = Inf;
-				adjacencyMatrix[j][i] = Inf;
+				adjacencyMatrix[i][j] = PINF;
+				adjacencyMatrix[j][i] = PINF;
 			}
 		}
 		
 		// compute for the first time adjacency distances
 		computeAdjacencyDistances(adjacencyMatrix);
 		
-		float min = Inf;
+		float min = PINF;
 		int rI = 0, rJ = 0, iteration = 0;
 		if (UPPER_ITERATION_LIMIT_GROWING > model.getRegions().size()) {
 			UPPER_ITERATION_LIMIT_GROWING = model.getRegions().size();
 		}
 		while (min > MIN_DISTANCE_THRESHOLD && iteration < UPPER_ITERATION_LIMIT_GROWING) {
-			min = Inf;
+			min = PINF;
 			for (int i = 0 ; i < adjacencyMatrix.length ; ++i) {
 				for (int j = 0 ; j <= i ; ++j) {
 					if (min > adjacencyMatrix[i][j]) {
@@ -902,7 +949,7 @@ public class ModelProcessing{
 					}
 				}
 			}
-			if (min == Inf) {
+			if (min == PINF) {
 				logger.debug("All regions are distinct. Stopping ...");
 				break;
 			}
@@ -921,8 +968,8 @@ public class ModelProcessing{
 			
 			// disconnect merged region rJ from any other regions
 			for (int i = 0 ; i < adjacencyMatrix.length ; ++i) {
-				adjacencyMatrix[i][rJ] = Inf;
-				adjacencyMatrix[rJ][i] = Inf;
+				adjacencyMatrix[i][rJ] = PINF;
+				adjacencyMatrix[rJ][i] = PINF;
 			}
 			
 			// update neighbors of neighbors of merged regions
