@@ -23,7 +23,7 @@ dependencies {
 
   compile 'org.ros.rosjava_core:rosjava:[0.1,)'
   compile 'org.knowrob.knowrob_common:knowrob_common:[0.1,)'
-  compile 'org.knowrob.knowrob_common:knowrob_cad_parser:[0.1,)'
+  compile 'org.knowrob.knowrob_cad_parser:knowrob_cad_parser:[0.1,)'
 
   compile 'commons-net:commons-net:3.0.1'
   compile 'com.googlecode.efficient-java-matrix-library:ejml:0.25'
