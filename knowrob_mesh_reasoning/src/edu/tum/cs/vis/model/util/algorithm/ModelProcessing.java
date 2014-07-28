@@ -144,7 +144,7 @@ public class ModelProcessing{
 		if (NUM_CLUSTERS >= model.getVertices().size() / 10) {
 			logger.debug("Number of vertices in the model smaller than number of clusters chosen");
 			int temp = NUM_CLUSTERS;
-			NUM_CLUSTERS = temp / 5;
+			NUM_CLUSTERS = temp / 10;
 			logger.debug("Number of clusters has been reduced from " +
 			temp + " to " + NUM_CLUSTERS);
 		}
@@ -168,7 +168,7 @@ public class ModelProcessing{
 			clusters[i].addVertexToCluster(v);
 			clusters[i].updateCentroid(curvatures);
 			v.setClusterLabel(clusters[i].getLabelId());
-			v.setClusterCurvatureVal(clusters[i].getCentroid()[0],clusters[i].getCentroid()[1]);
+			v.setClusterCurvatureVal(clusters[i].getCentroid()[0],clusters[i].getCentroid()[1],clusters[i].getCentroid()[2]);
 		}
 		
 		// remove randomly picked elements
@@ -192,7 +192,7 @@ public class ModelProcessing{
 			clusters[clusterIndex].addVertexToCluster(v);
 			clusters[clusterIndex].updateCentroid(curvatures);
 			v.setClusterLabel(clusters[clusterIndex].getLabelId());
-			v.setClusterCurvatureVal(clusters[clusterIndex].getCentroid()[0],clusters[clusterIndex].getCentroid()[1]);
+			v.setClusterCurvatureVal(clusters[clusterIndex].getCentroid()[0],clusters[clusterIndex].getCentroid()[1],clusters[clusterIndex].getCentroid()[2]);
 		}
 		
 //		for (int i = 0 ; i < NUM_CLUSTERS ; ++i) {
@@ -224,7 +224,7 @@ public class ModelProcessing{
 					clusters[clusterIndex].addVertexToCluster(model.getVertices().get(i));
 					clusters[clusterIndex].updateCentroid(curvatures);
 					model.getVertices().get(i).setClusterLabel(clusterIndex);
-					model.getVertices().get(i).setClusterCurvatureVal(clusters[clusterIndex].getCentroid()[0], clusters[clusterIndex].getCentroid()[1]);
+					model.getVertices().get(i).setClusterCurvatureVal(clusters[clusterIndex].getCentroid()[0], clusters[clusterIndex].getCentroid()[1], clusters[clusterIndex].getCentroid()[2]);
 					isRunning = true;
 				}
 			}
@@ -237,9 +237,10 @@ public class ModelProcessing{
 			classifiedVertices += clusters[i].getVertices().size();
 			for (int j = 0 ; j < clusters[i].getVertices().size() ; ++j) {
 				Curvature c = curvatures.get(clusters[i].getVertices().get(j));
-				clusters[i].getVertices().get(j).setClusterCurvatureVal(clusters[i].getCentroid()[0], clusters[i].getCentroid()[1]);
+				clusters[i].getVertices().get(j).setClusterCurvatureVal(clusters[i].getCentroid()[0], clusters[i].getCentroid()[1], clusters[i].getCentroid()[2]);
 				c.setCurvatureMin(clusters[i].getCentroid()[0]);
 				c.setCurvatureMax(clusters[i].getCentroid()[1]);
+				c.setCurvatureMinMax(clusters[i].getCentroid()[2]);
 			}
 		}
 		
@@ -266,7 +267,8 @@ public class ModelProcessing{
 	 */
 	private float distEuclid(Curvature c, Cluster cluster) {
 		return (float)Math.sqrt(Math.pow(c.getCurvatureMin() - cluster.getCentroid()[0] , 2) 
-				+ Math.pow(c.getCurvatureMax() - cluster.getCentroid()[1] , 2));
+				+ Math.pow(c.getCurvatureMax() - cluster.getCentroid()[1] , 2) 
+				+ Math.pow(c.getCurvatureMinMax() - cluster.getCentroid()[2], 2));
 	}
 	
 	/**
@@ -757,14 +759,14 @@ public class ModelProcessing{
 			Triangle t = model.getTriangles().get(i);
 			for (int j = 0 ; j < t.getPosition().length ; ++j) {
 				t.getPosition()[j].setClusterCurvatureVal(regions.get(t.getRegionLabel()).getCurvatureMinMaxOfRegion()[0], 
-						regions.get(t.getRegionLabel()).getCurvatureMinMaxOfRegion()[1]);
+						regions.get(t.getRegionLabel()).getCurvatureMinMaxOfRegion()[1], regions.get(t.getRegionLabel()).getCurvatureMinMaxOfRegion()[2]);
 				Curvature c = curvatures.get(t.getPosition()[j]);
 				c.setCurvatureMax(t.getPosition()[j].getClusterCurvatureVal()[0]);
 				c.setCurvatureMin(t.getPosition()[j].getClusterCurvatureVal()[1]);
 				c.setCurvatureMinMax(t.getPosition()[j].getClusterCurvatureVal()[0] * t.getPosition()[j].getClusterCurvatureVal()[0]);
 			}
 		}
-		CurvatureCalculation.setCurvatureHueSaturation(curvatures, model, 0.5f);
+		CurvatureCalculation.setCurvatureHueSaturation(curvatures, model, 1.0f);
 	}
 	
 //	/**

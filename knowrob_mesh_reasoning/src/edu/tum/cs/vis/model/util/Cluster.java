@@ -27,9 +27,10 @@ public class Cluster {
 	private final int				id;
 
 	/**
-	 * Centroid of the cluster containing Kmin on first position and Kmax on second position
+	 * Centroid of the cluster containing Kmin on the first position, 
+	 * Kmax on the second position and the KMinKMax curvature on the third position. 
 	 */
-	private final float[]			centroid		= new float[2];
+	private final float[]			centroid		= new float[3];
 
 	/**
 	 * Array list of all vertices that are classified to this cluster instance
@@ -41,7 +42,7 @@ public class Cluster {
 	 */
 	public Cluster(final int newId) {
 		this.id = newId;
-		this.centroid[0] = this.centroid[1] = 0.0f;
+		this.centroid[0] = this.centroid[1] = this.centroid[2] = 0.0f;
 	}
 
 	/**
@@ -91,19 +92,21 @@ public class Cluster {
 			// exit if no vertices
 			return;
 		}
-		centroid[0] = centroid[1] = 0.0f;
+		centroid[0] = centroid[1] = centroid[2] = 0.0f;
 		for (Vertex v : clusterVertices) {
 			centroid[0] += curvatures.get(v).getCurvatureMin();
 			centroid[1] += curvatures.get(v).getCurvatureMax();
+			centroid[2] += curvatures.get(v).getCurvatureMinMax();
 		}
 		centroid[0] /= clusterVertices.size();
 		centroid[1] /= clusterVertices.size();
+		centroid[2] /= clusterVertices.size();
 	}
 	
 	@Override
 	public String toString() {
 		String print = "Cluster ID " + this.id + "\n";
-		print = print + "Centroid: (" + this.centroid[0] + ", " + this.centroid[1] + ")\n";
+		print = print + "Centroid: (" + this.centroid[0] + ", " + this.centroid[1] + ", " + this.centroid[2] + ")\n";
 		print = print + "Vertices: " + this.clusterVertices.size() + "\n";
 		return print;
 	}
