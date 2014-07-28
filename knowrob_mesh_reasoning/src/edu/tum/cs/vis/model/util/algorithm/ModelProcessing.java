@@ -17,11 +17,8 @@ import java.awt.Color;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.concurrent.Callable;
 
 import javax.vecmath.Vector3f;
 
@@ -33,8 +30,8 @@ import edu.tum.cs.vis.model.util.Curvature;
 import edu.tum.cs.vis.model.util.Edge;
 import edu.tum.cs.vis.model.util.Region;
 import edu.tum.cs.vis.model.util.Triangle;
+import edu.tum.cs.vis.model.util.UtilityValues;
 import edu.tum.cs.vis.model.util.Vertex;
-import edu.tum.cs.ias.knowrob.utils.ThreadPool;
 
 
 /**
@@ -47,16 +44,11 @@ import edu.tum.cs.ias.knowrob.utils.ThreadPool;
  */
 public class ModelProcessing{
 
-	private static Logger		logger = Logger.getLogger(ModelProcessing.class);
+	private static Logger				logger = Logger.getLogger(ModelProcessing.class);
 	/**
 	 * Model to be processed
 	 */
 	protected Model						model;
-	
-//	/**
-//	 * Flag that shows if sharp edge detection has been done
-//	 */
-//	private boolean 					modelSharpEdgeDetectionCheck = false;
 	
 	/**
 	 * Flag that shows if the classification of the curvatures has been done
@@ -66,33 +58,33 @@ public class ModelProcessing{
 	/**
 	 * Defines the number of clusters used for classifying the vertices
 	 */	
-	private static int					NUM_OF_CLUSTERS = 30;
+	private static int					NUM_CLUSTERS = UtilityValues.NUM_CLUSTERS;
 	
 	/**
 	 * Defines upper iteration limit for the KMeans algorithm
 	 */
-	private final static int			UPPER_ITERATION_LIMIT = 100;
+	private final static int			ITERATION_LIMIT = UtilityValues.ITERATIONS_LIM;
 	
 	/**
 	 * Defines upper iteration limit for the region merging
 	 */
-	private static int			UPPER_ITERATION_LIMIT_GROWING = 180;
+	private static int					ITERATION_LIMIT_GROWING = UtilityValues.ITERATIONS_LIM_REGION_MERGING;
 	
 	/**
 	 * Defines the minimal area for small regions merging step
 	 */
-	private final static float			AREA_MIN_LIMIT = 5e-2f;
+	private final static float			AREA_MIN_LIMIT = UtilityValues.AREA_LIM;
 	
 	/**
 	 * Define minimum distance threshold for the region merging which stops the merging
 	 */
-	private final static float			MIN_DISTANCE_THRESHOLD = 5e-12f;
+	private final static float			MIN_DISTANCE_THRESHOLD = UtilityValues.MIN_DISTANCE_TOL;
 	
 	/**
 	 * Defines the value of the area weighting on the distance calculation
 	 * of the merging process
 	 */
-	private final static float			EPSILON = 1e-5f;
+	private final static float			EPSILON = UtilityValues.EPSILON;
 	
 	/**
 	 * Defines the maximum number for the 32-bit floating point precision (+Inf)
@@ -130,26 +122,12 @@ public class ModelProcessing{
 		return model;
 	}
 	
-//	/**
-//	 * Getter for the number of the added triangles
-//	 */
-//	public int getNumAddedTriangles() {
-//		return numAddedTriangles;
-//	}
-	
 	/**
 	 * Gets number of clusters defined
 	 */
 	public int getNumOfClusters() {
-		return NUM_OF_CLUSTERS;
+		return NUM_CLUSTERS;
 	}
-	
-//	/**
-//	 * Getter for the sharp edge detection flag
-//	 */
-//	public boolean isSharpEdgeDetectionChecked() {
-//		return modelSharpEdgeDetectionCheck;
-//	}
 	
 	/**
 	 * Getter for the K Means classification of curvatures
@@ -158,249 +136,19 @@ public class ModelProcessing{
 		return modelKMeansCurvatureClassification;
 	}
 	
-//	/**
-//	 * Detects the model sharp edges, marks them and adds additional 
-//	 * points for the "sharp triangles" in order to correct
-//	 * for problematic curvature computation
-//	 */
-//	public void sharpEdgeDetection() {
-//		// remove any wrong tesselated triangles in the model
-//		this.removeCollinearTriangles();
-//		
-//		this.numAddedTriangles = this.model.getTriangles().size();
-//		
-//		// perform the sharp edge detection for individual triangles (multi-threaded)
-//		List<Callable<Void>> threads = new LinkedList<Callable<Void>>();
-//
-//		final int interval = 500;
-//
-//		for (int start = 0; start < model.getTriangles().size(); start += interval) {
-//			final int st = start;
-//			threads.add(new Callable<Void>() {
-//
-//				@Override
-//				public Void call() throws Exception {
-//					int end = Math.min(st + interval, model.getTriangles().size());
-//					for (int i = st; i < end; i++) {
-//						sharpEdgeDetectionForTriangle(model.getTriangles().get(i));
-//					}
-//					return null;
-//				}
-//
-//			});
-//		}
-//		ThreadPool.executeInPool(threads);
-//
-////		for (int i = 0 ; i < model.getTriangles().size() ; ++i) {
-////			Triangle t = model.getTriangles().get(i);
-////			System.out.println(i + " " + t.getSharpEdges());
-////		}
-//		
-//		// for sharp triangles add new point and introduce 3 new triangles
-//		List<Triangle> toRemove = new ArrayList<Triangle>();
-//		for (int i = 0 ; i < model.getTriangles().size() ; ++i) {
-//			Triangle t = model.getTriangles().get(i);
-//			if (t.checkIsSharpTriangle()) {
-//				addTrianglesToModel(t);
-//				toRemove.add(t);
-//			}
-//		}
-//		model.getTriangles().removeAll(toRemove);
-//		
-////		this.removeCollinearTriangles();
-//	
-//		this.numAddedTriangles = this.model.getTriangles().size() - this.numAddedTriangles;
-//		if (this.numAddedTriangles != 0) {
-//			logger.debug("Added " + this.numAddedTriangles + " triangles to the model");
-//		}
-//		else {
-//			logger.debug("No triangles added to the model");
-//		}
-//		//
-//		this.modelSharpEdgeDetectionCheck = true;
-//		
-//		for (int i = 0 ; i < model.getTriangles().size() ; ++i) {
-//			Triangle t = model.getTriangles().get(i);
-//			System.out.println(i + " " + model.getTriangles().get(i) + "sharp edges:\n" + t.getSharpEdges() + "\n" + t.getNeighbors() + "\n");
-//		}
-//	}
-//	
-//	/**
-//	 * Performs the sharp detection at the triangle level
-//	 */
-//	private void sharpEdgeDetectionForTriangle(Triangle t) {
-//		synchronized (t) {
-//		Iterator<Triangle> it = t.getNeighbors().iterator();
-//		while (it.hasNext()) {
-//			Triangle n = it.next();
-//			synchronized (n) {
-//			float angleOfNormals = (float)Math.toDegrees(t.getNormalVector().angle(n.getNormalVector()));
-//			if ((angleOfNormals >= 80.0) && (angleOfNormals <= 110.0)) {
-//				List<Vertex> vShared = findSharedVertices(t,n);
-//				Edge edge = new Edge(vShared.get(0), vShared.get(2));
-//				vShared.get(0).isSharpVertex(true);
-//				vShared.get(1).isSharpVertex(true);
-//				vShared.get(2).isSharpVertex(true);
-//				vShared.get(3).isSharpVertex(true);
-//				t.addSharpEdge(edge);
-//				n.addSharpEdge(edge);
-//			}
-//			}
-//		}
-//		if (t.getNeighbors().size() < 3) {
-//			Edge[] edges = t.getEdges();
-//			for (int i = 0 ; i < edges.length ; ++i) {
-//				Triangle n = t.getNeighborOfEdge(edges[i]);
-//				if (n == null) {
-//					// mark vertices that define the edge as being sharp
-//					t.getPosition()[(i+1) % edges.length].isSharpVertex(true);
-//					t.getPosition()[(i+2) % edges.length].isSharpVertex(true);
-//					t.addSharpEdge(edges[i]);
-//				}
-//				
-//			}
-//		}
-//		}
-//	}
-//	
-//	/**
-//	 * Finds the two common points of two neighboring trinagles
-//	 */
-//	private List<Vertex> findSharedVertices(Triangle t, Triangle n) {
-//		List<Vertex> v = new ArrayList<Vertex>(4);
-//		for (int i = 0 ; i < t.getPosition().length ; ++i) {
-//			for (int j = 0 ; j < n.getPosition().length ; ++j) {
-//				if (t.getPosition()[i].sameCoordinates(n.getPosition()[j])) {
-//					v.add(t.getPosition()[i]);
-//					v.add(n.getPosition()[j]);
-//					break;
-//				}
-//			}
-//		}
-//		return v;
-//	}
-//	
-//	/**
-//	 * Adds triangles to model using the centroid of the triangle
-//	 * 
-//	 * @param t 
-//	 * 			triangle decomposed in 3 smaller triangles
-//	 */
-//	private void addTrianglesToModel(Triangle t) {
-//		Vertex newVertex = new Vertex(t.getCentroid().x, t.getCentroid().y, t.getCentroid().z);
-//		model.getVertices().add(newVertex);
-//		Triangle[] newTriangle = new Triangle[3];
-//		for (int i = 0 ; i < 3 ; ++i) {
-//			newTriangle[i] = new Triangle(t.getPosition()[i],t.getPosition()[(i+1)%3],newVertex);
-//			newTriangle[i].setAppearance(t.getAppearance());
-//			newTriangle[i].setNormalVector(t.getNormalVector());
-//		}
-//
-//		// add neighbors inside the big triangle
-//		newTriangle[0].addNeighbor(newTriangle[1]);
-//		newTriangle[0].addNeighbor(newTriangle[2]);
-//		newTriangle[1].addNeighbor(newTriangle[2]);
-//		
-//		// add triangle neighbors outside the original triangle 
-//		Edge[] edges = t.getEdges();
-//		for (int i = 0 ; i < edges.length ; ++i) {
-//			Triangle n = t.getNeighborOfEdge(edges[i]);
-//			if (n == null) {
-//				continue;
-//			}
-//			for (int j = 0 ; j < 3 ; ++j) {
-//				if (newTriangle[j].containsEdge(edges[i])) {
-//					n.removeNeighbor(t);
-//					n.addNeighbor(newTriangle[j]);
-//					newTriangle[j].addNeighbor(n);
-//					break;
-//				}
-//			}
-//		}
-//		
-////		
-////		List<Triangle> neighbors = new ArrayList<Triangle>();
-////		neighbors.addAll(t.getNeighbors());
-////		for (int i = 0 ; i < 3 ; ++i) {
-////			for (int j = 0 ; j < neighbors.size() ; ++j) {
-////				logger.debug("j = " + j);
-////				Triangle n = neighbors.get(j);
-////				int cont = 0;
-////				for (Vertex v : n.getPosition()) {
-////					if ((v.sameCoordinates(newTriangle[i].getPosition()[0])) || (v.sameCoordinates(newTriangle[i].getPosition()[1]))) {
-////						cont++;
-////					}
-////				}
-////				// if the neighboring triangle (exact 2 common vertices)
-////				if (cont == 2) {
-////					t.removeNeighbor(n);
-////					neighbors.remove(n);
-////					newTriangle[i].addNeighbor(n);
-////					n.addNeighbor(newTriangle[i]);
-////					break;
-////				}
-////			}
-////		}
-//		
-//		// add sharp edges if any to the new 3 created triangles
-//		for (Edge sharpEdge : t.getSharpEdges()) {
-//			for (int i = 0 ; i < 3 ; ++i) {
-//				newTriangle[i].addSharpEdge(sharpEdge);
-//			}
-//		}
-//		
-//		// add new vertex as direct neighbor and old vertices as neighbors for new one
-//		// compute centroids of new triangles and add them to the model
-//		for (int i = 0 ; i < 3 ; ++i) {
-//			t.getPosition()[i].addNeighbor(newVertex);
-//			newVertex.addNeighbor(t.getPosition()[i]);
-//			newTriangle[i].updateCentroid();
-//			model.getTriangles().add(newTriangle[i]);
-//		}
-//	}
-//	
-//	/**
-//	 * Removes "colinear triangles", i.e. "triangles" which have 3 "colinear" vertices
-//	 */
-//	private void removeCollinearTriangles() {
-//		List<Triangle> allTriangles = new ArrayList<Triangle>();
-//		allTriangles.addAll(model.getTriangles());
-//		int rmTriangles = 0;
-//		for (int i = 0 ; i < allTriangles.size() ; ++i) {
-//			Edge[] edges = allTriangles.get(i).getEdges();
-//			Vector3f crossProd = new Vector3f();
-//			crossProd.cross(edges[0].getEdgeValue(), edges[1].getEdgeValue());
-//			if (crossProd.length() == 0.0 || edges[0].getEdgeValue().length() == 0.0 || 
-//					edges[1].getEdgeValue().length() == 0.0 || edges[2].getEdgeValue().length() == 0.0) {
-//				logger.debug("removing" + allTriangles.get(i));
-//				List<Triangle> tn = new ArrayList<Triangle>();
-//				tn.addAll(allTriangles.get(i).getNeighbors());
-//				for (int j = 0 ; j < tn.size() ; ++j) {
-//					tn.get(j).removeNeighbor(allTriangles.get(i));
-//				}
-//				model.getTriangles().remove(allTriangles.get(i));
-//				allTriangles.remove(allTriangles.get(i));
-//				rmTriangles++;
-//			}
-//		}
-//		if (rmTriangles > 0) {
-//			logger.debug("Removed " + rmTriangles + " triangles");
-//		}
-//	}
-	
 	/**
 	 * KMeans algorithm implementation for vertex
 	 * curvature classification
 	 */
 	public void KMeansVCClassification(HashMap<Vertex,Curvature> curvatures) {
-		if (NUM_OF_CLUSTERS >= model.getVertices().size() / 10) {
+		if (NUM_CLUSTERS >= model.getVertices().size() / 10) {
 			logger.debug("Number of vertices in the model smaller than number of clusters chosen");
-			int temp = NUM_OF_CLUSTERS;
-			NUM_OF_CLUSTERS = temp / 5;
+			int temp = NUM_CLUSTERS;
+			NUM_CLUSTERS = temp / 5;
 			logger.debug("Number of clusters has been reduced from " +
-			temp + " to " + NUM_OF_CLUSTERS);
+			temp + " to " + NUM_CLUSTERS);
 		}
-		Cluster[] clusters = new Cluster[NUM_OF_CLUSTERS];
+		Cluster[] clusters = new Cluster[NUM_CLUSTERS];
 		
 		// randomly initialize clusters with one element each
 		List<Integer> dummyRnd = new ArrayList<Integer>();
@@ -410,8 +158,8 @@ public class ModelProcessing{
 			dummyRnd.add(i);
 		}
 		Collections.shuffle(dummyRnd);
-		pickedData.addAll(dummyRnd.subList(0, NUM_OF_CLUSTERS));
-		for (int i = 0 ; i < NUM_OF_CLUSTERS ; ++i) {
+		pickedData.addAll(dummyRnd.subList(0, NUM_CLUSTERS));
+		for (int i = 0 ; i < NUM_CLUSTERS ; ++i) {
 			clusters[i] = new Cluster(i);
 			// System.out.println(clusters[i].getLabelId());
 			Collections.shuffle(dummyRnd);
@@ -424,7 +172,7 @@ public class ModelProcessing{
 		}
 		
 		// remove randomly picked elements
-		for (int i = 0 ; i < NUM_OF_CLUSTERS ; ++i) {
+		for (int i = 0 ; i < NUM_CLUSTERS ; ++i) {
 			verticesData.remove(clusters[i].getVertices().get(0));
 		}
 		
@@ -434,7 +182,7 @@ public class ModelProcessing{
 			Vertex v = verticesData.remove(0);
 			float distMin = this.distEuclid(curvatures.get(v), clusters[0]);
 			int clusterIndex = 0;
-			for (int i = 1 ; i < NUM_OF_CLUSTERS ; ++i) {
+			for (int i = 1 ; i < NUM_CLUSTERS ; ++i) {
 				float distTmp = this.distEuclid(curvatures.get(v), clusters[i]);
 				if (distTmp < distMin) {
 					distMin = distTmp;
@@ -447,7 +195,7 @@ public class ModelProcessing{
 			v.setClusterCurvatureVal(clusters[clusterIndex].getCentroid()[0],clusters[clusterIndex].getCentroid()[1]);
 		}
 		
-//		for (int i = 0 ; i < NUM_OF_CLUSTERS ; ++i) {
+//		for (int i = 0 ; i < NUM_CLUSTERS ; ++i) {
 //			System.out.println("Cluster Id " + clusters[i].getLabelId());
 //			System.out.println("Vertices: " + clusters[i].getVertices());
 //		}
@@ -456,12 +204,12 @@ public class ModelProcessing{
 		// limit is exceeded
 		boolean isRunning = true;
 		int iteration = 0;
-		while (isRunning && iteration < UPPER_ITERATION_LIMIT) {
+		while (isRunning && iteration < ITERATION_LIMIT) {
 			isRunning = false;
 			for (int i = 0 ; i < model.getVertices().size() ; ++i) {
 				float distMin = this.distEuclid(curvatures.get(model.getVertices().get(i)), clusters[0]);
 				int clusterIndex = 0;
-				for (int j = 1 ; j < NUM_OF_CLUSTERS ; ++j) {
+				for (int j = 1 ; j < NUM_CLUSTERS ; ++j) {
 					float distTmp = this.distEuclid(curvatures.get(model.getVertices().get(i)), clusters[j]);
 					if (distTmp < distMin) {
 						distMin = distTmp;
@@ -485,7 +233,7 @@ public class ModelProcessing{
 		this.modelKMeansCurvatureClassification = true;
 		
 		int classifiedVertices = 0;
-		for (int i = 0 ; i < NUM_OF_CLUSTERS ; ++i) {
+		for (int i = 0 ; i < NUM_CLUSTERS ; ++i) {
 			classifiedVertices += clusters[i].getVertices().size();
 			for (int j = 0 ; j < clusters[i].getVertices().size() ; ++j) {
 				Curvature c = curvatures.get(clusters[i].getVertices().get(j));
@@ -498,11 +246,11 @@ public class ModelProcessing{
 		// compute new coloring used for primitive fitting
 		CurvatureCalculation.setCurvatureHueSaturation(curvatures, model, 1f);
 		
-//		for (int i = 0 ; i < NUM_OF_CLUSTERS ; ++i) {
+//		for (int i = 0 ; i < NUM_CLUSTERS ; ++i) {
 //			System.out.println(clusters[i]);
 //		}
 		
-		logger.debug("Classified " + classifiedVertices + " vertices out of " + model.getVertices().size() + " into " + NUM_OF_CLUSTERS + " clusters");
+		logger.debug("Classified " + classifiedVertices + " vertices out of " + model.getVertices().size() + " into " + NUM_CLUSTERS + " clusters");
 	}
 	
 	/**
@@ -842,10 +590,23 @@ public class ModelProcessing{
 			
 			unclassifiedNum = 0;
 			for (int i = 0 ; i < model.getTriangles().size() ; ++i) {
-				if (model.getTriangles().get(i).getRegionLabel() == -1) {
+				Triangle t = model.getTriangles().get(i);
+				if (t.getRegionLabel() == -1) {
 					unclassifiedNum++;
+//					for (int j = 0 ; j < model.getTriangles().size() ; ++j) {
+//						Appearance defaultApp = t.getAppearance();
+//						Appearance a = new Appearance();
+//						a.setColorFill(Color.CYAN);
+//						t.setAppearance(a);
+//						Triangle tr = model.getTriangles().get(j);
+//						if (tr.getNeighbors().contains(t)) {
+//							System.out.println("Triangle " + tr + " has neighbor " + t);
+//						}
+//						t.setAppearance(defaultApp);
+//					}
 				}
 			}
+			System.out.println(unclassifiedNum);
 		}
 		
 		Collections.sort(regions, new Comparator<Region>() {
@@ -935,10 +696,10 @@ public class ModelProcessing{
 		
 		float min = PINF;
 		int rI = 0, rJ = 0, iteration = 0;
-		if (UPPER_ITERATION_LIMIT_GROWING > model.getRegions().size()) {
-			UPPER_ITERATION_LIMIT_GROWING = model.getRegions().size();
+		if (ITERATION_LIMIT_GROWING > model.getRegions().size()) {
+			ITERATION_LIMIT_GROWING = model.getRegions().size();
 		}
-		while (min > MIN_DISTANCE_THRESHOLD && iteration < UPPER_ITERATION_LIMIT_GROWING) {
+		while (min > MIN_DISTANCE_THRESHOLD && iteration < ITERATION_LIMIT_GROWING) {
 			min = PINF;
 			for (int i = 0 ; i < adjacencyMatrix.length ; ++i) {
 				for (int j = 0 ; j <= i ; ++j) {

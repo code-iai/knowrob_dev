@@ -78,7 +78,7 @@ public class EdgeAnalyser extends MeshAnalyser {
 		trianglesProcessed.set(0);
 		
 		// remove any wrong tesselated triangles in the model
-		this.removeCollinearTriangles();
+//		this.removeCollinearTriangles();
 		
 		this.numAddedTriangles = allTriangles.size();
 		
@@ -137,35 +137,34 @@ public class EdgeAnalyser extends MeshAnalyser {
 			setProgress((float) trianglesProcessed.get() / (float) allTriangles.size() * 100.0f);
 	}
 	
-	/**
-	 * Removes "colinear triangles", i.e. "triangles" which have 3 "colinear" vertices
-	 */
-	private void removeCollinearTriangles() {
-		List<Triangle> allTrianglesToProcess = new ArrayList<Triangle>();
-		allTrianglesToProcess.addAll(allTriangles);
-		int rmTriangles = 0;
-		for (int i = 0 ; i < allTrianglesToProcess.size() ; ++i) {
-			Edge[] edges = allTrianglesToProcess.get(i).getEdges();
-			Vector3f crossProd = new Vector3f();
-			crossProd.cross(edges[0].getEdgeValue(), edges[1].getEdgeValue());
-			if (crossProd.length() == 0.0f || edges[0].getEdgeValue().length() == 0.0f || 
-					edges[1].getEdgeValue().length() == 0.0f || edges[2].getEdgeValue().length() == 0.0f) {
-				logger.debug("Removing " + allTrianglesToProcess.get(i));
-				List<Triangle> tn = new ArrayList<Triangle>();
-				tn.addAll(allTrianglesToProcess.get(i).getNeighbors());
-				for (int j = 0 ; j < tn.size() ; ++j) {
-					tn.get(j).removeNeighbor(allTrianglesToProcess.get(i));
-				}
-				cas.getModel().getGroup().removeTriangle(allTrianglesToProcess.get(i));
-//				allTriangles.remove(allTrianglesToProcess.get(i));
-				allTrianglesToProcess.remove(allTrianglesToProcess.get(i));
-				rmTriangles++;
-			}
-		}
-		if (rmTriangles > 0) {
-			logger.debug("Removed " + rmTriangles + " triangles");
-		}
-	}
+//	/**
+//	 * Removes "colinear triangles", i.e. "triangles" which have 3 "colinear" vertices
+//	 */
+//	private void removeCollinearTriangles() {
+//		List<Triangle> allTrianglesToProcess = new ArrayList<Triangle>();
+//		allTrianglesToProcess.addAll(allTriangles);
+//		int rmTriangles = 0;
+//		for (int i = 0 ; i < allTrianglesToProcess.size() ; ++i) {
+//			Triangle tr = allTrianglesToProcess.get(i);
+////			Edge[] edges = tr.getEdges();
+//			if (tr.getNeighbors().size() == 0) {
+//				logger.debug("Removing " + tr);
+//				for (int j = 0 ; j < allTrianglesToProcess.size() ; ++j) {
+//					Triangle tn = allTrianglesToProcess.get(j);
+//					if (tn.getNeighbors().contains(tr)) {
+//						tn.removeNeighbor(tr);
+//					}
+//				}
+//				cas.getModel().getGroup().removeTriangle(tr);
+//				allTriangles.remove(tr);
+//				allTrianglesToProcess.remove(tr);
+//				rmTriangles++;
+//			}
+//		}
+//		if (rmTriangles > 0) {
+//			logger.debug("Removed " + rmTriangles + " triangles");
+//		}
+//	}
 	
 	/**
 	 * Performs the sharp detection at the triangle level
@@ -177,7 +176,7 @@ public class EdgeAnalyser extends MeshAnalyser {
 			Triangle n = it.next();
 			//synchronized (n) {
 			float angleOfNormals = (float)Math.toDegrees(t.getNormalVector().angle(n.getNormalVector()));
-			if (angleOfNormals >= 87.5f) {
+			if (angleOfNormals >= 85.0f) {
 				List<Vertex> vShared = findSharedVertices(t,n);
 				Edge edge = new Edge(vShared.get(0), vShared.get(2));
 				vShared.get(0).isSharpVertex(true);
@@ -189,17 +188,13 @@ public class EdgeAnalyser extends MeshAnalyser {
 			}
 			//}
 		}
-//		if (t.getNeighbors().size() < 3) {
-//			Edge[] edges = t.getEdges();
-//			for (int i = 0 ; i < edges.length ; ++i) {
-//				Triangle n = t.getNeighborOfEdge(edges[i]);
-//				if (n == null) {
-//					// mark vertices that define the edge as being sharp
-//					t.getPosition()[(i+1) % edges.length].isSharpVertex(true);
-//					t.getPosition()[(i+2) % edges.length].isSharpVertex(true);
-//					t.addSharpEdge(edges[i]);
-//				}
-//				
+//		Edge[] edges = t.getEdges();
+//		for (int i = 0 ; i < edges.length ; ++i) {
+//			List<Triangle> neighbors = t.getNeighborsOfEdge(edges[i]);
+//			if (neighbors.size() == 0) {
+//				edges[i].getVerticesOfEdge()[0].isSharpVertex(true);
+//				edges[i].getVerticesOfEdge()[1].isSharpVertex(true);
+//				t.addSharpEdge(edges[i]);
 //			}
 //		}
 		}
@@ -210,11 +205,15 @@ public class EdgeAnalyser extends MeshAnalyser {
 	 */
 	private List<Vertex> findSharedVertices(Triangle t, Triangle n) {
 		List<Vertex> v = new ArrayList<Vertex>(4);
-		for (int i = 0 ; i < t.getPosition().length ; ++i) {
-			for (int j = 0 ; j < n.getPosition().length ; ++j) {
-				if (t.getPosition()[i].sameCoordinates(n.getPosition()[j])) {
-					v.add(t.getPosition()[i]);
-					v.add(n.getPosition()[j]);
+		Edge[] tEdges = t.getEdges();
+		Edge[] nEdges = n.getEdges();
+		for (int i = 0 ; i < tEdges.length ; ++i) {
+			for (int j = 0 ; j < nEdges.length ; ++j) {
+				if (tEdges[i].isDirectNeighbor(nEdges[j])) {
+					v.add(tEdges[i].getVerticesOfEdge()[0]);
+					v.add(nEdges[j].getVerticesOfEdge()[0]);
+					v.add(tEdges[i].getVerticesOfEdge()[1]);
+					v.add(nEdges[j].getVerticesOfEdge()[1]);
 					break;
 				}
 			}
@@ -237,6 +236,7 @@ public class EdgeAnalyser extends MeshAnalyser {
 			// update now its edges and set normal vector and appearance
 			newTriangle[i].updateEdges();
 			newTriangle[i].setAppearance(t.getAppearance());
+			newTriangle[i].setTexPosition(t.getTexPosition());
 			newTriangle[i].setNormalVector(t.getNormalVector());
 		}
 
@@ -248,16 +248,18 @@ public class EdgeAnalyser extends MeshAnalyser {
 		// add triangle neighbors outside the original triangle 
 		Edge[] edges = t.getEdges();
 		for (int i = 0 ; i < edges.length ; ++i) {
-			Triangle n = t.getNeighborOfEdge(edges[i]);
-			if (n == null) {
+			List<Triangle> toAdd = t.getNeighborsOfEdge(edges[i]);
+			if (toAdd.size() == 0) {
 				continue;
 			}
-			for (int j = 0 ; j < 3 ; ++j) {
-				if (newTriangle[j].containsEdge(edges[i])) {
-					n.removeNeighbor(t);
-					n.addNeighbor(newTriangle[j]);
-					newTriangle[j].addNeighbor(n);
-					break;
+			for (Triangle n : toAdd) {
+				for (int j = 0 ; j < 3 ; ++j) {
+					if (newTriangle[j].isDirectNeighbor(n)) {
+						n.removeNeighbor(t);
+						n.addNeighbor(newTriangle[j]);
+						newTriangle[j].addNeighbor(n);
+						break;
+					}
 				}
 			}
 		}
