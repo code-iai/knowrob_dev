@@ -9,7 +9,7 @@ project(knowrob_mesh_reasoning)
 # Catkin
 ##############################################################################
 
-find_package(catkin REQUIRED rosjava_build_tools knowrob_common)
+find_package(catkin REQUIRED rosjava_build_tools knowrob_common knowrob_cad_parser)
 
 # Set the gradle targets you want catkin's make to run by default, e.g.
 #   catkin_rosjava_setup(installApp)
@@ -18,7 +18,7 @@ find_package(catkin REQUIRED rosjava_build_tools knowrob_common)
 catkin_rosjava_setup(installApp publishMavenJavaPublicationToMavenRepository writeClasspath)
 
 catkin_package(
-  DEPENDS knowrob_common
+  DEPENDS knowrob_common knowrob_cad_parser
 )
 
 ##############################################################################

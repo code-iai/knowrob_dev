@@ -888,7 +888,7 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 
 	@Override
 	public void setup() {
-		size(1000, 1000, "edu.tum.cs.vis.model.view.PAppletSelectionGraphics");
+		size(1000, 1000, "org.knowrob.vis.model.view.PAppletSelectionGraphics");
 
 		frameRate(10);
 		cam = new PeasyCam(this, 0, 0, 0, 10);

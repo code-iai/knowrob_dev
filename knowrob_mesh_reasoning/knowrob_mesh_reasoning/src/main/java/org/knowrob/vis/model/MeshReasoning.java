@@ -47,6 +47,7 @@ import org.knowrob.vis.model.util.Vertex;
 import org.knowrob.vis.model.util.algorithm.CurvatureCalculation;
 import org.knowrob.vis.model.view.MeshReasoningView;
 import org.knowrob.vis.model.view.MeshReasoningViewControl;
+import org.knowrob.vis.model.view.PAppletSelectionGraphics;
 import org.knowrob.vis.tools.ImageGenerator.ImageGeneratorAction;
 import org.knowrob.vis.tools.ImageGenerator.ImageGeneratorSettings;
 import org.knowrob.vis.uima.Annotation;
