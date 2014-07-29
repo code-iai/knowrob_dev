@@ -16,7 +16,7 @@
 
 /* This plugin is necessary for creating installApp tasks (i.e. executables) */
 apply plugin: 'application'
-mainClassName = 'org.ros.RosRun'
+mainClassName = 'org.knowrob.vis.test.MeshReasoningTest'
 
 
 dependencies {
