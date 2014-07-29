@@ -192,8 +192,8 @@ public class CurvatureCalculation {
 
 		// Estimate curvature based on variation of normals
 		// along edges
-		float m[] = { 0, 0, 0 };
-		double w[][] = { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } };
+		float m[] = { 0.0f, 0.0f, 0.0f };
+		double w[][] = { { 0.0d, 0.0d, 0.0d }, { 0.0d, 0.0d, 0.0d }, { 0.0d, 0.0d, 0.0d } };
 		for (int j = 0; j < 3; j++) {
 
 			float u = e[j].getEdgeValue().dot(t);
@@ -227,26 +227,52 @@ public class CurvatureCalculation {
 		m[1] = (float) solution.getEntry(1);
 		m[2] = (float) solution.getEntry(2);
 
+		// flag for ill-solutioned system (NaN = no valid info on the curvatures => then consider 
+		// the curvatures to be the ones of a simple plane)
+		boolean okSolution = true;
+		if (isNaN(m[0]) || isNaN(m[1]) || isNaN(m[2])) {
+			okSolution = false;
+		}
+		
 		// Push it back out to the vertices
 		for (int j = 0; j < 3; j++) {
 			Vertex vj = tri.getPosition()[j];
 			float c1, c12, c2;
-			float ret[] = proj_curv(t, b, m[0], m[1], m[2], curvatures.get(vj)
-					.getPrincipleDirectionMax(), curvatures.get(vj).getPrincipleDirectionMin());
-			c1 = ret[0];
-			c12 = ret[1];
-			c2 = ret[2];
+			float[] ret;
 
+			// guard against ill-conditioned systems (NaN curvatures are viewed as a simple planar
+			// corresponding curves		
+			if (okSolution) {
+				ret = proj_curv(t, b, m[0], m[1], m[2], curvatures.get(vj).getPrincipleDirectionMax(), curvatures.get(vj).getPrincipleDirectionMin());
+				if (isNaN(ret[0]) || isNaN(ret[1]) || isNaN(ret[2])) {
+					c1 = 0.0f;
+					c12 = 0.0f;
+					c2 = 0.0f;
+				}
+				else {
+					c1 = ret[0];
+					c12 = ret[1];
+					c2 = ret[2];
+				}
+			}
+			else {
+				c1 = 0.0f;
+				c12 = 0.0f;
+				c2 = 0.0f;
+			}
+			
 			Curvature c = curvatures.get(vj);
 
-			double wt;
-			if (j == 0)
-				wt = tri.getCornerarea().x / vj.getPointarea();
-			else if (j == 1)
-				wt = tri.getCornerarea().y / vj.getPointarea();
-			else
-				wt = tri.getCornerarea().z / vj.getPointarea();
-
+			double wt = 0.0d;
+			if (vj.getPointarea() != 0.0f) {
+				if (j == 0)
+					wt = tri.getCornerarea().x / vj.getPointarea();
+				else if (j == 1)
+					wt = tri.getCornerarea().y / vj.getPointarea();
+				else
+					wt = tri.getCornerarea().z / vj.getPointarea();
+			}
+			
 			synchronized (c) {
 				c.setCurvatureMax((float) (c.getCurvatureMax() + wt * c1));
 				c.setCurvatureMinMax((float) (c.getCurvatureMinMax() + wt * c12));
@@ -269,7 +295,7 @@ public class CurvatureCalculation {
 			return;
 		calculateVoronoiArea(m);
 		calculateCurvature(curvatures, m);
-		setCurvatureHueSaturation(curvatures, m, 0.5f);
+		setCurvatureHueSaturation(curvatures, m, 1.0f);
 	}
 
 	/**
@@ -312,6 +338,7 @@ public class CurvatureCalculation {
 		}
 
 		ThreadPool.executeInPool(threads);
+		threads.clear();
 	}
 	
 	/**
@@ -669,5 +696,16 @@ public class CurvatureCalculation {
 		float d2 = invsigma2 * p1.distanceSquared(p2);
 		return (float) ((d2 >= 9.0f) ? 0.0f : Math.exp(-0.5f * d2));
 		// return (d2 >= 25.0f) ? 0.0f : exp(-0.5f*d2);
+	}
+	
+	/**
+	 * Helper method that returns whether a floating point number is
+	 * equal to NaN floating point equivalent or not
+	 * 
+	 * @param value
+	 * @return true or false
+	 */
+	public static boolean isNaN(final float value) {
+		return (value != value);
 	}
 }
