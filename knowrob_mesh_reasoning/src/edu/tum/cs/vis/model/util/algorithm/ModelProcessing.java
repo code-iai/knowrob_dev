@@ -20,8 +20,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
 
-import javax.vecmath.Vector3f;
-
 import edu.tum.cs.util.PrintUtil;
 import edu.tum.cs.vis.model.Model;
 import edu.tum.cs.vis.model.util.Appearance;
@@ -291,7 +289,6 @@ public class ModelProcessing{
 			Color c = new Color(R,G,B);
 			for (Triangle t : r.getTriangles()) {
 				a.setColorFill(c);
-//				a.setColorLine(c);
 				t.setAppearance(a);
 			}
 		}
@@ -547,9 +544,6 @@ public class ModelProcessing{
 			Triangle tr = model.getTriangles().get(i);
 			if (tr.updateIsSeedTriangle() && tr.getRegionLabel() == -1) {
 				Region newRegion = new Region(contId,tr);
-//				if (newRegion.getCurvatureMinMaxOfRegion()[0] == 0.0 && newRegion.getCurvatureMinMaxOfRegion()[1] == 0.0) {
-//					System.out.println("0.0 curv @" + tr);
-//				}
 				newRegion.buildUpRegion();
 				regions.add(newRegion);
 				contId++;
@@ -563,8 +557,10 @@ public class ModelProcessing{
 		}
 		logger.debug("Classified: " + (trianglesToClassifyToRegions - unclassifiedNum) + " out of: " + trianglesToClassifyToRegions);
 
+		int cachedUnclassifiedNum;
 		while (unclassifiedNum != 0) {
 			
+			cachedUnclassifiedNum = unclassifiedNum;
 			Collections.sort(regions, new Comparator<Region>() {
 				@Override
 				public int compare(Region r1, Region r2) {
@@ -595,20 +591,30 @@ public class ModelProcessing{
 				Triangle t = model.getTriangles().get(i);
 				if (t.getRegionLabel() == -1) {
 					unclassifiedNum++;
-//					for (int j = 0 ; j < model.getTriangles().size() ; ++j) {
-//						Appearance defaultApp = t.getAppearance();
-//						Appearance a = new Appearance();
-//						a.setColorFill(Color.CYAN);
-//						t.setAppearance(a);
-//						Triangle tr = model.getTriangles().get(j);
-//						if (tr.getNeighbors().contains(t)) {
-//							System.out.println("Triangle " + tr + " has neighbor " + t);
-//						}
-//						t.setAppearance(defaultApp);
-//					}
 				}
 			}
-			System.out.println(unclassifiedNum);
+			logger.debug("Remained triangles to classify: " + unclassifiedNum);
+			
+			// if not all triangles have been successfully classified into regions
+			// continue and remedy this by looking at their immediate neighbors that
+			// belong to a region; this solution works as the number of unclassified triangles
+			// (if any at all) is very low (a couple of triangles)
+			if (unclassifiedNum == cachedUnclassifiedNum) {
+				for (int i = 0 ; i < model.getTriangles().size() ; ++i) {
+					Triangle t = model.getTriangles().get(i);
+					if (t.getRegionLabel() == -1) {
+						float maxArea = 0.0f;
+						int index = -1;
+						for (Triangle n : t.getNeighbors()) {
+							if (n.getRegionLabel() != -1 && maxArea < n.getArea()) {
+								maxArea = n.getArea();
+								index = n.getRegionLabel();
+							}
+						}
+						regions.get(index).addTriangleToRegion(t);
+					}
+				}
+			}
 		}
 		
 		Collections.sort(regions, new Comparator<Region>() {
@@ -620,45 +626,6 @@ public class ModelProcessing{
 			}
 		});
 		
-//		int contcom = 0;
-//		for (int i = 0 ; i < model.getTriangles().size() ; ++i) {
-//			Triangle t = model.getTriangles().get(i);
-//			int cont = 0;
-//			for (int j = 0 ; j < regions.size() ; ++j) {
-//				if (regions.get(j).getTriangles().contains(t)) {
-//					cont++;
-//				}
-//			}
-//			if (cont != 1) {
-//				contcom++;
-//			}
-////			logger.debug("cont is:" + cont);
-//		}
-//		
-//		logger.debug("common triangles " + contcom);
-//		logger.debug("Analyzing unvisited triangles ...");
-//		if (regions.size() != 0) {
-//			int conti = 0;
-//			for (Triangle tr : model.getTriangles()) {
-//				if (tr.getRegionLabel() == -1 && tr.isVisited == false) {
-//					fillRegionCrackForTriangle(regions, tr);
-//					conti++;
-//				}
-//			}
-//			logger.debug("Cases visited: " + conti);
-//		}
-////		else {
-////			for (Triangle tr : model.getTriangles()) {
-////				if (tr.getRegionLabel() == -1) {
-////					Region newRegion = new Region(contId,tr);
-////					newRegion.buildUpRegion();
-////					regions.add(newRegion);
-////					contId++;
-////				}
-////			}
-////		}
-//		duration = System.currentTimeMillis() - duration;
-//		logger.debug("Ended. Took: " + PrintUtil.prettyMillis(duration));
 		for (int i = 0 ; i < regions.size() ; ++i) {
 			regions.get(i).updateRegionNeighbors(regions);
 //			System.out.println(regions.get(i));
@@ -768,42 +735,5 @@ public class ModelProcessing{
 		}
 		CurvatureCalculation.setCurvatureHueSaturation(curvatures, model, 1.0f);
 	}
-	
-//	/**
-//	 * Crack filling recursive algorithm that assigns unlabelled 
-//	 * triangles to the maximally spread neighboring region of itself 
-//	 * or of its neighbors
-//	 * 
-//	 * @param regions
-//	 * 			built regions of the model mesh
-//	 * 
-//	 * @param tr
-//	 * 			triangle to be filled in one of the regions
-//	 */
-//	public void fillRegionCrackForTriangle(List<Region> regions, Triangle tr) {
-//		float maxArea = 0.0f;
-//		int regionLabelId = -1;
-//		tr.isVisited = true;
-//		for (Triangle neighbor : tr.getNeighbors()) {
-//			if (neighbor.getRegionLabel() == -1 && neighbor.isVisited == false) {
-//				fillRegionCrackForTriangle(regions, neighbor);
-//			} 
-//			if (neighbor.getRegionLabel() != -1) {
-//				if (maxArea < regions.get(neighbor.getRegionLabel()).getAreaOfRegion()) {
-//					maxArea = regions.get(neighbor.getRegionLabel()).getAreaOfRegion();
-//					regionLabelId = regions.get(neighbor.getRegionLabel()).getRegionId();
-//				}
-//			}
-//		}
-//		if (regionLabelId == -1) {
-//			
-//			Region newRegion = new Region(regions.size(),tr);
-//			regions.add(newRegion);
-//		}
-//		else {
-//
-//			regions.get(regionLabelId).addTriangleToRegion(tr);
-//		}
-//	}
 }
 
