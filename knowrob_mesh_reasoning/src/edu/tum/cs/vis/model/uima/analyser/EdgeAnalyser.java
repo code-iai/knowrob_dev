@@ -14,8 +14,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.Callable;
 
-import javax.vecmath.Vector3f;
-
 import org.apache.log4j.Logger;
 
 import edu.tum.cs.vis.model.util.Edge;
@@ -188,15 +186,15 @@ public class EdgeAnalyser extends MeshAnalyser {
 			}
 			//}
 		}
-//		Edge[] edges = t.getEdges();
-//		for (int i = 0 ; i < edges.length ; ++i) {
-//			List<Triangle> neighbors = t.getNeighborsOfEdge(edges[i]);
-//			if (neighbors.size() == 0) {
-//				edges[i].getVerticesOfEdge()[0].isSharpVertex(true);
-//				edges[i].getVerticesOfEdge()[1].isSharpVertex(true);
-//				t.addSharpEdge(edges[i]);
-//			}
-//		}
+		Edge[] edges = t.getEdges();
+		for (int i = 0 ; i < edges.length ; ++i) {
+			List<Triangle> neighbors = t.getNeighborsOfEdge(edges[i]);
+			if (neighbors.size() == 0) {
+				edges[i].getVerticesOfEdge()[0].isSharpVertex(true);
+				edges[i].getVerticesOfEdge()[1].isSharpVertex(true);
+				t.addSharpEdge(edges[i]);
+			}
+		}
 		}
 	}
 	
