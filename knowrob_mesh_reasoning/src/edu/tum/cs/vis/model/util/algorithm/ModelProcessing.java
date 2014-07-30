@@ -142,7 +142,7 @@ public class ModelProcessing{
 		if (NUM_CLUSTERS >= model.getVertices().size() / 10) {
 			logger.debug("Number of vertices in the model smaller than number of clusters chosen");
 			int temp = NUM_CLUSTERS;
-			NUM_CLUSTERS = temp / 10;
+			NUM_CLUSTERS = temp / 5;
 			logger.debug("Number of clusters has been reduced from " +
 			temp + " to " + NUM_CLUSTERS);
 		}
@@ -349,15 +349,32 @@ public class ModelProcessing{
 				if (distance == PINF) {
 					continue;
 				}
+				boolean detachedEdges = true;
+				float[] curvatureDistanceBoundaryLinked = new float[2];
+				curvatureDistanceBoundaryLinked[0] = curvatureDistanceBoundary[0];
+				curvatureDistanceBoundaryLinked[1] = curvatureDistanceBoundary[1];
+				int contLinked = cont;
 				for (Vertex v : edgesVerticesAdjacency.keySet()) {
-					if (edgesVerticesAdjacency.get(v) == 2) {
+					if (edgesVerticesAdjacency.get(v) == 1) {
 						curvatureDistanceBoundary[0] += v.getClusterCurvatureVal()[0];
 						curvatureDistanceBoundary[1] += v.getClusterCurvatureVal()[1];
 						cont++;
 					}
+					if (edgesVerticesAdjacency.get(v) == 2) {
+						curvatureDistanceBoundaryLinked[0] += v.getClusterCurvatureVal()[0];
+						curvatureDistanceBoundaryLinked[1] += v.getClusterCurvatureVal()[1];
+						contLinked++;
+						detachedEdges=false;
+					}
 				}
-				curvatureDistanceBoundary[0] /= (float)cont;
-				curvatureDistanceBoundary[1] /= (float)cont;
+				if (detachedEdges) {
+					curvatureDistanceBoundary[0] /= (float)cont;
+					curvatureDistanceBoundary[1] /= (float)cont;
+				}
+				else {
+					curvatureDistanceBoundary[0] = curvatureDistanceBoundaryLinked[0] / (float)contLinked;
+					curvatureDistanceBoundary[1] = curvatureDistanceBoundaryLinked[1] / (float)contLinked;
+				}
 			}
 			// compute curvature distance: cD = ||c_reg_r - cDB|| + ||c_reg_n - cDB||
 			curvatureDistance = (float)((Math.sqrt(Math.pow(r.getCurvatureMinMaxOfRegion()[0] - curvatureDistanceBoundary[0], 2) 
@@ -442,15 +459,32 @@ public class ModelProcessing{
 					if (distance == PINF) {
 						continue;
 					}
+					boolean detachedEdges = true;
+					float[] curvatureDistanceBoundaryLinked = new float[2];
+					curvatureDistanceBoundaryLinked[0] = curvatureDistanceBoundary[0];
+					curvatureDistanceBoundaryLinked[1] = curvatureDistanceBoundary[1];
+					int contLinked = cont;
 					for (Vertex v : edgesVerticesAdjacency.keySet()) {
-						if (edgesVerticesAdjacency.get(v) == 2) {
+						if (edgesVerticesAdjacency.get(v) == 1) {
 							curvatureDistanceBoundary[0] += v.getClusterCurvatureVal()[0];
 							curvatureDistanceBoundary[1] += v.getClusterCurvatureVal()[1];
 							cont++;
 						}
+						if (edgesVerticesAdjacency.get(v) == 2) {
+							curvatureDistanceBoundaryLinked[0] += v.getClusterCurvatureVal()[0];
+							curvatureDistanceBoundaryLinked[1] += v.getClusterCurvatureVal()[1];
+							contLinked++;
+							detachedEdges=false;
+						}
 					}
-					curvatureDistanceBoundary[0] /= (float)cont;
-					curvatureDistanceBoundary[1] /= (float)cont;
+					if (detachedEdges) {
+						curvatureDistanceBoundary[0] /= (float)cont;
+						curvatureDistanceBoundary[1] /= (float)cont;
+					}
+					else {
+						curvatureDistanceBoundary[0] = curvatureDistanceBoundaryLinked[0] / (float)contLinked;
+						curvatureDistanceBoundary[1] = curvatureDistanceBoundaryLinked[1] / (float)contLinked;
+					}
 				}
 				// compute curvature distance: cD = ||c_reg_r - cDB|| + ||c_reg_n - cDB||
 				curvatureDistance = (float)((Math.sqrt(Math.pow(r.getCurvatureMinMaxOfRegion()[0] - curvatureDistanceBoundary[0], 2) 
@@ -650,8 +684,12 @@ public class ModelProcessing{
 		logger.debug("Regions to merge: " + regionsToMerge);
 		HashMap<Integer, Region> regions = model.getRegionsMap();
 		float[][] adjacencyMatrix = new float[regionsToMerge][regionsToMerge];
-
 		
+//		boolean[] isStillRegion = new boolean[regionsToMerge];
+//		for (int i = 0 ; i < isStillRegion.length ; ++i) {
+//			isStillRegion[i] = true;
+//		}
+
 		// initialize adjacency matrix entries with maximum distance values
 		for (int i = 0 ; i < adjacencyMatrix.length ; ++i) {
 			for (int j = 0 ; j <= i ; ++j) {
@@ -671,13 +709,15 @@ public class ModelProcessing{
 		while (min > MIN_DISTANCE_THRESHOLD && iteration < ITERATION_LIMIT_GROWING) {
 			min = PINF;
 			for (int i = 0 ; i < adjacencyMatrix.length ; ++i) {
-				for (int j = 0 ; j <= i ; ++j) {
-					if (min > adjacencyMatrix[i][j]) {
-						min = adjacencyMatrix[i][j];
-						rI = i;
-						rJ = j;
+//				if (isStillRegion[i]) {
+					for (int j = 0 ; j <= i ; ++j) {
+						if (/*isStillRegion[j] && */min > adjacencyMatrix[i][j]) {
+							min = adjacencyMatrix[i][j];
+							rI = i;
+							rJ = j;
+						}
 					}
-				}
+//				}
 			}
 			if (min == PINF) {
 				logger.debug("All regions are distinct. Stopping ...");
@@ -708,6 +748,7 @@ public class ModelProcessing{
 			}
 			
 			// remove deprecated merged region rJ
+//			isStillRegion[rJ] = false;
 			regions.remove(rJ);
 			
 			// re-compute necessary entries in the adjacency matrix (only for the existent merged region)
@@ -730,7 +771,7 @@ public class ModelProcessing{
 				Curvature c = curvatures.get(t.getPosition()[j]);
 				c.setCurvatureMax(t.getPosition()[j].getClusterCurvatureVal()[0]);
 				c.setCurvatureMin(t.getPosition()[j].getClusterCurvatureVal()[1]);
-				c.setCurvatureMinMax(t.getPosition()[j].getClusterCurvatureVal()[0] * t.getPosition()[j].getClusterCurvatureVal()[0]);
+				c.setCurvatureMinMax(t.getPosition()[j].getClusterCurvatureVal()[2]);
 			}
 		}
 		CurvatureCalculation.setCurvatureHueSaturation(curvatures, model, 1.0f);
