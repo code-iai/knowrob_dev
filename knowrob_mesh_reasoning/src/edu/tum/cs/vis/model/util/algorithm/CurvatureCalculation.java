@@ -31,6 +31,7 @@ import edu.tum.cs.vis.model.Model;
 import edu.tum.cs.vis.model.util.Curvature;
 import edu.tum.cs.vis.model.util.Edge;
 import edu.tum.cs.vis.model.util.Triangle;
+import edu.tum.cs.vis.model.util.UtilityValues;
 import edu.tum.cs.vis.model.util.Vertex;
 
 /**
@@ -295,7 +296,7 @@ public class CurvatureCalculation {
 			return;
 		calculateVoronoiArea(m);
 		calculateCurvature(curvatures, m);
-		setCurvatureHueSaturation(curvatures, m, 1.0f);
+		setCurvatureHueSaturation(curvatures, m, UtilityValues.CURV_SMOOTHING);
 	}
 
 	/**
@@ -338,7 +339,6 @@ public class CurvatureCalculation {
 		}
 
 		ThreadPool.executeInPool(threads);
-		threads.clear();
 	}
 	
 	/**
