@@ -3,7 +3,9 @@
  * materials are made available under the terms of the GNU Public License v3.0 which accompanies
  * this distribution, and is available at http://www.gnu.org/licenses/gpl.html
  * 
- * Contributors: Stefan Profanter - initial API and implementation, Year: 2012
+ * Contributors: 
+ * 		Stefan Profanter - initial API and implementation, Year: 2012
+ * 		Andrei Stoica - API and workflow modifications, Year: 2014		
  ******************************************************************************/
 package edu.tum.cs.vis.model;
 
@@ -44,14 +46,12 @@ import edu.tum.cs.vis.model.uima.annotation.primitive.PlaneAnnotation;
 import edu.tum.cs.vis.model.uima.annotation.primitive.SphereAnnotation;
 import edu.tum.cs.vis.model.uima.cas.MeshCas;
 import edu.tum.cs.vis.model.util.ContainerAnnotationVolumeComarator;
-import edu.tum.cs.vis.model.util.Curvature;
 import edu.tum.cs.vis.model.util.HandleComparator;
 import edu.tum.cs.vis.model.util.PrimitiveAnnotationAreaComparator;
-import edu.tum.cs.vis.model.util.Region;
 import edu.tum.cs.vis.model.util.Triangle;
 import edu.tum.cs.vis.model.util.Vertex;
+import edu.tum.cs.vis.model.util.algorithm.CasProcessing;
 import edu.tum.cs.vis.model.util.algorithm.CurvatureCalculation;
-import edu.tum.cs.vis.model.util.algorithm.ModelProcessing;
 import edu.tum.cs.vis.model.view.MeshReasoningView;
 import edu.tum.cs.vis.model.view.MeshReasoningViewControl;
 
@@ -228,11 +228,6 @@ public class MeshReasoning {
 			analyser = new ArrayList<MeshAnalyser>(6);
 		}
 		
-		// make sure all edges of all triangles in the model are initialized
-		for (int i = 0 ; i < model.getTriangles().size() ; ++i){
-			model.getTriangles().get(i).updateEdges();
-		}
-		
 		// set model to MeshCas
 		cas.setModel(model);
 		
@@ -258,7 +253,7 @@ public class MeshReasoning {
 		analyser.add(na);
 		Thread.yield();
 		na.process(cas);
-
+		
 		logger.debug("Checking for vertex sharing and calculating vertex normals ...");
 		cas.getModel().updateVertexSharing();
 
@@ -276,6 +271,11 @@ public class MeshReasoning {
 		Thread.yield();
 		ea.process(cas,imageGeneratorSettings);
 		
+//		for (int i = 0 ; i < cas.getModel().getTriangles().size() ; ++i) {
+//			Triangle tr = cas.getModel().getTriangles().get(i);
+//			System.out.println(tr + " neighbors = " + tr.getNeighbors().size());
+//		}
+
 		// recalculate vertex normals if new points were introduced in the model
 		if (ea.getNumAddedTriangles() != 0) {
 			logger.debug("Re-calculating vertex normals ...");
@@ -318,15 +318,15 @@ public class MeshReasoning {
 		CurvatureCalculation.calculateCurvatures(cas.getCurvatures(), cas.getModel());
 		long curvatureDuration = System.currentTimeMillis() - curvatureStartTime;
 		logger.debug("Ended. Took: " + PrintUtil.prettyMillis(curvatureDuration));
-
+	
 		// classify vertices by curvature using KMeans
 		logger.debug("Classifying vertices of CAD model by curvature using KMeans ...");
-		ModelProcessing processor = new ModelProcessing(cas.getModel());
+		CasProcessing casProcessor = new CasProcessing(cas);
 		long KMeansStartTime = System.currentTimeMillis();
-		processor.KMeansVCClassification(cas.getCurvatures());
+		casProcessor.KMeansVCClassification();
 		long KMeansDuration = System.currentTimeMillis() - KMeansStartTime;
 		logger.debug("Ended. Took: " + PrintUtil.prettyMillis(KMeansDuration));
-	
+		
 		if (imageGeneratorSettings != null && imageGeneratorSettings.isSaveCurvatureColor()) {
 			// wait until model is saved
 			mrv.setDrawCurvatureColor(true);
@@ -335,28 +335,10 @@ public class MeshReasoning {
 		}		
 
 		// Region growing process for all triangles
-		processor.processRegionGrowing();
-		processor.processRegionMerging();
-		processor.updateCurvaturesBasedOnRegions(cas.getCurvatures());
+		casProcessor.processRegionGrowing();
 		
 		// Region merging process for already existent regions
-//		cas.getModel().setRegions(processor.processRegionMerging());
-		
-//		int classifiedTr = 0;
-//		for (int i = 0 ; i < cas.getModel().getRegions().size() ; ++i) {
-//			System.out.println(cas.getModel().getRegions().get(i).getRegionId() + " KMin = " + cas.getModel().getRegions().get(i).getCurvatureMinMaxOfRegion()[0] 
-//					+ " KMax = " + cas.getModel().getRegions().get(i).getCurvatureMinMaxOfRegion()[1] + " " + cas.getModel().getRegions().get(i).getTriangles().size());
-//			classifiedTr += cas.getModel().getRegions().get(i).getTriangles().size();
-//		}
-//		System.out.println("classified: " + classifiedTr + " out of: " + model.getTriangles().size());
-		
-//		int trRemaining = 0;
-//		for (int i = 0 ; i < model.getTriangles().size() ; ++i) {
-//			if (model.getTriangles().get(i).getRegionLabel() == -1) {
-//				trRemaining++;
-//			}
-//		}
-//		System.out.println("remained: " + trRemaining);
+		casProcessor.processRegionMerging();
 		
 		PrimitiveAnalyser pa = new PrimitiveAnalyser();
 		analyser.add(pa);
@@ -826,19 +808,4 @@ public class MeshReasoning {
 	public void setFrameTitle(String title) {
 		frame.setTitle(title);
 	}
-
-	private void printVertices(List<Vertex> vertices) {
-		for (int i = 0 ; i < vertices.size() ; ++i) {
-			System.out.println("v.id: " + i);
-			System.out.println("-> " + vertices.get(i));
-			if (vertices.get(i).isSharpVertex()) {
-				System.out.println("sharp");
-			}
-			else {
-				System.out.println("not sharp");
-			}
-		}
-		System.out.println("\n");
-	}
-	
 }
