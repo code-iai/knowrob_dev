@@ -368,6 +368,26 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 
 		Curvature c = curvatures.get(v);
 
+//		if (Math.abs(c.getCurvatureMin()) < 1.0 && Math.abs(c.getCurvatureMax()) < 1.0 ) {
+//			return PrimitiveType.PLANE;
+//		}
+//		
+//		else if ((Math.abs(c.getCurvatureMin()) < 15 && Math.abs(c.getCurvatureMin()) >= 1.5) && (Math.abs(c.getCurvatureMax()) < 15 && Math.abs(c.getCurvatureMax()) >= 1.5) && (c.getCurvatureMax() * c.getCurvatureMin()) < 0.0) {
+//			return PrimitiveType.CONE_CONCAVE;
+//		}
+//		
+//		else if ((Math.abs(c.getCurvatureMin()) < 15 && Math.abs(c.getCurvatureMin()) >= 1.5) && (Math.abs(c.getCurvatureMax()) < 15 && Math.abs(c.getCurvatureMax()) >= 1.5) && (c.getCurvatureMax() * c.getCurvatureMin()) > 0.0) {
+//			return PrimitiveType.CONE_CONCAVE;
+//		}
+//		
+//		else if (Math.abs(c.getCurvatureMin()) >= 15 && Math.abs(c.getCurvatureMax()) >= 15 && (c.getCurvatureMax() * c.getCurvatureMin()) < 0.0) {
+//			return PrimitiveType.SPHERE_CONCAVE;
+//		}
+//		
+//		else {
+//			return PrimitiveType.SPHERE_CONVEX;
+//		}
+		
 		if (c.getSaturation() < 0.20)
 			return PrimitiveType.PLANE;
 
@@ -789,7 +809,6 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 		}
 
 		ThreadPool.executeInPool(threads);
-		threads.clear();
 
 		// set primitive type for all triangles
 		final Set<Triangle> alreadyInAnnotation = new HashSet<Triangle>();
