@@ -320,7 +320,7 @@ public class CasProcessing{
 				}
 				commonBorder += e.getEdgeValue().length();
 			}
-			if (sharpEdgeBorder == commonBorder) {
+			if (sharpEdgeBorder >= (0.4 * commonBorder)) {
 				adjacencyMatrix[r.getRegionId()][n.getRegionId()] = PINF;
 				adjacencyMatrix[n.getRegionId()][r.getRegionId()] = PINF;
 				return;
