@@ -7,6 +7,7 @@
  ******************************************************************************/
 package edu.tum.cs.vis.model.uima.analyser;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -18,6 +19,7 @@ import org.apache.log4j.Logger;
 
 import edu.tum.cs.ias.knowrob.utils.ThreadPool;
 import edu.tum.cs.vis.model.uima.cas.MeshCas;
+import edu.tum.cs.vis.model.util.Edge;
 import edu.tum.cs.vis.model.util.Triangle;
 import edu.tum.cs.vis.model.util.Vertex;
 
@@ -67,6 +69,9 @@ public class NeighborAnalyser extends MeshAnalyser {
 
 		trianglesElaborated.set(0);
 		allTriangles = cas.getModel().getTriangles();
+
+		removeCollinearTriangles(allTriangles);
+		
 		initialNumOfTriangles = allTriangles.size();
 		
 		final int interval = 100;
@@ -121,5 +126,44 @@ public class NeighborAnalyser extends MeshAnalyser {
 	public void updateProgress() {
 		if (allTriangles != null)
 			setProgress((float) trianglesElaborated.get() / (float) initialNumOfTriangles * 100.0f);
+	}
+	
+	/**
+	 * Checks all the triangles associated to the UIMA CAS of the CAD model in order to see
+	 * if they collapse to trivial triangle annotations ("collinear" triangles, where two vertices
+	 * are the same, or where two edges are parallel)
+	 * 
+	 * @param allTriangles
+	 * 				list of all triangles in the model to be checked
+	 */
+	private void removeCollinearTriangles(final List<Triangle> allTriangles) {
+		List<Triangle> toRemove = new ArrayList<Triangle>();
+		for (Triangle triangle : allTriangles) {
+			Vertex v0 = triangle.getPosition()[0];
+			Vertex v1 = triangle.getPosition()[1];
+			Vertex v2 = triangle.getPosition()[2];
+			if ((v0.x == v1.x && v0.y == v1.y && v0.z == v1.z) || (v0.x == v2.x && v0.y ==v2.y && v0.z == v2.z) || (v1.x == v2.x && v1.y == v2.y && v1.z == v2.z)) {
+				toRemove.add(triangle);
+				continue;
+			}
+			Edge[] edge = triangle.getEdges();
+			float angle = (float)(Math.toDegrees(edge[0].getEdgeValue().angle(edge[1].getEdgeValue())));
+			if (angle == 0.0f || angle == 180.0f) {
+				toRemove.add(triangle);
+				continue;
+			}
+			angle = (float)(Math.toDegrees(edge[0].getEdgeValue().angle(edge[2].getEdgeValue())));
+			if (angle == 0.0f || angle == 180.0f) {
+				toRemove.add(triangle);
+				continue;
+			}
+			angle = (float)(Math.toDegrees(edge[1].getEdgeValue().angle(edge[2].getEdgeValue())));
+			if (angle == 0.0f || angle == 180.0f) {
+				toRemove.add(triangle);
+				continue;
+			}	
+		}
+		logger.debug("Removed " + toRemove.size() + " collinear triangles from the model.");
+		allTriangles.removeAll(toRemove);
 	}
 }
