@@ -174,7 +174,7 @@ public class EdgeAnalyser extends MeshAnalyser {
 			Triangle n = it.next();
 			//synchronized (n) {
 			float angleOfNormals = (float)Math.toDegrees(t.getNormalVector().angle(n.getNormalVector()));
-			if (angleOfNormals >= 85.0f) {
+			if (angleOfNormals >= 65.0f) {
 				List<Vertex> vShared = findSharedVertices(t,n);
 				Edge edge = new Edge(vShared.get(0), vShared.get(2));
 				vShared.get(0).isSharpVertex(true);
