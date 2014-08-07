@@ -35,7 +35,9 @@ import edu.tum.cs.vis.model.util.Curvature;
 import edu.tum.cs.vis.model.util.DrawSettings;
 import edu.tum.cs.vis.model.util.DrawType;
 import edu.tum.cs.vis.model.util.Edge;
+import edu.tum.cs.vis.model.util.Group;
 import edu.tum.cs.vis.model.util.IntersectedTriangle;
+import edu.tum.cs.vis.model.util.Region;
 import edu.tum.cs.vis.model.util.Triangle;
 import edu.tum.cs.vis.model.util.Vertex;
 
@@ -141,14 +143,22 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 	 * draw voronoi area for each vertex?
 	 */
 	private boolean									drawVoronoiArea		= false;
+	
 	/**
 	 * draw sharp edges existent in the model
 	 */
 	private boolean									drawSharpEdges 		= false;
+	
+	/**
+	 * draw region edges
+	 */
+	private boolean									drawRegionEdges		= false;
+	
 	/**
 	 * Select only nearest triangle or all intersecting with mouse ray?
 	 */
 	private boolean									selectNearestOnly	= true;
+	
 	/**
 	 * draw bounding box for each group?
 	 */
@@ -357,7 +367,7 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 			}
 		}
 
-		if (drawVertexNormals || drawVertexCurvature || drawVoronoiArea || drawSharpEdges) {
+		if (drawVertexNormals || drawVertexCurvature || drawVoronoiArea || drawSharpEdges || drawRegionEdges) {
 			g.strokeWeight(2f);
 			for (MeshCas c : casList) {
 				synchronized (c.getModel().getVertices()) {
@@ -366,7 +376,7 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 							g.stroke(41, 120, 37);
 							Vector3f n = (Vector3f) v.getNormalVector().clone();
 							n.scale(0.05f);
-							g.line(v.x, v.y, v.z, v.x + n.x, v.y + n.y, v.z + n.z);
+//							g.line(v.x, v.y, v.z, v.x + n.x, v.y + n.y, v.z + n.z);
 							g.fill(35, 148, 143);
 							g.noStroke();
 							g.sphereDetail(20);
@@ -382,33 +392,89 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 							if (curv == null)
 								continue;
 
-							g.stroke(0, 72, 153);
+							g.stroke(50, 50, 255);
 
 							Vector3f max = (Vector3f) curv.getPrincipleDirectionMax().clone();
 							max.scale(curv.getCurvatureMax() / 20f);
+//							max.scale(c.getModel().getScale() / (8f * max.length()));
 							g.line(v.x, v.y, v.z, v.x + max.x, v.y + max.y, v.z + max.z);
 
-							g.stroke(243, 146, 0);
+							g.stroke(255, 50, 50);
 							Vector3f min = (Vector3f) curv.getPrincipleDirectionMin().clone();
 							min.scale(curv.getCurvatureMax() / 20f);
+//							min.scale(c.getModel().getScale() / (8f * min.length()));
 							g.line(v.x, v.y, v.z, v.x + min.x, v.y + min.y, v.z + min.z);
 						}
 					}
 				}
-				if (drawSharpEdges) {
-					g.stroke(255, 30, 0);
-					synchronized (c.getModel().getTriangles()) {
-					for (Triangle t : c.getModel().getTriangles()) {
-						Edge[] edges = t.getEdges();
-						for (int i = 0 ; i < edges.length ; ++i) {
-							if (edges[i].getIsSharpEdge()) {
-								Vertex v = edges[i].getVerticesOfEdge()[0];
-								Vector3f edge = edges[i].getEdgeValue();
-								g.line(v.x, v.y, v.z, v.x - edge.x, v.y - edge.y, v.z - edge.z);
+				if (drawSharpEdges || drawRegionEdges) {
+					if (drawSharpEdges && drawRegionEdges) {
+						synchronized (c.getModel().getRegions()) {
+							for (Region r : c.getModel().getRegions()) {
+								for (int i = 0 ; i < r.getBoundaryEdges().size() ; ++i) {
+									Edge edge = r.getBoundaryEdges().get(i);
+									Vertex v = edge.getVerticesOfEdge()[0];
+									Vector3f edgeVal = edge.getEdgeValue();
+									if (edge.getIsSharpEdge()) {
+										g.stroke(240, 140, 0);
+									}
+									else {
+										g.stroke(255, 255, 0);
+									}
+									g.line(v.x, v.y, v.z, v.x - edgeVal.x, v.y - edgeVal.y, v.z - edgeVal.z);
+								}
+							}
+						}
+						g.stroke(240, 140, 0);
+						synchronized (c.getModel().getTriangles()) {
+							for (Triangle t : c.getModel().getTriangles()) {
+								Edge[] edges = t.getEdges();
+								for (int i = 0 ; i < edges.length ; ++i) {
+									if (edges[i].getIsSharpEdge()) {
+										Vertex v = edges[i].getVerticesOfEdge()[0];
+										Vector3f edge = edges[i].getEdgeValue();
+										g.line(v.x, v.y, v.z, v.x - edge.x, v.y - edge.y, v.z - edge.z);
+									}
+								}
+							}
+						}
+					}
+					else if (drawSharpEdges) {
+						g.stroke(240, 140, 0);
+						synchronized (c.getModel().getTriangles()) {
+							for (Triangle t : c.getModel().getTriangles()) {
+								Edge[] edges = t.getEdges();
+								for (int i = 0 ; i < edges.length ; ++i) {
+									if (edges[i].getIsSharpEdge()) {
+										Vertex v = edges[i].getVerticesOfEdge()[0];
+										Vector3f edge = edges[i].getEdgeValue();
+										g.line(v.x, v.y, v.z, v.x - edge.x, v.y - edge.y, v.z - edge.z);
+									}
+								}
+							}
+						}
+					}
+					else if (drawRegionEdges) {
+						g.stroke(255,255,0);
+						synchronized (c.getModel().getRegions()) {
+							for (Region r : c.getModel().getRegions()) {
+								for (int i = 0 ; i < r.getBoundaryEdges().size() ; ++i) {
+									Edge edge = r.getBoundaryEdges().get(i);
+									Vertex v = edge.getVerticesOfEdge()[0];
+									Vector3f edgeVal = edge.getEdgeValue(); 
+									g.line(v.x, v.y, v.z, v.x - edgeVal.x, v.y - edgeVal.y, v.z - edgeVal.z);
+								}
 							}
 						}
 					}
 				}
+				if (drawVertexNormals) {
+					for (Triangle t : c.getModel().getTriangles()) {
+						Vector3f n = (Vector3f) t.getNormalVector().clone();
+						n.scale(0.05f);
+						g.stroke(40,120,30);
+						g.line(t.getCentroid().x, t.getCentroid().y, t.getCentroid().z, t.getCentroid().x + n.x, t.getCentroid().y + n.y, t.getCentroid().z + n.z);
+					}
 				}
 			}
 		}
@@ -516,12 +582,21 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 	}
 	
 	/**
-	 * Should the  sharp edges be drawn?
+	 * Should the sharp edges be drawn?
 	 * 
 	 * @return the drawSharpEdges
 	 */
 	public boolean isDrawSharpEdges() {
 		return drawSharpEdges;
+	}
+	
+	/**
+	 * Should the region edges be drawn?
+	 * 
+	 * @return the drawRegionEdges
+	 */
+	public boolean isDrawRegionEdges() {
+		return drawRegionEdges;
 	}
 
 	/**
@@ -677,6 +752,16 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 				}
 				selectedTriangles.clear();
 				selectedTriangles.add(nearest);
+				System.out.println("========= New selection =========");
+				for (IntersectedTriangle t : selectedTriangles) {
+					System.out.println(t.t);
+					System.out.println("=========== Neighbors ===========");
+					for (Triangle n : t.t.getNeighbors()) {
+						System.out.println(n);
+						System.out.println("aon = " + (Math.toDegrees(t.t.getNormalVector().angle(n.getNormalVector())) + " aoninv = " + (Math.toDegrees(n.getNormalVector().angle(t.t.getNormalVector())))));
+					}
+				}
+				System.out.println("========= End selection =========\n");
 			}
 
 			selectedTrianglesChanged();
@@ -862,10 +947,18 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 	
 	/**
 	 * @param drawSharpEdges
-	 * 			  the drwaSharpEdges to set
+	 * 			  the drawSharpEdges to set
 	 */
 	public void setDrawSharpEdges(boolean drawSharpEdges) {
 		this.drawSharpEdges = drawSharpEdges;
+	}
+	
+	/**
+	 * @param drawRegionEdges
+	 * 			  the drawRegionEdges to set
+	 */
+	public void setDrawRegionEdges(boolean drawRegionEdges) {
+		this.drawRegionEdges = drawRegionEdges;
 	}
 
 	/**
@@ -948,5 +1041,11 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 		if (imageGeneratorSettings != null) {
 			imageGeneratorSettings.triggerSetup();
 		}
+	}
+	
+	public void setSelectedTriangle(Triangle t) {
+		selectedTriangles.clear();
+		IntersectedTriangle tr = new IntersectedTriangle(t, t.getPosition()[0]);
+		selectedTriangles.add(tr);
 	}
 }

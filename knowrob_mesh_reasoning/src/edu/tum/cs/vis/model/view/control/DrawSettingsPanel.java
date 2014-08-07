@@ -80,6 +80,12 @@ public class DrawSettingsPanel extends JPanel implements ActionListener {
 	 * Checkbox for selectTrianglesOnly setting.
 	 */
 	private final JCheckBox			cbxSelectTriangles;
+	
+	/**
+	 * Checkbox for displaying region edge boundaries
+	 */
+	private final JCheckBox			cbxDrawRegionEdges;
+	
 	/**
 	 * draw bounding box for each group
 	 */
@@ -130,6 +136,11 @@ public class DrawSettingsPanel extends JPanel implements ActionListener {
 		cbxDrawSharpEdges.addActionListener(this);
 		cbxDrawSharpEdges.setSelected(false);
 		this.add(cbxDrawSharpEdges);
+		
+		cbxDrawRegionEdges = new JCheckBox("Region Edges");
+		cbxDrawRegionEdges.addActionListener(this);
+		cbxDrawRegionEdges.setSelected(false);
+		this.add(cbxDrawRegionEdges);
 
 		btnSetRotation = new JButton("Set View");
 		btnSetRotation.addActionListener(this);
@@ -166,6 +177,8 @@ public class DrawSettingsPanel extends JPanel implements ActionListener {
 			view.setDrawVoronoiArea(cbxDrawVoronoiArea.isSelected());
 		else if (e.getSource() == cbxDrawSharpEdges)
 			view.setDrawSharpEdges(cbxDrawSharpEdges.isSelected());
+		else if (e.getSource() == cbxDrawRegionEdges) 
+			view.setDrawRegionEdges(cbxDrawRegionEdges.isSelected());
 		else if (e.getSource() == cbxDrawBoundingBox)
 			view.setDrawBoundingBox(cbxDrawBoundingBox.isSelected());
 		else if (e.getSource() == btnSetRotation) {
