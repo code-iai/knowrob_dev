@@ -130,10 +130,17 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 	 * Should background be white
 	 */
 	private boolean									backgroundWhite		= false;
+	
 	/**
 	 * draw normals for each vertex?
 	 */
 	private boolean									drawVertexNormals	= false;
+	
+	/**
+	 * draw normals for each triangle?
+	 */
+	private boolean									drawTriangleNormals = false;
+	
 	/**
 	 * draw curvature properties for each vertex?
 	 */
@@ -367,17 +374,17 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 			}
 		}
 
-		if (drawVertexNormals || drawVertexCurvature || drawVoronoiArea || drawSharpEdges || drawRegionEdges) {
+		if (drawVertexNormals || drawTriangleNormals || drawVertexCurvature || drawVoronoiArea || drawSharpEdges || drawRegionEdges) {
 			g.strokeWeight(2f);
 			for (MeshCas c : casList) {
 				synchronized (c.getModel().getVertices()) {
 					for (Vertex v : c.getModel().getVertices()) {
 						if (drawVertexNormals || drawVoronoiArea) {
-							g.stroke(41, 120, 37);
+							g.stroke(41, 120, 40);
 							Vector3f n = (Vector3f) v.getNormalVector().clone();
-							n.scale(0.05f);
-//							g.line(v.x, v.y, v.z, v.x + n.x, v.y + n.y, v.z + n.z);
-							g.fill(35, 148, 143);
+							n.scale(0.075f);
+							g.line(v.x, v.y, v.z, v.x + n.x, v.y + n.y, v.z + n.z);
+							g.fill(35, 150, 140);
 							g.noStroke();
 							g.sphereDetail(20);
 							if (drawVoronoiArea) {
@@ -408,6 +415,7 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 					}
 				}
 				if (drawSharpEdges || drawRegionEdges) {
+					g.strokeWeight(3f);
 					if (drawSharpEdges && drawRegionEdges) {
 						synchronized (c.getModel().getRegions()) {
 							for (Region r : c.getModel().getRegions()) {
@@ -419,7 +427,7 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 										g.stroke(240, 140, 0);
 									}
 									else {
-										g.stroke(255, 255, 0);
+										g.stroke(0, 255, 0);
 									}
 									g.line(v.x, v.y, v.z, v.x - edgeVal.x, v.y - edgeVal.y, v.z - edgeVal.z);
 								}
@@ -455,7 +463,7 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 						}
 					}
 					else if (drawRegionEdges) {
-						g.stroke(255,255,0);
+						g.stroke(0 , 255, 0);
 						synchronized (c.getModel().getRegions()) {
 							for (Region r : c.getModel().getRegions()) {
 								for (int i = 0 ; i < r.getBoundaryEdges().size() ; ++i) {
@@ -467,14 +475,17 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 							}
 						}
 					}
+					g.strokeWeight(2f);
 				}
-				if (drawVertexNormals) {
+				if (drawTriangleNormals) {
+					g.strokeWeight(1f);
 					for (Triangle t : c.getModel().getTriangles()) {
 						Vector3f n = (Vector3f) t.getNormalVector().clone();
 						n.scale(0.05f);
-						g.stroke(40,120,30);
+						g.stroke(35, 120, 200);
 						g.line(t.getCentroid().x, t.getCentroid().y, t.getCentroid().z, t.getCentroid().x + n.x, t.getCentroid().y + n.y, t.getCentroid().z + n.z);
 					}
+					g.strokeWeight(2f);
 				}
 			}
 		}
@@ -564,12 +575,21 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 	}
 
 	/**
-	 * Should vertex normals be drawn
+	 * Should vertex normals be drawn?
 	 * 
 	 * @return the drawVertexNormals
 	 */
 	public boolean isDrawVertexNormals() {
 		return drawVertexNormals;
+	}
+	
+	/**
+	 * Should triangle normals be drawn?
+	 * 
+	 * @return the drawTriangleNormals
+	 */
+	public boolean isDrawTriangleNormals() {
+		return drawTriangleNormals;
 	}
 
 	/**
@@ -937,6 +957,14 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 		this.drawVertexNormals = drawVertexNormals;
 	}
 
+	/**
+	 * @param drawTriangleNormals
+	 * 			  the drwaTriangleNormals to set
+	 */
+	public void setDrawTriangleNormals(boolean drawTriangleNormals) {
+		this.drawTriangleNormals = drawTriangleNormals;
+	}
+	
 	/**
 	 * @param drawVoronoiArea
 	 *            the drawVoronoiArea to set

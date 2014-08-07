@@ -44,42 +44,24 @@ public class DrawSettingsPanel extends JPanel implements ActionListener {
 	private final MeshReasoningView	view;
 
 	/**
-	 * use white background
-	 */
-	private final JCheckBox			cbxWhiteBackground;
-	/**
 	 * draw vertex normals
 	 */
 	private final JCheckBox			cbxDrawVertexNormals;
+	
+	/**
+	 * draw triangle normals
+	 */
+	private final JCheckBox			cbxDrawTriangleNormals;
+	
 	/**
 	 * draw vertex curvature
 	 */
 	private final JCheckBox			cbxDrawVertexCurvature;
+	
 	/**
 	 * color model by curvature
 	 */
 	private final JCheckBox			cbxDrawCurvatureColor;
-	/**
-	 * draw voronoi area
-	 */
-	private final JCheckBox			cbxDrawVoronoiArea;
-	/**
-	 * draw sharp edges
-	 */
-	private final JCheckBox			cbxDrawSharpEdges;
-	/**
-	 * button to set rotation of camera manually
-	 */
-	private final JButton			btnSetRotation;
-	/**
-	 * select only nearest triangle or all triangles intersecting mouse ray
-	 */
-	private final JCheckBox			cbxSelectNearestOnly;
-
-	/**
-	 * Checkbox for selectTrianglesOnly setting.
-	 */
-	private final JCheckBox			cbxSelectTriangles;
 	
 	/**
 	 * Checkbox for displaying region edge boundaries
@@ -87,10 +69,40 @@ public class DrawSettingsPanel extends JPanel implements ActionListener {
 	private final JCheckBox			cbxDrawRegionEdges;
 	
 	/**
+	 * draw sharp edges
+	 */
+	private final JCheckBox			cbxDrawSharpEdges;
+	
+	/**
+	 * Checkbox for selectTrianglesOnly setting.
+	 */
+	private final JCheckBox			cbxSelectTriangles;
+	
+	/**
+	 * select only nearest triangle or all triangles intersecting mouse ray
+	 */
+	private final JCheckBox			cbxSelectNearestOnly;
+	
+	/**
 	 * draw bounding box for each group
 	 */
 	private final JCheckBox			cbxDrawBoundingBox;
 
+	/**
+	 * draw voronoi area
+	 */
+	private final JCheckBox			cbxDrawVoronoiArea;
+	
+	/**
+	 * use white background
+	 */
+	private final JCheckBox			cbxWhiteBackground;
+	
+	/**
+	 * button to set rotation of camera manually
+	 */
+	private final JButton			btnSetRotation;
+	
 	/**
 	 * Creates a new draw settings panel
 	 * 
@@ -107,59 +119,64 @@ public class DrawSettingsPanel extends JPanel implements ActionListener {
 		GridLayout grid = new GridLayout(0, 2);
 		setLayout(grid);
 
-		cbxWhiteBackground = new JCheckBox("White Background");
-		cbxWhiteBackground.addActionListener(this);
-		cbxWhiteBackground.setSelected(view.isBackgroundWhite());
-		this.add(cbxWhiteBackground);
-
 		cbxDrawVertexNormals = new JCheckBox("Vertex normals");
 		cbxDrawVertexNormals.addActionListener(this);
 		cbxDrawVertexNormals.setSelected(false);
 		this.add(cbxDrawVertexNormals);
 
+		cbxDrawTriangleNormals = new JCheckBox("Triangle normals");
+		cbxDrawTriangleNormals.addActionListener(this);
+		cbxDrawTriangleNormals.setSelected(false);
+		this.add(cbxDrawTriangleNormals);
+
 		cbxDrawVertexCurvature = new JCheckBox("Vertex curvature");
 		cbxDrawVertexCurvature.addActionListener(this);
 		cbxDrawVertexCurvature.setSelected(false);
 		this.add(cbxDrawVertexCurvature);
-
+		
 		cbxDrawCurvatureColor = new JCheckBox("Color by curvature");
 		cbxDrawCurvatureColor.addActionListener(this);
 		cbxDrawCurvatureColor.setSelected(false);
 		this.add(cbxDrawCurvatureColor);
 
-		cbxDrawVoronoiArea = new JCheckBox("Voronoi Area");
-		cbxDrawVoronoiArea.addActionListener(this);
-		cbxDrawVoronoiArea.setSelected(false);
-		this.add(cbxDrawVoronoiArea);
+		cbxDrawRegionEdges = new JCheckBox("Region Edges");
+		cbxDrawRegionEdges.addActionListener(this);
+		cbxDrawRegionEdges.setSelected(false);
+		this.add(cbxDrawRegionEdges);
 		
 		cbxDrawSharpEdges = new JCheckBox("Sharp Edges");
 		cbxDrawSharpEdges.addActionListener(this);
 		cbxDrawSharpEdges.setSelected(false);
 		this.add(cbxDrawSharpEdges);
 		
-		cbxDrawRegionEdges = new JCheckBox("Region Edges");
-		cbxDrawRegionEdges.addActionListener(this);
-		cbxDrawRegionEdges.setSelected(false);
-		this.add(cbxDrawRegionEdges);
-
-		btnSetRotation = new JButton("Set View");
-		btnSetRotation.addActionListener(this);
-		this.add(btnSetRotation);
-
+		cbxSelectTriangles = new JCheckBox("Select triangles");
+		cbxSelectTriangles.addActionListener(this);
+		cbxSelectTriangles.setSelected(view.isSelectTrianglesOnly());
+		this.add(cbxSelectTriangles);
+		
 		cbxSelectNearestOnly = new JCheckBox("Select nearest");
 		cbxSelectNearestOnly.addActionListener(this);
 		cbxSelectNearestOnly.setSelected(view.isSelectNearestOnly());
 		this.add(cbxSelectNearestOnly);
 
-		cbxSelectTriangles = new JCheckBox("Select triangles");
-		cbxSelectTriangles.addActionListener(this);
-		cbxSelectTriangles.setSelected(view.isSelectTrianglesOnly());
-		this.add(cbxSelectTriangles);
-
+		cbxDrawVoronoiArea = new JCheckBox("Voronoi Area");
+		cbxDrawVoronoiArea.addActionListener(this);
+		cbxDrawVoronoiArea.setSelected(false);
+		this.add(cbxDrawVoronoiArea);
+		
 		cbxDrawBoundingBox = new JCheckBox("Bounding box");
 		cbxDrawBoundingBox.addActionListener(this);
 		cbxDrawBoundingBox.setSelected(view.isDrawBoundingBox());
 		this.add(cbxDrawBoundingBox);
+
+		cbxWhiteBackground = new JCheckBox("White Background");
+		cbxWhiteBackground.addActionListener(this);
+		cbxWhiteBackground.setSelected(view.isBackgroundWhite());
+		this.add(cbxWhiteBackground);
+
+		btnSetRotation = new JButton("Set View");
+		btnSetRotation.addActionListener(this);
+		this.add(btnSetRotation);
 
 	}
 
@@ -169,6 +186,8 @@ public class DrawSettingsPanel extends JPanel implements ActionListener {
 			view.setBackgroundWhite(cbxWhiteBackground.isSelected());
 		else if (e.getSource() == cbxDrawVertexNormals)
 			view.setDrawVertexNormals(cbxDrawVertexNormals.isSelected());
+		else if (e.getSource() == cbxDrawTriangleNormals) 
+			view.setDrawTriangleNormals(cbxDrawTriangleNormals.isSelected());
 		else if (e.getSource() == cbxDrawVertexCurvature)
 			view.setDrawVertexCurvature(cbxDrawVertexCurvature.isSelected());
 		else if (e.getSource() == cbxDrawCurvatureColor)
