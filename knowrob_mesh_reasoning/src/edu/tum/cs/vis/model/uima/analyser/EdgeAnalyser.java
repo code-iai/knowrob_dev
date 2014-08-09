@@ -18,6 +18,7 @@ import org.apache.log4j.Logger;
 
 import edu.tum.cs.vis.model.util.Edge;
 import edu.tum.cs.vis.model.util.Triangle;
+import edu.tum.cs.vis.model.util.UtilityValues;
 import edu.tum.cs.vis.model.util.Vertex;
 import edu.tum.cs.vis.model.uima.cas.MeshCas;
 import edu.tum.cs.ias.knowrob.utils.ThreadPool;
@@ -169,32 +170,64 @@ public class EdgeAnalyser extends MeshAnalyser {
 	 */
 	private void sharpEdgeDetectionForTriangle(Triangle t) {
 		synchronized (t) {
-		Iterator<Triangle> it = t.getNeighbors().iterator();
-		while (it.hasNext()) {
-			Triangle n = it.next();
-			//synchronized (n) {
-			float angleOfNormals = (float)Math.toDegrees(t.getNormalVector().angle(n.getNormalVector()));
-			if (angleOfNormals >= 65.0f) {
-				List<Vertex> vShared = findSharedVertices(t,n);
-				Edge edge = new Edge(vShared.get(0), vShared.get(2));
-				vShared.get(0).isSharpVertex(true);
-				vShared.get(1).isSharpVertex(true);
-				vShared.get(2).isSharpVertex(true);
-				vShared.get(3).isSharpVertex(true);
-				t.addSharpEdge(edge);
-				n.addSharpEdge(edge);
+			Edge[] edges = t.getEdges();
+			for (int i = 0 ; i < edges.length ; ++i) {
+				List<Triangle> neighbors = t.getNeighborsOfEdge(edges[i]);
+				// if no neighbors at the edge, then triangle is at the boundary 
+				// of an open part of the mesh, so mark boundary as sharp edge
+				if (neighbors.size() == 0) {
+					edges[i].getVerticesOfEdge()[0].isSharpVertex(true);
+					edges[i].getVerticesOfEdge()[1].isSharpVertex(true);
+					t.addSharpEdge(edges[i]);
+				}
+				else if (neighbors.size() == 1 && !neighbors.get(0).isVisited()) {
+					float angleOfNormals = (float) (Math.toDegrees(t.getNormalVector().angle(neighbors.get(0).getNormalVector())));
+					if (angleOfNormals >= UtilityValues.SHARP_EDGE_ANGLE_TOL) {
+						// get shared edge from the neighboring triangle
+						Edge neighborCommonEdge = neighbors.get(0).getCommonEdge(t);
+						edges[i].getVerticesOfEdge()[0].isSharpVertex(true);
+						edges[i].getVerticesOfEdge()[1].isSharpVertex(true);
+						neighborCommonEdge.getVerticesOfEdge()[0].isSharpVertex(true);
+						neighborCommonEdge.getVerticesOfEdge()[1].isSharpVertex(true);
+						t.addSharpEdge(edges[i]);
+						neighbors.get(0).addSharpEdge(neighborCommonEdge);
+					}
+				}
+				else {
+					// if multiple neighbors then decided on individual basis if 
+					// edges of neighbors are edge and weight on this the decision for
+					// the triangle edge
+					
+					// perimeter of edge of sharp and non sharp triangle neighbors
+					float perNonSharpNeighbors = 0.0f;
+					for (int j = 0 ; j < neighbors.size() ; ++j) {
+						float angleOfNormals = (float) (Math.toDegrees(t.getNormalVector().angle(neighbors.get(j).getNormalVector())));
+						Edge neighborCommonEdge = neighbors.get(j).getCommonEdge(t);
+						if (angleOfNormals >= UtilityValues.SHARP_EDGE_ANGLE_TOL && !neighbors.get(j).isVisited()) {
+							neighborCommonEdge.getVerticesOfEdge()[0].isSharpVertex(true);
+							neighborCommonEdge.getVerticesOfEdge()[1].isSharpVertex(true);
+							neighbors.get(j).addSharpEdge(neighborCommonEdge);
+							// also mark vertices on the triangle t to be sharp if same coordinates with the the ones from the neighbor
+							if (edges[i].getVerticesOfEdge()[0].sameCoordinates(neighborCommonEdge.getVerticesOfEdge()[0])
+									|| edges[i].getVerticesOfEdge()[0].sameCoordinates(neighborCommonEdge.getVerticesOfEdge()[1])) {
+								edges[i].getVerticesOfEdge()[0].isSharpVertex(true);
+							}
+							else if (edges[i].getVerticesOfEdge()[1].sameCoordinates(neighborCommonEdge.getVerticesOfEdge()[0])
+									|| edges[i].getVerticesOfEdge()[1].sameCoordinates(neighborCommonEdge.getVerticesOfEdge()[1])) {
+								edges[i].getVerticesOfEdge()[1].isSharpVertex(true);
+							}
+						}
+						else {
+							perNonSharpNeighbors += neighborCommonEdge.getEdgeValue().length();
+						}
+					}
+					// if perimeter of non sharp edges is 0, then also edge is sharp
+					if (perNonSharpNeighbors == 0.0f) {
+						t.addSharpEdge(edges[i]);
+					}
+				}
 			}
-			//}
-		}
-		Edge[] edges = t.getEdges();
-		for (int i = 0 ; i < edges.length ; ++i) {
-			List<Triangle> neighbors = t.getNeighborsOfEdge(edges[i]);
-			if (neighbors.size() == 0) {
-				edges[i].getVerticesOfEdge()[0].isSharpVertex(true);
-				edges[i].getVerticesOfEdge()[1].isSharpVertex(true);
-				t.addSharpEdge(edges[i]);
-			}
-		}
+			t.setIsVisited(true);
 		}
 	}
 	
