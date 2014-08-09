@@ -15,6 +15,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import javax.vecmath.Vector3f;
+
 import org.apache.log4j.Logger;
 
 import edu.tum.cs.ias.knowrob.utils.ThreadPool;
@@ -142,26 +144,19 @@ public class NeighborAnalyser extends MeshAnalyser {
 			Vertex v0 = triangle.getPosition()[0];
 			Vertex v1 = triangle.getPosition()[1];
 			Vertex v2 = triangle.getPosition()[2];
+			// if two vertices share the same coordinates than remove triangle as collinear
 			if ((v0.x == v1.x && v0.y == v1.y && v0.z == v1.z) || (v0.x == v2.x && v0.y ==v2.y && v0.z == v2.z) || (v1.x == v2.x && v1.y == v2.y && v1.z == v2.z)) {
 				toRemove.add(triangle);
 				continue;
 			}
+			// if any two edges are parallel (cross product has absolute value 0) then remove triangle as collinear
 			Edge[] edge = triangle.getEdges();
-			float angle = (float)(Math.toDegrees(edge[0].getEdgeValue().angle(edge[1].getEdgeValue())));
-			if (angle == 0.0f || angle == 180.0f) {
+			Vector3f crossProd = new Vector3f();
+			crossProd.cross(edge[0].getEdgeValue(), edge[1].getEdgeValue());
+			if (crossProd.length() == 0.0f) {
 				toRemove.add(triangle);
 				continue;
 			}
-			angle = (float)(Math.toDegrees(edge[0].getEdgeValue().angle(edge[2].getEdgeValue())));
-			if (angle == 0.0f || angle == 180.0f) {
-				toRemove.add(triangle);
-				continue;
-			}
-			angle = (float)(Math.toDegrees(edge[1].getEdgeValue().angle(edge[2].getEdgeValue())));
-			if (angle == 0.0f || angle == 180.0f) {
-				toRemove.add(triangle);
-				continue;
-			}	
 		}
 		logger.debug("Removed " + toRemove.size() + " collinear triangles from the model.");
 		allTriangles.removeAll(toRemove);
