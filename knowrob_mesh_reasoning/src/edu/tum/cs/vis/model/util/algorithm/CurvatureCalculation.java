@@ -124,6 +124,7 @@ public class CurvatureCalculation {
 
 			tmp = new Vector3f();
 			tmp.cross(v.getNormalVector(), c.getPrincipleDirectionMax());
+			tmp.normalize();
 			c.setPrincipleDirectionMin(tmp);
 
 		}
@@ -151,7 +152,7 @@ public class CurvatureCalculation {
 		}
 
 		ThreadPool.executeInPool(threads);
-
+		
 		// Compute principal directions and curvatures at each vertex
 		for (int i = 0; i < m.getVertices().size(); i++) {
 			Curvature c = curvatures.get(m.getVertices().get(i));
@@ -159,10 +160,10 @@ public class CurvatureCalculation {
 			float kRet[] = new float[2];
 
 			diagonalize_curv(c.getPrincipleDirectionMax(), c.getPrincipleDirectionMin(),
-					c.getCurvatureMax(), c.getCurvatureMinMax(), c.getCurvatureMin(), m
+					c.getCurvatureMin(), c.getCurvatureMinMax(), c.getCurvatureMax(), m
 							.getVertices().get(i).getNormalVector(), pdirRet, kRet);
-			c.setPrincipleDirectionMax(pdirRet[1]);
-			c.setPrincipleDirectionMin(pdirRet[0]);
+			c.setPrincipleDirectionMax(pdirRet[0]);
+			c.setPrincipleDirectionMin(pdirRet[1]);
 			c.setCurvatureMax(kRet[0]);
 			c.setCurvatureMin(kRet[1]);
 		}
@@ -185,7 +186,7 @@ public class CurvatureCalculation {
 		t.normalize();
 		Vector3f n = new Vector3f();
 		//n.cross(e[0], e[1]);
-		n.cross(e[1].getEdgeValue(), e[0].getEdgeValue());
+		n.cross(e[0].getEdgeValue(), e[1].getEdgeValue());
 		//n.normalize();
 		Vector3f b = new Vector3f();
 		b.cross(n, t);
@@ -205,7 +206,8 @@ public class CurvatureCalculation {
 			// w[1][2] += u*v;
 			w[2][2] += v * v;
 			Vector3f dn = new Vector3f(tri.getPosition()[(j + 2) % 3].getNormalVector());
-			dn.sub(tri.getPosition()[(j + 1) % 3].getNormalVector());
+			Vector3f dnn = new Vector3f(tri.getPosition()[(j + 1) % 3].getNormalVector());
+			dn.sub(dnn);
 			float dnu = dn.dot(t);
 			float dnv = dn.dot(b);
 			m[0] += dnu * u;
@@ -446,7 +448,7 @@ public class CurvatureCalculation {
 
 			r_old_u.scale(s);
 			r_old_v.scale(c);
-			r_old_u.sub(r_old_v);
+			r_old_u.add(r_old_v);
 			pdir[0] = r_old_u;
 		}
 		pdir[1] = new Vector3f();
