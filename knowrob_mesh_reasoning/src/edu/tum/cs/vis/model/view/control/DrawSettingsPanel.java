@@ -54,7 +54,17 @@ public class DrawSettingsPanel extends JPanel implements ActionListener {
 	private final JCheckBox			cbxDrawTriangleNormals;
 	
 	/**
-	 * draw vertex curvature
+	 * draw vertex normalized minimum curvature direction
+	 */
+	private final JCheckBox			cbxDrawVertexCurvatureMin;
+	
+	/**
+	 * draw vertex normalized maximum curvature direction
+	 */
+	private final JCheckBox			cbxDrawVertexCurvatureMax;
+	
+	/**
+	 * draw vertex together both min and max curvature directions
 	 */
 	private final JCheckBox			cbxDrawVertexCurvature;
 	
@@ -128,6 +138,16 @@ public class DrawSettingsPanel extends JPanel implements ActionListener {
 		cbxDrawTriangleNormals.addActionListener(this);
 		cbxDrawTriangleNormals.setSelected(false);
 		this.add(cbxDrawTriangleNormals);
+		
+		cbxDrawVertexCurvatureMin = new JCheckBox("Vertex min. curvature");
+		cbxDrawVertexCurvatureMin.addActionListener(this);
+		cbxDrawVertexCurvatureMin.setSelected(false);
+		this.add(cbxDrawVertexCurvatureMin);
+		
+		cbxDrawVertexCurvatureMax = new JCheckBox("Vertex max. curvature");
+		cbxDrawVertexCurvatureMax.addActionListener(this);
+		cbxDrawVertexCurvatureMax.setSelected(false);
+		this.add(cbxDrawVertexCurvatureMax);
 
 		cbxDrawVertexCurvature = new JCheckBox("Vertex curvature");
 		cbxDrawVertexCurvature.addActionListener(this);
@@ -188,6 +208,10 @@ public class DrawSettingsPanel extends JPanel implements ActionListener {
 			view.setDrawVertexNormals(cbxDrawVertexNormals.isSelected());
 		else if (e.getSource() == cbxDrawTriangleNormals) 
 			view.setDrawTriangleNormals(cbxDrawTriangleNormals.isSelected());
+		else if (e.getSource() == cbxDrawVertexCurvatureMin)
+			view.setDrawVertexCurvatureMin(cbxDrawVertexCurvatureMin.isSelected());
+		else if (e.getSource() == cbxDrawVertexCurvatureMax)
+			view.setDrawVertexCurvatureMax(cbxDrawVertexCurvatureMax.isSelected());
 		else if (e.getSource() == cbxDrawVertexCurvature)
 			view.setDrawVertexCurvature(cbxDrawVertexCurvature.isSelected());
 		else if (e.getSource() == cbxDrawCurvatureColor)

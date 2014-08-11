@@ -142,6 +142,16 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 	private boolean									drawTriangleNormals = false;
 	
 	/**
+	 * draw min curvature direction for each vertex?
+	 */
+	private boolean									drawVertexCurvatureMin = false;
+	
+	/**
+	 * draw max curvatrue direction for each vertex?
+	 */
+	private boolean 								drawVertexCurvatureMax = false;
+	
+	/**
 	 * draw curvature properties for each vertex?
 	 */
 	private boolean									drawVertexCurvature	= false;
@@ -301,7 +311,7 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 
 		getSelectionGraphics().setDrawWithTransparency(
 				(selectTrianglesOnly && selectedTriangles.size() > 0)
-						|| selectedAnnotations.size() > 0);
+						|| (selectedAnnotations.size() > 0) || drawSharpEdges || drawRegionEdges);
 
 		for (MeshCas c : casList) {
 			if (c.getModel() == null)
@@ -374,7 +384,8 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 			}
 		}
 
-		if (drawVertexNormals || drawTriangleNormals || drawVertexCurvature || drawVoronoiArea || drawSharpEdges || drawRegionEdges) {
+		if (drawVertexNormals || drawTriangleNormals || drawVertexCurvatureMin || drawVertexCurvatureMax 
+				|| drawVertexCurvature || drawVoronoiArea || drawSharpEdges || drawRegionEdges) {
 			g.strokeWeight(2f);
 			for (MeshCas c : casList) {
 				synchronized (c.getModel().getVertices()) {
@@ -394,23 +405,43 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 								g.popMatrix();
 							}
 						}
-						if (drawVertexCurvature) {
+						if (drawVertexCurvature || drawVertexCurvatureMin || drawVertexCurvatureMax) {
 							Curvature curv = c.getCurvature(v);
-							if (curv == null)
+							if (curv == null) {
 								continue;
-
-							g.stroke(50, 50, 255);
-
-							Vector3f max = (Vector3f) curv.getPrincipleDirectionMax().clone();
-							max.scale(curv.getCurvatureMax() / 20f);
-//							max.scale(c.getModel().getScale() / (8f * max.length()));
-							g.line(v.x, v.y, v.z, v.x + max.x, v.y + max.y, v.z + max.z);
-
-							g.stroke(255, 50, 50);
-							Vector3f min = (Vector3f) curv.getPrincipleDirectionMin().clone();
-							min.scale(curv.getCurvatureMax() / 20f);
-//							min.scale(c.getModel().getScale() / (8f * min.length()));
-							g.line(v.x, v.y, v.z, v.x + min.x, v.y + min.y, v.z + min.z);
+							}
+							g.strokeWeight(3f);
+							if (drawVertexCurvatureMin) {
+								g.stroke(50, 50, 255);
+								Vector3f min = (Vector3f) curv.getPrincipleDirectionMin().clone();
+								min.scale(c.getModel().getScale() / (10f * min.length()));
+								g.line(v.x - min.x/2, v.y - min.y/2, v.z - min.z/2, v.x + min.x/2, v.y + min.y/2, v.z + min.z/2);
+							}
+							if (drawVertexCurvatureMax) {
+								g.stroke(255, 50, 50);
+								Vector3f max = (Vector3f) curv.getPrincipleDirectionMax().clone();
+								max.scale(c.getModel().getScale() / (8f * max.length()));
+								g.line(v.x - max.x/2, v.y - max.y/2, v.z - max.z/2, v.x + max.x/2, v.y + max.y/2, v.z + max.z/2);
+							}
+							g.strokeWeight(1f);
+							if (drawVertexCurvature) {
+								// min curvature direction - color code is BLUE
+								g.stroke(50, 50, 255);
+								Vector3f min = (Vector3f) curv.getPrincipleDirectionMin().clone();
+								min.normalize();
+								min.scale(curv.getCurvatureMin() / 20f);
+	//							min.scale(c.getModel().getScale() / (8f * min.length()));
+								g.line(v.x - min.x/2, v.y - min.y/2, v.z - min.z/2, v.x + min.x/2, v.y + min.y/2, v.z + min.z/2);
+							
+								// max curvature direction - color code is RED
+								g.stroke(255, 50, 50);
+								Vector3f max = (Vector3f) curv.getPrincipleDirectionMax().clone();
+								max.normalize();
+								max.scale(curv.getCurvatureMax() / 20f);
+	//							max.scale(c.getModel().getScale() / (8f * max.length()));
+								g.line(v.x - max.x/2, v.y - max.y/2, v.z - max.z/2, v.x + max.x/2, v.y + max.y/2, v.z + max.z/2);
+							}
+							g.strokeWeight(2f);
 						}
 					}
 				}
@@ -563,6 +594,24 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 	 */
 	public boolean isDrawBoundingBox() {
 		return drawBoundingBox;
+	}
+	
+	/**
+	 * Should the min curvature direction of each vertex be displayed?
+	 * 
+	 * @return the drawVertexCurvatureMin
+	 */
+	public boolean isDrawVertexCurvatureMin() {
+		return drawVertexCurvatureMin;
+	}
+	
+	/**
+	 * Should the max curvature direction of each vertex be displayed?
+	 * 
+	 * @return the drawVertexCurvatureMax
+	 */
+	public boolean isDrawVertexCurvatureMax() {
+		return drawVertexCurvatureMax;
 	}
 
 	/**
@@ -940,6 +989,24 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 		draw();
 	}
 
+	/**
+	 * 
+	 * @param drawVertexCurvatureMin
+	 *            the drawVertexCurvatureMin to set
+	 */
+	public void setDrawVertexCurvatureMin(boolean drawVertexCurvatureMin) {
+		this.drawVertexCurvatureMin = drawVertexCurvatureMin;
+	}
+	
+	/**
+	 * 
+	 * @param drawVertexCurvatureMax
+	 *            the drawVertexCurvatureMax to set
+	 */
+	public void setDrawVertexCurvatureMax(boolean drawVertexCurvatureMax) {
+		this.drawVertexCurvatureMax = drawVertexCurvatureMax;
+	}
+	
 	/**
 	 * 
 	 * @param drawVertexCurvature
