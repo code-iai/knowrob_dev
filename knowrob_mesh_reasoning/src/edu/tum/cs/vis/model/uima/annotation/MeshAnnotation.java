@@ -9,6 +9,7 @@ package edu.tum.cs.vis.model.uima.annotation;
 
 import java.awt.Color;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import processing.core.PGraphics;
@@ -18,6 +19,7 @@ import com.google.common.collect.HashMultimap;
 import edu.tum.cs.vis.model.Model;
 import edu.tum.cs.vis.model.uima.cas.MeshCas;
 import edu.tum.cs.vis.model.util.DrawSettings;
+import edu.tum.cs.vis.model.util.Edge;
 import edu.tum.cs.vis.model.util.Mesh;
 import edu.tum.cs.vis.model.util.Triangle;
 import edu.tum.cs.vis.model.util.Vertex;
@@ -169,17 +171,35 @@ public abstract class MeshAnnotation<S extends MeshAnnotation> extends DrawableA
 		 */
 
 		// Check all neighbors of the triangle which annotation they have
-		for (Triangle neig : t.getNeighbors()) {
-			// neighbor is in same annotation, skip
-			if (getMesh().getTriangles().contains(neig))
-				continue;
-
-			// Get annotation of triangle
-			T ma = cas.findAnnotation(parClazz, neig);
-			if (ma != null)
-				annotations.add(ma);
+		Edge[] edges = t.getEdges();
+		for (int i = 0 ; i < edges.length ; ++i) {
+//			if (!edges[i].getIsSharpEdge()) {
+			List<Triangle> neighbors = t.getNeighborsOfEdge(edges[i]);
+			for (int j = 0 ; j < neighbors.size() ; ++j) {
+				// neighbor not in same annotation, then process
+				if (!mesh.getTriangles().contains(neighbors.get(j))) {
+					// get annotation of triangle
+					T neighAnnotation = cas.findAnnotation(parClazz, neighbors.get(j));
+					if (neighAnnotation != null) {
+						annotations.add(neighAnnotation);
+					}
+				}
+//				}
+			}
 		}
 		return annotations;
+		
+//		for (Triangle neig : t.getNeighbors()) {
+//			// neighbor is in same annotation, skip
+//			if (getMesh().getTriangles().contains(neig))
+//				continue;
+//
+//			// Get annotation of triangle
+//			T ma = cas.findAnnotation(parClazz, neig);
+//			if (ma != null)
+//				annotations.add(ma);
+//		}
+//		return annotations;
 	}
 
 	/**
@@ -202,26 +222,32 @@ public abstract class MeshAnnotation<S extends MeshAnnotation> extends DrawableA
 
 		for (Triangle t : mesh.getTriangles()) {
 			for (Triangle neigTriangle : t.getNeighbors()) {
-				if (!neighbor.containsTriangle(neigTriangle))
-					continue;
-				// arriving here, we found two triangles which represent the edge
-				int vertCount = 0;
-				for (Vertex vt : t.getPosition()) {
-					for (Vertex vn : neigTriangle.getPosition()) {
-						if (vt.sameCoordinates(vn)) {
-							edgeVertices.add(vt);
-							vertCount++;
-							break;
-						}
+				if (neighbor.containsTriangle(neigTriangle)) {
+					// arriving here, we found two triangles which represent the edge
+					Edge commEdge = t.getCommonEdge(neigTriangle);
+					if (commEdge != null) {
+						edgeVertices.add(commEdge.getVerticesOfEdge()[0]);
+						edgeVertices.add(commEdge.getVerticesOfEdge()[1]);
+						edgeTriangles.put(t, neigTriangle);
 					}
+//					int vertCount = 0;
+//					for (Vertex vt : t.getPosition()) {
+//						for (Vertex vn : neigTriangle.getPosition()) {
+//							if (vt.sameCoordinates(vn)) {
+//								edgeVertices.add(vt);
+//								vertCount++;
+//								break;
+//							}
+//						}
+//					}
+//
+//					// neighboring triangles have exactly two common vertices
+//					if (vertCount != 2)
+//						continue;
+//					edgeTriangles.put(t, neigTriangle);
 				}
-
-				// neighboring triangles have exactly two common vertices
-				if (vertCount != 2)
-					continue;
-				edgeTriangles.put(t, neigTriangle);
 			}
-		}
+		}	
 	}
 
 	/**

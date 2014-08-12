@@ -25,6 +25,7 @@ import com.google.common.collect.HashMultimap;
 
 import edu.tum.cs.ias.knowrob.utils.ThreadPool;
 import edu.tum.cs.uima.Annotation;
+import edu.tum.cs.vis.model.Model;
 import edu.tum.cs.vis.model.uima.annotation.PrimitiveAnnotation;
 import edu.tum.cs.vis.model.uima.annotation.primitive.ConeAnnotation;
 import edu.tum.cs.vis.model.uima.annotation.primitive.PlaneAnnotation;
@@ -32,8 +33,10 @@ import edu.tum.cs.vis.model.uima.annotation.primitive.PrimitiveType;
 import edu.tum.cs.vis.model.uima.annotation.primitive.SphereAnnotation;
 import edu.tum.cs.vis.model.uima.cas.MeshCas;
 import edu.tum.cs.vis.model.util.Curvature;
+import edu.tum.cs.vis.model.util.Edge;
 import edu.tum.cs.vis.model.util.Region;
 import edu.tum.cs.vis.model.util.Triangle;
+import edu.tum.cs.vis.model.util.UtilityValues;
 import edu.tum.cs.vis.model.util.Vertex;
 
 /**
@@ -55,13 +58,13 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 	/**
 	 * Degree between normal vertices for allowed combining of neighboring plane annotations
 	 */
-	private static final float	PLANE_COMBINE_DEGREE	= 10f;
+	private static final float	PLANE_COMBINE_DEGREE	= 5.0f;
 
 	/**
 	 * Tolerance in radiant between two surface normals of triangles to connect them as a single
 	 * plane
 	 */
-	private static double		PLANE_TOLERANCE			= 2.0f * Math.PI / 180f;
+	private static double		PLANE_TOLERANCE			= 2.0f;
 
 	/**
 	 * Analyze given triangle and try to region grow a plane. Only plane annotations are generated
@@ -85,10 +88,16 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 
 		// FIFO queue for triangles to visit for BFS
 		LinkedList<Triangle> queue = new LinkedList<Triangle>();
-		if (triangle.getNeighbors() != null) {
-			// Add all neighbor triangles to the queue
-			queue.addAll(triangle.getNeighbors());
+		Edge[] edges = triangle.getEdges();
+		for (int i = 0 ; i < edges.length ; ++i) {
+			if (!edges[i].getIsSharpEdge()) {
+				queue.addAll(triangle.getNeighborsOfEdge(edges[i]));
+			}
 		}
+//		if (triangle.getNeighbors() != null) {
+//			// Add all neighbor triangles to the queue
+//			queue.addAll(triangle.getNeighbors());
+//		}
 
 		PlaneAnnotation annotation = null;
 
@@ -118,17 +127,33 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 				alreadyInAnnotation.add(currNeighbor);
 
 				// Add all neighbors of current triangle to queue
-				for (Triangle a : currNeighbor.getNeighbors()) {
-					synchronized (annotation.getMesh()) {
-						synchronized (annotation.getMesh().getTriangles()) {
-
-							if (visited.contains(a)
-									|| annotation.getMesh().getTriangles().contains(a))
-								continue;
-						}
-					}
-					queue.add(a);
+//				for (Triangle a : currNeighbor.getNeighbors()) {
+//					synchronized (annotation.getMesh()) {
+//						synchronized (annotation.getMesh().getTriangles()) {
+//
+//							if (visited.contains(a)
+//									|| annotation.getMesh().getTriangles().contains(a))
+//								continue;
+				Edge[] nEdges = currNeighbor.getEdges();
+				for (int i = 0 ; i < nEdges.length ; ++i) {
+					if (!edges[i].getIsSharpEdge()) {
+						List<Triangle> neighbors = currNeighbor.getNeighborsOfEdge(nEdges[i]);
+						for (int j = 0 ; j < neighbors.size() ; ++j) {
+							synchronized (annotation.getMesh()) {
+								synchronized (annotation.getMesh().getTriangles()) {
+									if (visited.contains(neighbors.get(j)) || 
+											annotation.getMesh().getTriangles().contains(neighbors.get(j))) {
+										continue;
+									}
+								}
+							}
+							queue.add(neighbors.get(j));
+//							queue.add(a);
+//						}
+//					}
 				}
+			}
+		}
 			}
 		}
 		return annotation;
@@ -171,23 +196,18 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 				PrimitiveAnnotation pa = (PrimitiveAnnotation) a;
 
 				@SuppressWarnings("unchecked")
-				Set<PrimitiveAnnotation> neighborAnnotations = pa.getNeighborAnnotations(cas,
-						pa.getClass());
+				Set<PrimitiveAnnotation> neighborAnnotations = pa.getNeighborAnnotations(cas, pa.getClass());
 				for (PrimitiveAnnotation a1 : neighborAnnotations) {
 					if (toRemove.contains(a1))
 						continue;
-					if (pa instanceof ConeAnnotation
-							&& ((ConeAnnotation) pa).isConcave() != ((ConeAnnotation) a1)
-									.isConcave()) {
+					if (pa instanceof ConeAnnotation 
+							&& ((ConeAnnotation) pa).isConcave() != ((ConeAnnotation) a1).isConcave()) {
 						continue;
 					} else if (pa instanceof SphereAnnotation
-							&& ((SphereAnnotation) pa).isConcave() != ((SphereAnnotation) a1)
-									.isConcave()) {
+							&& ((SphereAnnotation) pa).isConcave() != ((SphereAnnotation) a1).isConcave()) {
 						continue;
 					} else if (pa instanceof PlaneAnnotation
-							&& Math.acos(((PlaneAnnotation) pa).getPlaneNormal().dot(
-									((PlaneAnnotation) a1).getPlaneNormal())) > PLANE_COMBINE_DEGREE
-									* Math.PI / 180.0) {
+							&& Math.toDegrees(((PlaneAnnotation) pa).getPlaneNormal().angle(((PlaneAnnotation) a1).getPlaneNormal())) > PLANE_COMBINE_DEGREE) {
 						// Two planes, but angle bigger than PLANE_COMBINE_DEGREE degree
 						continue;
 					}
@@ -204,7 +224,6 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 				}
 			}
 		}
-
 		synchronized (annotations) {
 			annotations.removeAll(toRemove);
 		}
@@ -252,39 +271,35 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 					boolean merge = false;
 					if (pa instanceof ConeAnnotation
 							&& a1 instanceof ConeAnnotation
-							&& ((ConeAnnotation) pa).isConcave() != ((ConeAnnotation) a1)
-									.isConcave()) {
+							&& ((ConeAnnotation) pa).isConcave() != ((ConeAnnotation) a1).isConcave()) {
 						// merge pa into a1 if area of pa is significantly smaller than a1, because
 						// neighboring cones, one convex and one concave with different size are
 						// very unlikely.
-						if (pa.getArea() < a1.getArea() * 0.30)
+						if (pa.getArea() < a1.getArea() * 0.30f)
 							merge = true;
 					}
 
 					if (!merge && pa instanceof PlaneAnnotation && a1 instanceof ConeAnnotation
-							&& pa.getArea() < a1.getArea() * 0.3) {
+							&& pa.getArea() < a1.getArea() * 0.30f) {
 						// found a small plane annotation neighboring cone annotation. Check if
 						// plane annotation should be part of cone annotation by checking if plane
 						// normal is perpendicular to the generating axis.
 						// Primitives are not fitted yet, therefore we need to compare triangles on
 						// the edge for approximately the same normal vector
-						HashMultimap<Triangle, Triangle> edgeTriangles = HashMultimap.create(a1
-								.getMesh().getTriangles().size() / 3, 2);
+						HashMultimap<Triangle, Triangle> edgeTriangles = HashMultimap.create(a1.getMesh().getTriangles().size(), 2);
 						Set<Vertex> edgeVertices = new HashSet<Vertex>();
 						pa.getNeighborEdge(cas, a1, edgeVertices, edgeTriangles);
 
 						// check for a triangle pair where the angle between triangle normals is
-						// bigger or equal
-						// to 180 degree.
+						// bigger or equal to 180 degree.
 						for (Triangle t : edgeTriangles.keySet()) {
 							Set<Triangle> partnerSet = edgeTriangles.get(t);
-
 							for (Triangle partner : partnerSet) {
-
-								float dot = t.getNormalVector().dot(partner.getNormalVector());
-
+//								float dot = t.getNormalVector().dot(partner.getNormalVector());
+								float angle = (float)(Math.toDegrees(t.getNormalVector().angle(partner.getNormalVector())));
 								// allow angle difference of approx 8 degree: cos(8*PI/180)=0.99
-								if (dot > 0.98) {
+//								if (dot > 0.98) {
+								if (angle <= 5.0f || angle >= 175.0f) {
 									merge = true;
 									break;
 								}
@@ -367,28 +382,8 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 	private static PrimitiveType getPrimitiveType(HashMap<Vertex, Curvature> curvatures, Vertex v) {
 
 		Curvature c = curvatures.get(v);
-
-//		if (Math.abs(c.getCurvatureMin()) < 1.0 && Math.abs(c.getCurvatureMax()) < 1.0 ) {
-//			return PrimitiveType.PLANE;
-//		}
-//		
-//		else if ((Math.abs(c.getCurvatureMin()) < 15 && Math.abs(c.getCurvatureMin()) >= 1.5) && (Math.abs(c.getCurvatureMax()) < 15 && Math.abs(c.getCurvatureMax()) >= 1.5) && (c.getCurvatureMax() * c.getCurvatureMin()) < 0.0) {
-//			return PrimitiveType.CONE_CONCAVE;
-//		}
-//		
-//		else if ((Math.abs(c.getCurvatureMin()) < 15 && Math.abs(c.getCurvatureMin()) >= 1.5) && (Math.abs(c.getCurvatureMax()) < 15 && Math.abs(c.getCurvatureMax()) >= 1.5) && (c.getCurvatureMax() * c.getCurvatureMin()) > 0.0) {
-//			return PrimitiveType.CONE_CONCAVE;
-//		}
-//		
-//		else if (Math.abs(c.getCurvatureMin()) >= 15 && Math.abs(c.getCurvatureMax()) >= 15 && (c.getCurvatureMax() * c.getCurvatureMin()) < 0.0) {
-//			return PrimitiveType.SPHERE_CONCAVE;
-//		}
-//		
-//		else {
-//			return PrimitiveType.SPHERE_CONVEX;
-//		}
 		
-		if (c.getSaturation() < 0.20)
+		if (Math.abs(c.getSaturation()) < 0.20)
 			return PrimitiveType.PLANE;
 
 		float hue = c.getHue();
@@ -547,16 +542,8 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 	 * @return true if angle is within tolerance
 	 */
 	private static boolean planeAngleWithinTolerance(Vector3f norm1, Vector3f norm2) {
-		double dot = norm1.dot(norm2);
-		if (dot > 1.0) // due to floating point arithmetic
-			dot = 1.0;
-
-		// Angle between 0 and 180 degree because angle of normal vector may be exactly 0 or 180
-		// degree for same plane
-		double angle = Math.acos(dot) + Math.PI * 2;
-		angle = angle % Math.PI;
-
-		return (angle <= PLANE_TOLERANCE || angle >= Math.PI - PLANE_TOLERANCE);
+		float angle = (float)(Math.toDegrees(norm1.angle(norm2)));
+		return (angle <= PLANE_TOLERANCE || angle >= 180 - PLANE_TOLERANCE);
 	}
 
 	/**
@@ -611,11 +598,9 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 		if (type == PrimitiveType.PLANE)
 			annotation = new PlaneAnnotation(cas.getCurvatures(), cas.getModel());
 		else if (type == PrimitiveType.SPHERE_CONCAVE || type == PrimitiveType.SPHERE_CONVEX)
-			annotation = new SphereAnnotation(cas.getCurvatures(), cas.getModel(),
-					type == PrimitiveType.SPHERE_CONCAVE);
+			annotation = new SphereAnnotation(cas.getCurvatures(), cas.getModel(), type == PrimitiveType.SPHERE_CONCAVE);
 		else
-			annotation = new ConeAnnotation(cas.getCurvatures(), cas.getModel(),
-					type == PrimitiveType.CONE_CONCAVE);
+			annotation = new ConeAnnotation(cas.getCurvatures(), cas.getModel(), type == PrimitiveType.CONE_CONCAVE);
 
 		synchronized (annotation.getMesh().getTriangles()) {
 			annotation.getMesh().getTriangles().add(triangle);
@@ -632,10 +617,19 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 
 		// FIFO queue for triangles to visit for BFS
 		LinkedList<Triangle> queue = new LinkedList<Triangle>();
-		if (triangle.getNeighbors() != null) {
-			// Add all neighbor triangles to the queue
-			queue.addAll(triangle.getNeighbors());
+		Edge[] edges = triangle.getEdges();
+		for (int i = 0 ; i < edges.length ; ++i) {
+			if (!edges[i].getIsSharpEdge()) {
+				List<Triangle> neighbors = triangle.getNeighborsOfEdge(edges[i]);
+				for (int j = 0 ; j < neighbors.size() ; ++j) {
+					queue.add(neighbors.get(j));
+				}
+			}
 		}
+//		if (triangle.getNeighbors() != null) {
+//			// Add all neighbor triangles to the queue
+//			queue.addAll(triangle.getNeighbors());
+//		}
 
 		while (!queue.isEmpty()) {
 			Triangle currNeighbor = queue.pop();
@@ -643,11 +637,9 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 			if (alreadyInAnnotation.contains(currNeighbor))
 				continue;
 
-			boolean isSameType = (type == getTrianglePrimitiveType(cas.getCurvatures(),
-					currNeighbor));
+			boolean isSameType = (type == getTrianglePrimitiveType(cas.getCurvatures(),currNeighbor));
 
-			boolean isSameNormal = planeAngleWithinTolerance(triangle.getNormalVector(),
-					currNeighbor.getNormalVector());
+			boolean isSameNormal = planeAngleWithinTolerance(triangle.getNormalVector(),currNeighbor.getNormalVector());
 
 			if (isSameType && type == PrimitiveType.PLANE)
 				isSameType = isSameNormal; // only combine triangles which lie on the same plane
@@ -659,20 +651,35 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 				alreadyInAnnotation.add(currNeighbor);
 
 				// Add all neighbors of current triangle to queue
-				for (Triangle a : currNeighbor.getNeighbors()) {
-					synchronized (annotation.getMesh()) {
-						synchronized (annotation.getMesh().getTriangles()) {
-
-							if (visited.contains(a)
-									|| annotation.getMesh().getTriangles().contains(a))
-								continue;
+				Edge[] currEdges = currNeighbor.getEdges();
+				for (int i = 0 ; i < currEdges.length ; ++i) {
+					if (!currEdges[i].getIsSharpEdge()) {
+						List<Triangle> currNeighbors = currNeighbor.getNeighborsOfEdge(currEdges[i]);
+						for (int j = 0 ; j < currNeighbors.size() ; ++j) {
+							synchronized (annotation.getMesh()) {
+								synchronized (annotation.getMesh().getTriangles()) {
+									if (visited.contains(currNeighbors.get(j)) || annotation.getMesh().getTriangles().contains(currNeighbors.get(j))) {
+										continue;
+									}
+								}
+							}
+							queue.add(currNeighbors.get(j));
 						}
 					}
-					queue.add(a);
 				}
+//				for (Triangle a : currNeighbor.getNeighbors()) {
+//					synchronized (annotation.getMesh()) {
+//						synchronized (annotation.getMesh().getTriangles()) {
+//
+//							if (visited.contains(a)
+//									|| annotation.getMesh().getTriangles().contains(a))
+//								continue;
+//						}
+//					}
+//					queue.add(a);
+//				}
 			}
 		}
-
 	}
 
 	/* (non-Javadoc)
@@ -730,46 +737,62 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 		int coneConvexCnt = 0;
 		int coneConcavCnt = 0;
 		for (Vertex v : triangle.getPosition()) {
-
-			Curvature c = curvatures.get(v);
-			if (c.getPrimitiveType() == PrimitiveType.PLANE)
-				planeCnt++;
-			else if (c.getPrimitiveType() == PrimitiveType.SPHERE_CONVEX)
-				sphereConvexCnt++;
-			else if (c.getPrimitiveType() == PrimitiveType.SPHERE_CONCAVE)
-				sphereConcavCnt++;
-			else if (c.getPrimitiveType() == PrimitiveType.CONE_CONVEX)
-				coneConvexCnt++;
-			else if (c.getPrimitiveType() == PrimitiveType.CONE_CONCAVE)
-				coneConcavCnt++;
-		}
-
-		trianglePrimitiveTypeMap.put(
-				triangle,
-				getTypeForCounts(planeCnt, sphereConvexCnt, sphereConcavCnt, coneConvexCnt,
-						coneConcavCnt));
-
-		if (checkNeighbors) {
-			// smooth type by neighbors
-			for (Triangle t : triangle.getNeighbors()) {
-				PrimitiveType type = getTrianglePrimitiveType(curvatures, t, false);
-
-				if (type == PrimitiveType.PLANE)
-					planeCnt += 1;
-				else if (type == PrimitiveType.SPHERE_CONVEX)
-					sphereConvexCnt += 1;
-				else if (type == PrimitiveType.SPHERE_CONCAVE)
-					sphereConcavCnt += 1;
-				else if (type == PrimitiveType.CONE_CONVEX)
-					coneConvexCnt += 1;
-				else if (type == PrimitiveType.CONE_CONCAVE)
-					coneConcavCnt += 1;
+			if (!v.isSharpVertex()) {
+				Curvature c = curvatures.get(v);
+				if (c.getPrimitiveType() == PrimitiveType.PLANE)
+					planeCnt++;
+				else if (c.getPrimitiveType() == PrimitiveType.SPHERE_CONVEX)
+					sphereConvexCnt++;
+				else if (c.getPrimitiveType() == PrimitiveType.SPHERE_CONCAVE)
+					sphereConcavCnt++;
+				else if (c.getPrimitiveType() == PrimitiveType.CONE_CONVEX)
+					coneConvexCnt++;
+				else if (c.getPrimitiveType() == PrimitiveType.CONE_CONCAVE)
+					coneConcavCnt++;
 			}
 		}
 
-		return getTypeForCounts(planeCnt, sphereConvexCnt, sphereConcavCnt, coneConvexCnt,
-				coneConcavCnt);
+//		trianglePrimitiveTypeMap.put(triangle, getTypeForCounts(planeCnt, sphereConvexCnt, sphereConcavCnt, coneConvexCnt, coneConcavCnt));
 
+		if (checkNeighbors) {
+			// smooth type by neighbors
+			Edge[] edges = triangle.getEdges();
+			for (int i = 0 ; i < edges.length ; ++i) {
+				if (!edges[i].getIsSharpEdge()) {
+					List<Triangle> neighbors = triangle.getNeighborsOfEdge(edges[i]);
+					for (int j = 0 ; j < neighbors.size() ; ++j) {
+						PrimitiveType type = getTrianglePrimitiveType(curvatures, neighbors.get(j), false);
+						if (type == PrimitiveType.PLANE)
+							planeCnt += 1;
+						else if (type == PrimitiveType.SPHERE_CONVEX)
+							sphereConvexCnt += 1;
+						else if (type == PrimitiveType.SPHERE_CONCAVE)
+							sphereConcavCnt += 1;
+						else if (type == PrimitiveType.CONE_CONVEX)
+							coneConvexCnt += 1;
+						else if (type == PrimitiveType.CONE_CONCAVE)
+							coneConcavCnt += 1;
+					}
+				}
+			}
+//			for (Triangle t : triangle.getNeighbors()) {
+//				PrimitiveType type = getTrianglePrimitiveType(curvatures, t, false);
+//
+//				if (type == PrimitiveType.PLANE)
+//					planeCnt += 1;
+//				else if (type == PrimitiveType.SPHERE_CONVEX)
+//					sphereConvexCnt += 1;
+//				else if (type == PrimitiveType.SPHERE_CONCAVE)
+//					sphereConcavCnt += 1;
+//				else if (type == PrimitiveType.CONE_CONVEX)
+//					coneConvexCnt += 1;
+//				else if (type == PrimitiveType.CONE_CONCAVE)
+//					coneConcavCnt += 1;
+//			}
+		}
+
+		trianglePrimitiveTypeMap.put(triangle, getTypeForCounts(planeCnt, sphereConvexCnt, sphereConcavCnt, coneConvexCnt, coneConcavCnt));
+		return trianglePrimitiveTypeMap.get(triangle);
 	}
 
 	/* (non-Javadoc)
@@ -781,6 +804,14 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 		allVertices = cas.getModel().getVertices();
 		allTriangles = cas.getModel().getTriangles();
 		allRegions = cas.getModel().getRegions();
+		float totalSurfaceArea = 0.0f;
+		
+		// compute the total surface area of the CAD model
+		for (int i = 0 ; i < allTriangles.size() ; ++i) {
+			totalSurfaceArea += allTriangles.get(i).getArea();
+		}
+		// unscale total surface area
+		totalSurfaceArea /= cas.getModel().getScale();
 		
 		// set primitive type for all vertices
 		List<Callable<Void>> threads = new LinkedList<Callable<Void>>();
@@ -815,22 +846,24 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 
 		final Set<Triangle> toElaborate = new HashSet<Triangle>();
 		for (Region r : allRegions) {
+			float areaRegionUnscaled = r.getAreaOfRegion() / cas.getModel().getScale();
 			for (Triangle t : r.getTriangles()) {
 				if (alreadyInAnnotation.contains(t))
 					continue;
 				PlaneAnnotation found = analyseTrianglePlane(cas, t, alreadyInAnnotation);
 				if (found != null) {
-					if (found.getMesh().getTriangles().size() <= 20) {
-						// Plane too small, maybe part of cylinder.
-						// give another chance in analyseTriangle
-						toElaborate.addAll(found.getMesh().getTriangles());
-						alreadyInAnnotation.removeAll(toElaborate);
-					} else {
-	
+//					System.out.println(found + " -> " + found.getArea() / totalSurfaceArea);
+					if (found.getArea() > (0.05 * totalSurfaceArea) || found.getArea() > (0.3 * areaRegionUnscaled) || found.getMesh().getTriangles().size() > 20) {
 						synchronized (cas.getAnnotations()) {
 							cas.addAnnotation(found);
 						}
 						itemsElaborated.incrementAndGet();
+					}
+					else {
+						// Plane too small, maybe part of cylinder.
+						// give another chance in analyseTriangle
+						 toElaborate.addAll(found.getMesh().getTriangles());
+						 alreadyInAnnotation.removeAll(toElaborate);
 					}
 				} else {
 					toElaborate.add(t);
@@ -844,16 +877,27 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 			toElaborate.removeAll(pa.getMesh().getTriangles());
 			alreadyInAnnotation.addAll(pa.getMesh().getTriangles());
 		}
-
+		
 		// Split number of triangles into alreadyAdded and to elaborate
-		itemsToElaborate = (int) (allVertices.size() + alreadyInAnnotation.size()
-				+ toElaborate.size() + (allTriangles.size() * 0.1));
+		itemsToElaborate = (int) (allVertices.size() + alreadyInAnnotation.size() + toElaborate.size() + (allTriangles.size() * 0.1));
 
+//		fitAnnotations(cas.getAnnotations());
+		
+		// why is this here??? all items to elaborate are separate from the ones in annotations
 		alreadyInAnnotation.removeAll(toElaborate);
-		for (Triangle t : toElaborate) {
-			analyseTriangle(cas, t, alreadyInAnnotation);
-			itemsElaborated.incrementAndGet();
+		
+		for (Region r : allRegions) {
+			for (Triangle t : r.getTriangles()) {
+				if (toElaborate.contains(t)) {
+					analyseTriangle(cas, t, alreadyInAnnotation);
+					itemsElaborated.incrementAndGet();
+				}
+			}
 		}
+		
+		fitAnnotations(cas.getAnnotations());
+		
+		logger.debug("Pre-combining neighbors ...");
 		combineSmallAnnotations(cas);
 
 		combineSameNeighboringAnnotations(cas, cas.getAnnotations(), null);
@@ -896,8 +940,7 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 					continue;
 
 				// create a temporary cone annotation and let it fit:
-				ConeAnnotation tmp = new ConeAnnotation(cas.getCurvatures(), cas.getModel(),
-						sa.isConcave());
+				ConeAnnotation tmp = new ConeAnnotation(cas.getCurvatures(), cas.getModel(), sa.isConcave());
 				synchronized (tmp.getMesh().getTriangles()) {
 					tmp.getMesh().getTriangles().addAll(sa.getMesh().getTriangles());
 				}
