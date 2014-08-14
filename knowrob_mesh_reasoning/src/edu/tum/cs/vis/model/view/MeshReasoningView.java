@@ -410,17 +410,19 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 							if (curv == null) {
 								continue;
 							}
-							g.strokeWeight(3f);
+							g.strokeWeight(2f);
 							if (drawVertexCurvatureMin) {
 								g.stroke(50, 50, 255);
 								Vector3f min = (Vector3f) curv.getPrincipleDirectionMin().clone();
-								min.scale(c.getModel().getScale() / (10f * min.length()));
+								min.normalize();
+								min.scale(1 / 35f);
 								g.line(v.x - min.x/2, v.y - min.y/2, v.z - min.z/2, v.x + min.x/2, v.y + min.y/2, v.z + min.z/2);
 							}
 							if (drawVertexCurvatureMax) {
 								g.stroke(255, 50, 50);
 								Vector3f max = (Vector3f) curv.getPrincipleDirectionMax().clone();
-								max.scale(c.getModel().getScale() / (8f * max.length()));
+								max.normalize();
+								max.scale(1 / 35f);
 								g.line(v.x - max.x/2, v.y - max.y/2, v.z - max.z/2, v.x + max.x/2, v.y + max.y/2, v.z + max.z/2);
 							}
 							g.strokeWeight(1f);
