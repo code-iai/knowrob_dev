@@ -8,7 +8,6 @@
 package edu.tum.cs.vis.model.uima.analyser;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -16,6 +15,7 @@ import java.util.concurrent.Callable;
 
 import org.apache.log4j.Logger;
 
+import edu.tum.cs.vis.model.util.Appearance;
 import edu.tum.cs.vis.model.util.Edge;
 import edu.tum.cs.vis.model.util.Triangle;
 import edu.tum.cs.vis.model.util.UtilityValues;
@@ -231,26 +231,26 @@ public class EdgeAnalyser extends MeshAnalyser {
 		}
 	}
 	
-	/**
-	 * Finds the two common points of two neighboring triangles
-	 */
-	private List<Vertex> findSharedVertices(Triangle t, Triangle n) {
-		List<Vertex> v = new ArrayList<Vertex>(4);
-		Edge[] tEdges = t.getEdges();
-		Edge[] nEdges = n.getEdges();
-		for (int i = 0 ; i < tEdges.length ; ++i) {
-			for (int j = 0 ; j < nEdges.length ; ++j) {
-				if (tEdges[i].isDirectNeighbor(nEdges[j])) {
-					v.add(tEdges[i].getVerticesOfEdge()[0]);
-					v.add(nEdges[j].getVerticesOfEdge()[0]);
-					v.add(tEdges[i].getVerticesOfEdge()[1]);
-					v.add(nEdges[j].getVerticesOfEdge()[1]);
-					break;
-				}
-			}
-		}
-		return v;
-	}
+//	/**
+//	 * Finds the two common points of two neighboring triangles
+//	 */
+//	private List<Vertex> findSharedVertices(Triangle t, Triangle n) {
+//		List<Vertex> v = new ArrayList<Vertex>(4);
+//		Edge[] tEdges = t.getEdges();
+//		Edge[] nEdges = n.getEdges();
+//		for (int i = 0 ; i < tEdges.length ; ++i) {
+//			for (int j = 0 ; j < nEdges.length ; ++j) {
+//				if (tEdges[i].isDirectNeighbor(nEdges[j])) {
+//					v.add(tEdges[i].getVerticesOfEdge()[0]);
+//					v.add(nEdges[j].getVerticesOfEdge()[0]);
+//					v.add(tEdges[i].getVerticesOfEdge()[1]);
+//					v.add(nEdges[j].getVerticesOfEdge()[1]);
+//					break;
+//				}
+//			}
+//		}
+//		return v;
+//	}
 	
 	/**
 	 * Adds triangles to model using the centroid of the triangle
@@ -264,9 +264,12 @@ public class EdgeAnalyser extends MeshAnalyser {
 		Triangle[] newTriangle = new Triangle[3];
 		for (int i = 0 ; i < 3 ; ++i) {
 			newTriangle[i] = new Triangle(t.getPosition()[i],t.getPosition()[(i+1)%3],newVertex);
+			if (t.getAppearance() != null) {
+				Appearance appearance = new Appearance(t.getAppearance());
+				newTriangle[i].setAppearance(appearance);
+			}
 			// update now its edges and set normal vector and appearance
 			newTriangle[i].updateEdges();
-			newTriangle[i].setAppearance(t.getAppearance());
 			newTriangle[i].setTexPosition(t.getTexPosition());
 			newTriangle[i].setNormalVector(t.getNormalVector());
 		}
