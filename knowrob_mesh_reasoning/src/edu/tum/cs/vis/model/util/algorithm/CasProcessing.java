@@ -146,12 +146,14 @@ public class CasProcessing{
 	 * curvature classification
 	 */
 	public void KMeansVCClassification() {
-		if (NUM_CLUSTERS >= cas.getModel().getVertices().size() / 10) {
+		if (NUM_CLUSTERS >= cas.getModel().getVertices().size()* 0.025) {
 			logger.debug("Number of vertices in the model smaller than number of clusters chosen");
 			int temp = NUM_CLUSTERS;
-			NUM_CLUSTERS = temp / 5;
-			logger.debug("Number of clusters has been reduced from " +
-			temp + " to " + NUM_CLUSTERS);
+			NUM_CLUSTERS = (int)(cas.getModel().getVertices().size() * 0.025);
+			if (NUM_CLUSTERS < 5) {
+				NUM_CLUSTERS = 5;
+			}
+			logger.debug("Number of clusters has been changed from " + temp + " to " + NUM_CLUSTERS);
 		}
 		Cluster[] clusters = new Cluster[NUM_CLUSTERS];
 		
@@ -434,8 +436,10 @@ public class CasProcessing{
 		// remove r2 from the regions list
 		cas.getModel().getRegions().remove(r2);
 		
-		// re-determine the neighboring relations for updated r1
-		r1.updateRegionNeighbors(cas.getModel().getRegions());
+		// re-determine the neighboring relations for updated r1 and for deprecated r2
+		for (Region reg : r2.getNeighbors()) {
+			reg.updateRegionNeighbors(cas.getModel().getRegions());				
+		}
 	}
 	
 	/**
@@ -447,7 +451,7 @@ public class CasProcessing{
 		logger.debug("Building up regions ...");
 		long duration = System.currentTimeMillis();
 		int trianglesToClassifyToRegions = cas.getModel().getTriangles().size();
-		int unclassifiedNum = 0;
+		List<Triangle> toClassify = new ArrayList<Triangle>();
 		List<Region> regions = new ArrayList<Region>();
 		int contId = 0;
 		
@@ -465,15 +469,15 @@ public class CasProcessing{
 		
 		for (int i = 0 ; i < cas.getModel().getTriangles().size() ; ++i) {
 			if (cas.getModel().getTriangles().get(i).getRegionLabel() == -1) {
-				unclassifiedNum++;
+				toClassify.add(cas.getModel().getTriangles().get(i));
 			}
 		}
-		logger.debug("Classified: " + (trianglesToClassifyToRegions - unclassifiedNum) + " out of: " + trianglesToClassifyToRegions);
+		logger.debug("Classified: " + (trianglesToClassifyToRegions - toClassify.size()) + " out of: " + trianglesToClassifyToRegions);
 
 		int cachedUnclassifiedNum;
-		while (unclassifiedNum != 0) {
+		while (toClassify.size() != 0) {
 			
-			cachedUnclassifiedNum = unclassifiedNum;
+			cachedUnclassifiedNum = toClassify.size();
 			Collections.sort(regions, new Comparator<Region>() {
 				@Override
 				public int compare(Region r1, Region r2) {
@@ -494,25 +498,18 @@ public class CasProcessing{
 					}
 					if (!edge.getIsSharpEdge()) {
 						regions.get(i).addTriangleToRegion(t);
+						toClassify.remove(t);
 					}
 				}
-//				regions.get(i).addTrianglesToRegion(neighborsAtRegion);
 			}
 			
-			unclassifiedNum = 0;
-			for (int i = 0 ; i < cas.getModel().getTriangles().size() ; ++i) {
-				Triangle t = cas.getModel().getTriangles().get(i);
-				if (t.getRegionLabel() == -1) {
-					unclassifiedNum++;
-				}
-			}
-			logger.debug("Remained triangles to classify: " + unclassifiedNum);
+			logger.debug("Remained to classify: " + toClassify.size() + " triangles");
 			
 			// if not all triangles have been successfully classified into regions
 			// continue and remedy this by looking at their immediate neighbors that
 			// belong to a region; this solution works as the number of unclassified triangles
 			// (if any at all) is very low (a couple of triangles)
-			if (unclassifiedNum == cachedUnclassifiedNum) {
+			if (toClassify.size() == cachedUnclassifiedNum) {
 				for (int i = 0 ; i < cas.getModel().getTriangles().size() ; ++i) {
 					Triangle t = cas.getModel().getTriangles().get(i);
 					if (t.getRegionLabel() == -1) {
@@ -525,11 +522,11 @@ public class CasProcessing{
 							}
 						}
 						regions.get(index).addTriangleToRegion(t);
+						toClassify.remove(t);
 					}
 				}
 			}
 		}
-		
 		Collections.sort(regions, new Comparator<Region>() {
 			@Override
 			public int compare(Region r1, Region r2) {
@@ -538,6 +535,10 @@ public class CasProcessing{
 				return id1.compareTo(id2);
 			}
 		});
+		
+		for (int i = 0 ; i < regions.size() ; ++i) {
+			regions.get(i).updateRegionBoundary();
+		}
 		
 		for (int i = 0 ; i < regions.size() ; ++i) {
 			regions.get(i).updateRegionNeighbors(regions);
@@ -551,7 +552,7 @@ public class CasProcessing{
 		cas.getModel().setRegions(regions);
 		
 		logger.debug("Ended. Took: " + PrintUtil.prettyMillis(System.currentTimeMillis() - duration));
-		logger.debug("Triangles classified: " + (trianglesToClassifyToRegions - unclassifiedNum) + " out of: " + trianglesToClassifyToRegions);
+		logger.debug("Triangles classified: " + (trianglesToClassifyToRegions - toClassify.size()) + " out of: " + trianglesToClassifyToRegions);
 		logger.debug("CAD model has: " + regions.size() +" classified regions");
 	}
 	
@@ -619,6 +620,8 @@ public class CasProcessing{
 				rI = rJ;
 				rJ = tmp;
 			}
+		    
+			// merge and update neighboring relations for all neigbors of reg rJ
 			mergeRegions(regions.get(rI), regions.get(rJ));
 			iteration++;
 			
@@ -626,12 +629,6 @@ public class CasProcessing{
 			for (int i = 0 ; i < adjacencyMatrix.length ; ++i) {
 				adjacencyMatrix[i][rJ] = PINF;
 				adjacencyMatrix[rJ][i] = PINF;
-			}
-			
-			// update neighbors of neighbors of merged regions
-			
-			for (Region nr : regions.get(rJ).getNeighbors()) {
-				nr.updateRegionNeighbors(cas.getModel().getRegions());				
 			}
 
 			// remove deprecated merged region rJ
@@ -651,7 +648,7 @@ public class CasProcessing{
 		logger.debug("Curvatures values for the CAD model updated. Took: " + (PrintUtil.prettyMillis(System.currentTimeMillis() - duration)));
 	}
 	
-	public void updateCurvaturesBasedOnRegions() {
+	private void updateCurvaturesBasedOnRegions() {
 		HashMap<Integer, Region> regions = cas.getModel().getRegionsMap();
 		for (int i = 0 ; i < cas.getModel().getTriangles().size() ; ++i) {
 			Triangle t = cas.getModel().getTriangles().get(i);
