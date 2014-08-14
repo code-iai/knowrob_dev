@@ -218,7 +218,6 @@ public class MeshReasoning {
 
 		// normalize model for further reasoning
 		model.normalize();
-		logger.debug("Model normalized to fit a unity length cube. Scaling applied: " + model.getScale());
 		
 		// list of current running analyzers used in mesh reasoning view
 		ArrayList<MeshAnalyser> analyser;
@@ -329,10 +328,10 @@ public class MeshReasoning {
 		logger.debug("Ended. Took: " + PrintUtil.prettyMillis(KMeansDuration));
 		
 		if (imageGeneratorSettings != null && imageGeneratorSettings.isSaveCurvatureColor()) {
-			// wait until model is saved
-			mrv.setDrawCurvatureColor(true);
+			// draw estimated curvature coloring
+			mrv.setDrawCurvatureColor(3);
 			imageGeneratorSettings.waitSaved("curvature");
-			mrv.setDrawCurvatureColor(false);
+			mrv.setDrawCurvatureColor(0);
 		}		
 
 		// Region growing process for all triangles
