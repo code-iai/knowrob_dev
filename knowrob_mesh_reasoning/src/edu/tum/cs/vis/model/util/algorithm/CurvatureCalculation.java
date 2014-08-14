@@ -167,10 +167,10 @@ public class CurvatureCalculation {
 			float kRet[] = new float[2];
 
 			diagonalize_curv(c.getPrincipleDirectionMax(), c.getPrincipleDirectionMin(),
-					c.getCurvatureMin(), c.getCurvatureMinMax(), c.getCurvatureMax(), m
+					c.getCurvatureMax(), c.getCurvatureMinMax(), c.getCurvatureMin(), m
 							.getVertices().get(i).getNormalVector(), pdirRet, kRet);
-			c.setPrincipleDirectionMax(pdirRet[0]);
-			c.setPrincipleDirectionMin(pdirRet[1]);
+			c.setPrincipleDirectionMax(pdirRet[1]);
+			c.setPrincipleDirectionMin(pdirRet[0]);
 			c.setCurvatureMax(kRet[0]);
 			c.setCurvatureMin(kRet[1]);
 		}
