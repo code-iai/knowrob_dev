@@ -76,7 +76,7 @@ public class DrawSettingsPanel extends JPanel implements ActionListener {
 	/**
 	 * color model by curvature
 	 */
-	private final JComboBox<String>			cmbbxDrawCurvatureColor;
+	private final JComboBox			cmbbxDrawCurvatureColor;
 	
 	private final String[]			cmbbxOptions;
 	
@@ -166,7 +166,7 @@ public class DrawSettingsPanel extends JPanel implements ActionListener {
 		cbxDrawVertexCurvature.setSelected(false);
 		this.add(cbxDrawVertexCurvature);
 		
-		cmbbxDrawCurvatureColor = new JComboBox<String>(cmbbxOptions);
+		cmbbxDrawCurvatureColor = new JComboBox(cmbbxOptions);
 		cmbbxDrawCurvatureColor.addActionListener(this);
 		cmbbxDrawCurvatureColor.setSelectedIndex(0);
 		this.add(cmbbxDrawCurvatureColor);
