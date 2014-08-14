@@ -33,8 +33,7 @@ public class Curvature {
 	 *            value
 	 * @return Color represented by HSV
 	 */
-	private static Color hsv2srgb(float h, float s, float v) {
-		// From FvD
+	private static Color hsv2rgb(float h, float s, float v) {
 		float H = h, S = s, V = v;
 		if (S <= 0.0f)
 			return new Color(V, V, V);
@@ -42,7 +41,6 @@ public class Curvature {
 		if (H < 0.0f)
 			H += 2 * Math.PI;
 		// S and V is now between 0 and 1, H between 0 an 2*PI
-
 		float hi = (float) (H * (Math.PI / 3)); // Divide by 60 degree
 		int i = (int) Math.floor(hi);
 		float f = hi - i;
@@ -50,6 +48,60 @@ public class Curvature {
 		float q = V * (1.0f - (S * f));
 		float t = V * (1.0f - (S * (1.0f - f)));
 		switch (i) {
+			case 0:
+				return new Color(V, t, p);
+			case 1:
+				return new Color(q, V, p);
+			case 2:
+				return new Color(p, V, t);
+			case 3:
+				return new Color(p, q, V);
+			case 4:
+				return new Color(t, p, V);
+			default:
+				return new Color(V, p, q);
+		}
+	}
+	
+	/**
+	 * Convert HSV to RGB color space according to:
+	 * https://en.wikipedia.org/wiki/HSL_and_HSV#From_HSV
+	 * a scalar field of the curvature tensor
+	 * 
+	 * @param H
+	 * 				hue
+	 * @param hMin
+	 * 				minimum hue value for the scale
+	 * @param hMax
+	 * 				maximum hue value for the scale
+	 * @param S
+	 * 				saturation to be used (needs to be in between 0 and 1)
+	 * @param V
+	 * 				value to be used (needs to be in between 0 and 1)
+	 * @return color
+	 * 				RGB color
+	 */
+	private static Color hsv2rgb(float H, float hMin, float hMax, float S, float V) {
+		if (S < 0) {
+			S = 0.2f;
+		}
+		if (S > 1) {
+			S = 1;
+		}
+		if (H > hMax) {
+			H = hMax;
+		}
+		if (H < hMin) {
+			H = hMin;
+		}
+		H = 240f - 240f * (H - hMin) / (hMax - hMin);
+		float finterval = (float) (H / 60f); // Divide by 60 degree
+		int interval = (int) Math.floor(finterval);
+		float f = finterval - interval;
+		float p = V * (1.0f - S);
+		float q = V * (1.0f - (S * f));
+		float t = V * (1.0f - (S * (1.0f - f)));
+		switch (interval) {
 			case 0:
 				return new Color(V, t, p);
 			case 1:
@@ -79,7 +131,8 @@ public class Curvature {
 	 * minimum curvature magnitude
 	 */
 	private float			curvatureMin			= 0;
-
+	
+	
 	/**
 	 * maximum curvature magnitude
 	 */
@@ -89,6 +142,16 @@ public class Curvature {
 	 * value between minimum and maximum curvature needed for curvature calculation
 	 */
 	private float			curvatureMinMax			= 0;
+	
+	/** 
+	 * mean curvature value = (Kmin + Kmax) / 2
+	 */
+	private float 			meanCurvature			= 0;
+
+	/**
+	 * Gaussian curvature value = Kmin * Kmax
+	 */
+	private float 			gaussCurvature			= 0;
 
 	/**
 	 * resulting primitive type for curvature properties
@@ -96,21 +159,56 @@ public class Curvature {
 	private PrimitiveType	primitiveType;
 
 	/**
-	 * resulting hue for curvature properties
+	 * currently computed hue for curvature properties
 	 */
 	private float			hue;
 	/**
-	 * resulting saturation for curvature properties
+	 * currently computed saturation for curvature properties
 	 */
 	private float			saturation;
 
 	/**
-	 * get color for coloring model by curvature.
-	 * 
-	 * @return color by curvature
+	 * initially computed hue based on curvature estimation
+	 */
+	private float 			initialHue;
+	
+	/**
+	 * initially computed saturation based on curvature estimation
+	 */
+	private float			initialSaturation;
+	
+	/**
+	 * Get the estimated curvatures scalar field coloring using the
+	 * initially computed hue and saturation scalar values
 	 */
 	public Color getColor() {
-		return hsv2srgb(hue, saturation, 1);
+		return hsv2rgb(initialHue, initialSaturation, 1);
+	}
+	
+	/**
+	 * get Mean curvature coloring for the model
+	 * 
+	 * @param lowMeanCurvature
+	 * 			lowest mean curvature reference of the CAD model
+	 * @param highMeanCurvature
+	 * 			highest mean curvature reference of the CAD model
+	 * @return color by mean curvature value
+	 */
+	public Color getMeanColor(final float lowMeanCurvature, final float highMeanCurvature) {
+		return hsv2rgb(meanCurvature, lowMeanCurvature, highMeanCurvature, saturation, 1);
+	}
+	
+	/**
+	 * get Gaussian curvature coloring for the model
+	 * 
+	 * @param lowGaussCurvature
+	 * 			lowest Gaussian curvature reference of the CAD model
+	 * @param highGaussCurvature
+	 * 			highest Gaussian curvature reference of the CAD model
+	 * @return color by Gauss curvature value
+	 */
+	public Color getGaussColor(final float lowGaussCurvature, final float highGaussCurvature) {
+		return hsv2rgb(gaussCurvature, lowGaussCurvature, highGaussCurvature, saturation, 1);
 	}
 
 	/**
@@ -139,7 +237,35 @@ public class Curvature {
 	public float getCurvatureMinMax() {
 		return curvatureMinMax;
 	}
+	
+	/**
+	 * get mean curvature
+	 * 
+	 * @return the mean curvature value
+	 */
+	public float getMeanCurvature() {
+		return meanCurvature;
+	}
+	
+	/**
+	 * get Gaussian curvature
+	 * 
+	 * @return the Gaussian curvature value
+	 */
+	public float getGaussCurvature() {
+		return gaussCurvature;
+	}
 
+	/**
+	 * Gets the initially computed hue based on the estimated
+	 * curvature values for the vertices of the CAD model
+	 * 
+	 * @return	initialHue
+	 */
+	public float getInitialHue() {
+		return initialHue;
+	}
+	
 	/**
 	 * Get hue for curvature values used for coloring model by curvature
 	 * 
@@ -178,12 +304,36 @@ public class Curvature {
 	}
 
 	/**
+	 * Get initially computed saturation based on the estimated curvature
+	 * values of the vertices of the CAD model
+	 * 
+	 * @return initialSaturation
+	 */
+	public float getInitialSaturation() {
+		return initialSaturation;
+	}
+	
+	/**
 	 * Get saturation for curvature values used for coloring model by curvature
 	 * 
 	 * @return the saturation
 	 */
 	public float getSaturation() {
 		return saturation;
+	}
+	
+	/**
+	 * Gets the mean curvature value based on the min and max curvature values of the Curvature
+	 */
+	public void setMeanCurvature() {
+		this.meanCurvature = (this.curvatureMin + this.curvatureMax) / 2f;
+	}
+	
+	/**
+	 * Gets the Gaussian curvature value based on the min and max curvature values of the Curvature
+	 */
+	public void setGaussCurvature() {
+		this.gaussCurvature = this.curvatureMin * this.curvatureMax;
 	}
 
 	/**
@@ -217,10 +367,20 @@ public class Curvature {
 	}
 
 	/**
+	 * Set initial hue value of the vertex curvature
+	 * 
+	 * @param hue
+	 * 			the hue to be set
+	 */
+	public void setInitialHue(final float hue) {
+		this.initialHue = hue;
+	}
+	
+	/**
 	 * set hue used for coloring model by curvature
 	 * 
 	 * @param hue
-	 *            the hue to set
+	 *            the hue to be set
 	 */
 	public void setHue(float hue) {
 		this.hue = hue;
@@ -257,6 +417,16 @@ public class Curvature {
 	}
 
 	/**
+	 * Set initial saturation of the curvature vertex
+	 * 
+	 * @param saturation
+	 * 			the saturation to be set
+	 */
+	public void setInitialSaturation(final float saturation) {
+		this.initialSaturation = saturation;
+	}
+	
+	/**
 	 * Set hue used for coloring model by curvature
 	 * 
 	 * @param saturation
@@ -265,7 +435,7 @@ public class Curvature {
 	public void setSaturation(float saturation) {
 		this.saturation = saturation;
 	}
-
+	
 	@Override
 	public String toString() {
 		String ret = "";

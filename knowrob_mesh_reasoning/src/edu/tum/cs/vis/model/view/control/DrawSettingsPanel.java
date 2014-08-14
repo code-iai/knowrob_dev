@@ -11,10 +11,15 @@ import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JRadioButtonMenuItem;
 
 import edu.tum.cs.vis.model.uima.cas.MeshCas;
 import edu.tum.cs.vis.model.view.MeshReasoningView;
@@ -71,7 +76,9 @@ public class DrawSettingsPanel extends JPanel implements ActionListener {
 	/**
 	 * color model by curvature
 	 */
-	private final JCheckBox			cbxDrawCurvatureColor;
+	private final JComboBox<String>			cmbbxDrawCurvatureColor;
+	
+	private final String[]			cmbbxOptions;
 	
 	/**
 	 * Checkbox for displaying region edge boundaries
@@ -128,6 +135,11 @@ public class DrawSettingsPanel extends JPanel implements ActionListener {
 
 		GridLayout grid = new GridLayout(0, 2);
 		setLayout(grid);
+		cmbbxOptions = new String[4];
+		cmbbxOptions[0] = new String("No curv. coloring");
+		cmbbxOptions[1] = new String("Mean curv. coloring");
+		cmbbxOptions[2] = new String("Gauss curv. coloring");
+		cmbbxOptions[3] = new String("Est. curv. coloring");
 
 		cbxDrawVertexNormals = new JCheckBox("Vertex normals");
 		cbxDrawVertexNormals.addActionListener(this);
@@ -154,10 +166,10 @@ public class DrawSettingsPanel extends JPanel implements ActionListener {
 		cbxDrawVertexCurvature.setSelected(false);
 		this.add(cbxDrawVertexCurvature);
 		
-		cbxDrawCurvatureColor = new JCheckBox("Color by curvature");
-		cbxDrawCurvatureColor.addActionListener(this);
-		cbxDrawCurvatureColor.setSelected(false);
-		this.add(cbxDrawCurvatureColor);
+		cmbbxDrawCurvatureColor = new JComboBox<String>(cmbbxOptions);
+		cmbbxDrawCurvatureColor.addActionListener(this);
+		cmbbxDrawCurvatureColor.setSelectedIndex(0);
+		this.add(cmbbxDrawCurvatureColor);
 
 		cbxDrawRegionEdges = new JCheckBox("Region Edges");
 		cbxDrawRegionEdges.addActionListener(this);
@@ -202,28 +214,50 @@ public class DrawSettingsPanel extends JPanel implements ActionListener {
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		if (e.getSource() == cbxWhiteBackground)
+		if (e.getSource() == cbxWhiteBackground) {
 			view.setBackgroundWhite(cbxWhiteBackground.isSelected());
-		else if (e.getSource() == cbxDrawVertexNormals)
+		}
+		else if (e.getSource() == cbxDrawVertexNormals) {
 			view.setDrawVertexNormals(cbxDrawVertexNormals.isSelected());
-		else if (e.getSource() == cbxDrawTriangleNormals) 
+		}
+		else if (e.getSource() == cbxDrawTriangleNormals) {
 			view.setDrawTriangleNormals(cbxDrawTriangleNormals.isSelected());
-		else if (e.getSource() == cbxDrawVertexCurvatureMin)
-			view.setDrawVertexCurvatureMin(cbxDrawVertexCurvatureMin.isSelected());
-		else if (e.getSource() == cbxDrawVertexCurvatureMax)
+		}
+		else if (e.getSource() == cbxDrawVertexCurvatureMin) {
+			view.setDrawVertexCurvatureMin(cbxDrawVertexCurvatureMin.isSelected()); 
+		}
+		else if (e.getSource() == cbxDrawVertexCurvatureMax) {
 			view.setDrawVertexCurvatureMax(cbxDrawVertexCurvatureMax.isSelected());
-		else if (e.getSource() == cbxDrawVertexCurvature)
+		}
+		else if (e.getSource() == cbxDrawVertexCurvature) {
 			view.setDrawVertexCurvature(cbxDrawVertexCurvature.isSelected());
-		else if (e.getSource() == cbxDrawCurvatureColor)
-			view.setDrawCurvatureColor(cbxDrawCurvatureColor.isSelected());
-		else if (e.getSource() == cbxDrawVoronoiArea)
+		}
+		else if (e.getSource() == cmbbxDrawCurvatureColor) {
+			if (cmbbxDrawCurvatureColor.getSelectedIndex() == 0) {
+				view.setDrawCurvatureColor(0);
+			}
+			else if (cmbbxDrawCurvatureColor.getSelectedIndex() == 1) {
+				view.setDrawCurvatureColor(1);
+			}
+			else if (cmbbxDrawCurvatureColor.getSelectedIndex() == 2) {
+				view.setDrawCurvatureColor(2);
+			}
+			else if (cmbbxDrawCurvatureColor.getSelectedIndex() == 3) {
+				view.setDrawCurvatureColor(3);
+			}
+		}
+		else if (e.getSource() == cbxDrawVoronoiArea) {
 			view.setDrawVoronoiArea(cbxDrawVoronoiArea.isSelected());
-		else if (e.getSource() == cbxDrawSharpEdges)
+		}
+		else if (e.getSource() == cbxDrawSharpEdges) {
 			view.setDrawSharpEdges(cbxDrawSharpEdges.isSelected());
-		else if (e.getSource() == cbxDrawRegionEdges) 
+		}
+		else if (e.getSource() == cbxDrawRegionEdges) {
 			view.setDrawRegionEdges(cbxDrawRegionEdges.isSelected());
-		else if (e.getSource() == cbxDrawBoundingBox)
+		}
+		else if (e.getSource() == cbxDrawBoundingBox) {
 			view.setDrawBoundingBox(cbxDrawBoundingBox.isSelected());
+		}
 		else if (e.getSource() == btnSetRotation) {
 			String current = Math.round(view.getCam().getRotations()[0] * 180f / Math.PI) + ","
 					+ Math.round(view.getCam().getRotations()[1] * 180f / Math.PI) + ","

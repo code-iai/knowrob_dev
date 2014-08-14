@@ -965,15 +965,29 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 	 * @param drawCurvatureColor
 	 *            true if color by curvature
 	 */
-	public void setDrawCurvatureColor(boolean drawCurvatureColor) {
+	public void setDrawCurvatureColor(int whichColoring) {
 
 		for (MeshCas c : casList) {
+			float offsetMean = 10;
+			float offsetGauss = 20;
 			for (Vertex v : c.getModel().getVertices()) {
-				if (drawCurvatureColor) {
-					Curvature curv = c.getCurvature(v);
-					v.overrideColor = curv == null ? null : curv.getColor();
-				} else
+				if (whichColoring == 0) {
 					v.overrideColor = null;
+				}
+				else if (whichColoring == 1) {
+					Curvature curv = c.getCurvature(v);
+					v.overrideColor = (curv == null) ? null : curv.getMeanColor(c.getModel().getAvgMeanCurvature() - offsetMean,
+							c.getModel().getAvgMeanCurvature() + offsetMean);
+				} 
+				else if (whichColoring == 2) {
+					Curvature curv = c.getCurvature(v);
+					v.overrideColor = (curv == null) ? null : curv.getGaussColor(c.getModel().getAvgGaussCurvature() - offsetGauss,
+							c.getModel().getAvgGaussCurvature() + offsetGauss);
+				}
+				else if (whichColoring == 3) {
+					Curvature curv = c.getCurvature(v);
+					v.overrideColor = (curv == null) ? null : curv.getColor();
+				}
 			}
 		}
 	}

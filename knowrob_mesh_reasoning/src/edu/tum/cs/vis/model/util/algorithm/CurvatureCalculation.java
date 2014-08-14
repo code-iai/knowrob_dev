@@ -25,9 +25,11 @@ import org.apache.commons.math3.linear.DecompositionSolver;
 import org.apache.commons.math3.linear.LUDecomposition;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
+import org.apache.log4j.Logger;
 
 import edu.tum.cs.ias.knowrob.utils.ThreadPool;
 import edu.tum.cs.vis.model.Model;
+import edu.tum.cs.vis.model.uima.analyser.PrimitiveAnalyser;
 import edu.tum.cs.vis.model.util.Curvature;
 import edu.tum.cs.vis.model.util.Edge;
 import edu.tum.cs.vis.model.util.Triangle;
@@ -84,6 +86,11 @@ class AccumCurv extends ACCUM {
  */
 public class CurvatureCalculation {
 
+	/**
+	 * Log4J Logger
+	 */
+	private static Logger		logger					= Logger.getLogger(CurvatureCalculation.class);
+	
 	/**
 	 * Calculate curvature for each vertex of model
 	 * 
@@ -299,6 +306,7 @@ public class CurvatureCalculation {
 		calculateVoronoiArea(m);
 		calculateCurvature(curvatures, m);
 		setCurvatureHueSaturation(curvatures, m, UtilityValues.CURV_SMOOTHING);
+		setCurvatureBoundaryValues(curvatures, m);
 	}
 
 	/**
@@ -642,6 +650,8 @@ public class CurvatureCalculation {
 			float s = (float) ((2 / Math.PI) * Math.atan((2.0f * H * H - K) * cscale));
 			c.setHue(h);
 			c.setSaturation(s);
+			c.setMeanCurvature();
+			c.setGaussCurvature();
 		}
 	}
 
@@ -707,7 +717,44 @@ public class CurvatureCalculation {
 	 * @param value
 	 * @return true or false
 	 */
-	public static boolean isNaN(final float value) {
+	private static boolean isNaN(final float value) {
 		return (value != value);
+	}
+	
+	private static void setCurvatureBoundaryValues(HashMap<Vertex, Curvature> curvatures, Model model) {
+		float avgMean = 0f, varMean = 0f;
+		float avgGauss = 0f, varGauss = 0f;
+		for (int i = 0 ; i < model.getVertices().size() ; ++i) {
+			Curvature c = curvatures.get(model.getVertices().get(i));
+			avgMean += c.getMeanCurvature();
+			varMean += c.getMeanCurvature() * c.getMeanCurvature();
+			avgGauss += c.getGaussCurvature();
+			varGauss += c.getGaussCurvature() * c.getGaussCurvature();
+			c.setInitialHue(c.getHue());
+			c.setInitialSaturation(c.getSaturation());
+			if (model.getLowMeanCurvature() > c.getMeanCurvature()) {
+				model.setLowMeanCurvature(c.getMeanCurvature());
+			}
+			if (model.getHighMeanCurvature() < c.getMeanCurvature()) {
+				model.setHighMeanCurvature(c.getMeanCurvature());
+			}
+			if (model.getLowGaussCurvature() > c.getGaussCurvature()) {
+				model.setLowGaussCurvature(c.getGaussCurvature());
+			}
+			if (model.getHighGaussCurvature() < c.getGaussCurvature()) {
+				model.setHighGaussCurvature(c.getGaussCurvature());
+			}
+		}
+		avgMean /= model.getVertices().size();
+		avgGauss /= model.getVertices().size();
+		varMean /= model.getVertices().size() - avgMean * avgMean;
+		varGauss /= model.getVertices().size() - avgGauss * avgGauss;
+		model.setAvgMeanCurvature(avgMean);
+		model.setAvgGaussCurvature(avgGauss);
+		model.setVarMeanCurvature(varMean);
+		model.setVarGaussCurvature(varGauss);
+		logger.debug("Curvature computation finished.\nAvg. Mean Curv.: " + model.getAvgMeanCurvature() + 
+				" Var. Mean Curv.: " + model.getVarMeanCurvature() + "\nAvg. Gaussian Curv.: " + model.getAvgGaussCurvature() + 
+				" Var. Gaussian Curv.: " + model.getVarGaussCurvature());
 	}
 }
