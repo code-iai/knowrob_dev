@@ -218,6 +218,7 @@ public class MeshReasoning {
 
 		// normalize model for further reasoning
 		model.normalize();
+		logger.debug("Model normalized to fit a unity length cube. Scaling applied: " + model.getScale());
 		
 		// list of current running analyzers used in mesh reasoning view
 		ArrayList<MeshAnalyser> analyser;
