@@ -3,7 +3,9 @@
  * materials are made available under the terms of the GNU Public License v3.0 which accompanies
  * this distribution, and is available at http://www.gnu.org/licenses/gpl.html
  * 
- * Contributors: Stefan Profanter - initial API and implementation, Year: 2012
+ * Contributors: 
+ * 		Stefan Profanter - initial API and implementation, Year: 2012
+ * 		Andrei Stoica - refactored implementation during Google Summer of Code 2014, Year: 2014
  ******************************************************************************/
 package edu.tum.cs.vis.model.uima.analyser;
 
@@ -40,13 +42,11 @@ import edu.tum.cs.vis.model.util.UtilityValues;
 import edu.tum.cs.vis.model.util.Vertex;
 
 /**
- * 
- * Mesh analyzer to assign each triangle the corresponding primitive type according to its curvature
- * properties.
- * 
+ * Mesh analyzer which assigns each triangle to its corresponding primitive type 
+ * according to its curvature estimated and filtered properties.
  * 
  * @author Stefan Profanter
- * 
+ * @author Andrei Stoica (refactor of the processing block)
  */
 public class PrimitiveAnalyser extends MeshAnalyser {
 
@@ -56,13 +56,14 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 	private static Logger		logger					= Logger.getLogger(PrimitiveAnalyser.class);
 
 	/**
-	 * Degree between normal vertices for allowed combining of neighboring plane annotations
+	 * Threshold degree between normal vertices for allowing combination of neighboring 
+	 * plane annotations
 	 */
 	private static final float	PLANE_COMBINE_DEGREE	= 5.0f;
 
 	/**
-	 * Tolerance in radiant between two surface normals of triangles to connect them as a single
-	 * plane
+	 * Tolerance in degrees between two surface normals of neighboring triangles in order
+	 * to add them to the same plane annotation
 	 */
 	private static double		PLANE_TOLERANCE			= 2.0f;
 
