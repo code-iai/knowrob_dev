@@ -7,7 +7,10 @@
  ******************************************************************************/
 package edu.tum.cs.vis.model.util.algorithm;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -32,6 +35,7 @@ import edu.tum.cs.vis.model.Model;
 import edu.tum.cs.vis.model.uima.analyser.PrimitiveAnalyser;
 import edu.tum.cs.vis.model.util.Curvature;
 import edu.tum.cs.vis.model.util.Edge;
+import edu.tum.cs.vis.model.util.Region;
 import edu.tum.cs.vis.model.util.Triangle;
 import edu.tum.cs.vis.model.util.UtilityValues;
 import edu.tum.cs.vis.model.util.Vertex;
@@ -650,8 +654,6 @@ public class CurvatureCalculation {
 			float s = (float) ((2 / Math.PI) * Math.atan((2.0f * H * H - K) * cscale));
 			c.setHue(h);
 			c.setSaturation(s);
-			c.setMeanCurvature();
-			c.setGaussCurvature();
 		}
 	}
 
@@ -724,14 +726,23 @@ public class CurvatureCalculation {
 	private static void setCurvatureBoundaryValues(HashMap<Vertex, Curvature> curvatures, Model model) {
 		float avgMean = 0f, varMean = 0f;
 		float avgGauss = 0f, varGauss = 0f;
+		List<Float> curvMeanData = new ArrayList<Float>();
+		List<Float> curvGaussData = new ArrayList<Float>();
+		logger.debug("Computing model estimated curvature statistics ...");
 		for (int i = 0 ; i < model.getVertices().size() ; ++i) {
 			Curvature c = curvatures.get(model.getVertices().get(i));
-			avgMean += c.getMeanCurvature();
-			varMean += c.getMeanCurvature() * c.getMeanCurvature();
-			avgGauss += c.getGaussCurvature();
-			varGauss += c.getGaussCurvature() * c.getGaussCurvature();
+			c.setMeanCurvature();
+			c.setGaussCurvature();
 			c.setInitialHue(c.getHue());
 			c.setInitialSaturation(c.getSaturation());
+			float curvMean = c.getMeanCurvature();
+			float curvGauss = c.getGaussCurvature();
+			curvMeanData.add(curvMean);
+			curvGaussData.add(curvGauss);
+			avgMean += curvMean;
+			varMean += curvMean * curvMean;
+			avgGauss += curvGauss;
+			varGauss += curvGauss * curvGauss;
 			if (model.getLowMeanCurvature() > c.getMeanCurvature()) {
 				model.setLowMeanCurvature(c.getMeanCurvature());
 			}
@@ -749,12 +760,111 @@ public class CurvatureCalculation {
 		avgGauss /= model.getVertices().size();
 		varMean /= model.getVertices().size() - avgMean * avgMean;
 		varGauss /= model.getVertices().size() - avgGauss * avgGauss;
-		model.setAvgMeanCurvature(avgMean);
-		model.setAvgGaussCurvature(avgGauss);
-		model.setVarMeanCurvature(varMean);
-		model.setVarGaussCurvature(varGauss);
-		logger.debug("Curvature computation finished.\nAvg. Mean Curv.: " + model.getAvgMeanCurvature() + 
-				" Var. Mean Curv.: " + model.getVarMeanCurvature() + "\nAvg. Gaussian Curv.: " + model.getAvgGaussCurvature() + 
-				" Var. Gaussian Curv.: " + model.getVarGaussCurvature());
+		logger.debug("\n\tAvg. Mean Curv.: " + avgMean + " Var. Mean Curv.: " + varMean +
+				"\nAvg. Gaussian Curv.: " + avgGauss + " Var. Gaussian Curv.: " + varGauss);
+		logger.debug("Analyzing curvatures and removing spurious points statistics for coloring scale ...");
+		float[] statsMean = {avgMean, varMean};
+		float[] statsGauss = {avgGauss, varGauss};
+		removeSpuriousCurvatures(curvMeanData, true, statsMean);
+		removeSpuriousCurvatures(curvGaussData, false, statsGauss);
+		model.setAvgMeanCurvature(statsMean[0]);
+		model.setAvgGaussCurvature(statsGauss[0]);
+		model.setVarMeanCurvature(statsMean[1]);
+		model.setVarGaussCurvature(statsGauss[1]);
+		logger.debug("Curvature statistical computation finished." +
+				"\n\tAvg. Mean Curv.: " + model.getAvgMeanCurvature() + " Var. Mean Curv.: " + model.getVarMeanCurvature() +
+				"\nAvg. Gaussian Curv.: " + model.getAvgGaussCurvature() + " Var. Gaussian Curv.: " + model.getVarGaussCurvature());
+	}
+	
+	private static void removeSpuriousCurvatures(List<Float> curvData, boolean meanCurv, float[] statsBeg) {
+		float avg = statsBeg[0];
+		float var = statsBeg[1];
+		float distChauv = 0f;
+		int iter = 0;
+		float N = (float)(curvData.size());
+		sortCurv(curvData, meanCurv);
+		while (distChauv < 0.5f && iter < 30 && N > 0) {
+			float dataPoint;
+			float std = (float)(Math.sqrt(var));
+			float dFront = estimateProbability(((curvData.get(0) - avg) / std)) * N;
+			float dBack = estimateProbability(((curvData.get(curvData.size()-1) - avg) / std)) * N;
+			if (dFront < dBack) {
+				distChauv = dFront;
+				dataPoint = curvData.get(0);
+			}
+			else {
+				distChauv = dBack;
+				dataPoint = curvData.get((int)(N - 1f));
+			}
+			if (distChauv < 0.5) {
+				curvData.remove(dataPoint);
+				N--;
+				float[] stats = getVarianceOfData(curvData);
+				avg = stats[0];
+				var = stats[1];
+			}
+			iter++;
+		}
+		statsBeg[0] = avg;
+		statsBeg[1] = var;
+		logger.debug(iter);
+	}
+	
+	private static void sortCurv(final List<Float> curvData, final boolean meanCurvToSort) {
+		if (meanCurvToSort) {
+			Collections.sort(curvData, new Comparator<Float>() {
+				@Override
+				public int compare(Float c1, Float c2) {
+					return c1.compareTo(c2);
+				}
+			});
+		}
+		else {
+			Collections.sort(curvData, new Comparator<Float>() {
+				@Override
+				public int compare(Float c1, Float c2) {
+					return c1.compareTo(c2);
+				}
+			});
+		}
+	}
+	
+	private static float estimateProbability(float value) {
+		value = Math.abs(value);
+		if (value <= 0.5f) {
+			return 0.191f;
+		}
+		if (value <= 1f) {
+			return 0.150f;
+		}
+		if (value <= 1.5f) {
+			return 0.092f;
+		}
+		if (value <= 2f) {
+			return 0.044f;
+		}
+		if (value <= 2.5f) {
+			return 0.017f;
+		}
+		if (value <= 3f) {
+			return 0.005f;
+		}
+		if (value <= 3.5f) {
+			return 0.001f;
+		}
+		return 0f;
+	}
+	
+	private static float[] getVarianceOfData(List<Float> data) {
+		float mean = 0f;
+		float var = 0f;
+		for (int i = 0 ; i < data.size() ; ++i) {
+			mean += data.get(i);
+			var += data.get(i) * data.get(i);
+		}
+		mean /= data.size();
+		var /= data.size() - mean * mean;
+		float[] statistics = {mean , var};
+		return statistics;
 	}
 }
