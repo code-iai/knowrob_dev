@@ -66,6 +66,38 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 	 * to add them to the same plane annotation
 	 */
 	private static double		PLANE_TOLERANCE			= 2.0f;
+	
+	/**
+	 * Map which maps a triangle to a certain primitive type: PLANE, SPHERE.CONVEX, 
+	 * SPHERE.CONCAVE, CONE.CONVEX, CONE.CONCAVE
+	 */
+	private final HashMap<Triangle, PrimitiveType>	trianglePrimitiveTypeMap	= new HashMap<Triangle, PrimitiveType>();
+
+	/**
+	 * list of all vertices of cad model
+	 */
+	List<Vertex>									allVertices;
+
+	/**
+	 * list of all triangles of cad model
+	 */
+	List<Triangle>									allTriangles;
+	
+	/**
+	 * list of all regions of cad model
+	 */
+	List<Region>									allRegions;
+
+	/**
+	 * Number of triangles already elaborated/processed. Used for indicating current progress
+	 */
+	final AtomicInteger								itemsElaborated				= new AtomicInteger(
+																						0);
+
+	/**
+	 * Remaining number of items to elaborate
+	 */
+	private int										itemsToElaborate			= 0;
 
 	/**
 	 * Analyze given triangle and try to region grow a plane. Only plane annotations are generated
@@ -280,50 +312,72 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 							merge = true;
 					}
 
-					if (!merge && pa instanceof PlaneAnnotation && a1 instanceof ConeAnnotation
-							&& pa.getArea() < a1.getArea() * 0.30f) {
-						// found a small plane annotation neighboring cone annotation. Check if
-						// plane annotation should be part of cone annotation by checking if plane
-						// normal is perpendicular to the generating axis.
-						// Primitives are not fitted yet, therefore we need to compare triangles on
-						// the edge for approximately the same normal vector
-						HashMultimap<Triangle, Triangle> edgeTriangles = HashMultimap.create(a1.getMesh().getTriangles().size(), 2);
-						Set<Vertex> edgeVertices = new HashSet<Vertex>();
-						pa.getNeighborEdge(cas, a1, edgeVertices, edgeTriangles);
+					if (!merge && pa instanceof PlaneAnnotation && a1 instanceof ConeAnnotation) {
+						if (pa.getArea() < a1.getArea() * 0.05f) {
+							// Found a very small plane annotation neighboring a cone annotation. Check if
+							// plane annotation should be part of cone annotation by checking if plane
+							// normal is perpendicular to the generating axis.
+							// Primitives are not fitted yet, therefore we need to compare triangles on
+							// the edge for approximately the same normal vector
+							HashMultimap<Triangle, Triangle> edgeTriangles = HashMultimap.create(a1.getMesh().getTriangles().size(), 2);
+							Set<Vertex> edgeVertices = new HashSet<Vertex>();
+							pa.getNeighborEdge(cas, a1, edgeVertices, edgeTriangles);
 
-						// check for a triangle pair where the angle between triangle normals is
-						// bigger or equal to 180 degree.
-						for (Triangle t : edgeTriangles.keySet()) {
-							Set<Triangle> partnerSet = edgeTriangles.get(t);
-							for (Triangle partner : partnerSet) {
-//								float dot = t.getNormalVector().dot(partner.getNormalVector());
-								float angle = (float)(Math.toDegrees(t.getNormalVector().angle(partner.getNormalVector())));
-								// allow angle difference of approx 8 degree: cos(8*PI/180)=0.99
-//								if (dot > 0.98) {
-								if (angle <= 5.0f || angle >= 175.0f) {
-									merge = true;
-									break;
+							// check for a triangle pair where the angle between triangle normals is
+							// bigger or equal to 180 degree with a tolerance of twice the plane combine degree.
+							for (Triangle t : edgeTriangles.keySet()) {
+								Set<Triangle> partnerSet = edgeTriangles.get(t);
+								for (Triangle partner : partnerSet) {
+									float angle = (float)(Math.toDegrees(t.getNormalVector().angle(partner.getNormalVector())));
+									if (angle <= (2 * PLANE_COMBINE_DEGREE) || angle >= 180f - (2 * PLANE_COMBINE_DEGREE)) {
+										merge = true;
+										break;
+									}
+								}
+							}
+						}
+						else if (pa.getArea() >= a1.getArea() * 0.05f && pa.getArea() < a1.getArea() * 0.30f) {
+							// found a small plane annotation neighboring cone annotation. Check if
+							// plane annotation should be part of cone annotation by checking if plane
+							// normal is perpendicular to the generating axis.
+							// Primitives are not fitted yet, therefore we need to compare triangles on
+							// the edge for approximately the same normal vector
+							HashMultimap<Triangle, Triangle> edgeTriangles = HashMultimap.create(a1.getMesh().getTriangles().size(), 2);
+							Set<Vertex> edgeVertices = new HashSet<Vertex>();
+							pa.getNeighborEdge(cas, a1, edgeVertices, edgeTriangles);
+
+							// check for a triangle pair where the angle between triangle normals is
+							// bigger or equal to 180 degree with a tolerance of twice the plane combine degree.
+							for (Triangle t : edgeTriangles.keySet()) {
+								Set<Triangle> partnerSet = edgeTriangles.get(t);
+								for (Triangle partner : partnerSet) {
+									float angle = (float)(Math.toDegrees(t.getNormalVector().angle(partner.getNormalVector())));
+									if (angle <= PLANE_TOLERANCE || angle >= 180f - PLANE_TOLERANCE) {
+										merge = true;
+										break;
+									}
 								}
 							}
 						}
 					}
-
-					/*if (!isSamePlane(a1, pa))
-						continue;
-
-					if (!(pa instanceof PlaneAnnotation)
-							&& pa.getPrimitiveArea() / pa.getArea() > 0.8) {
-						continue;
+					
+					if (!merge && pa instanceof PlaneAnnotation && (a1 instanceof SphereAnnotation || a1 instanceof ConeAnnotation)
+							&& pa.getArea() < a1.getArea() * 0.02f) {
+						// found very small plane (covering less than 2 percent of neighboring sphere or cone annotation)
+						// so merge it into the big annotation as these results are just unwanted artifacts after the region growing
+						merge = true;
 					}
-
-					float percentage = pa.getArea() / a1.getArea();
-
-					// If annotation is smaller than 5% of the area of the surrounding annotation,
-					// combine both into one
-					if (percentage < 0.05f) {*/
+					
+					if (!merge && pa instanceof ConeAnnotation && a1 instanceof SphereAnnotation 
+							&& ((ConeAnnotation)pa).isConcave() == ((SphereAnnotation)a1).isConcave()
+							&& pa.getArea() < a1.getArea() * 0.05f) {
+						// found a small cone annotation next to a sphere annotation of the same convexity, so merge them together and 
+						// this would be reverted at the sphere checking time if the fit error is too big
+						merge = true;
+					}
+					
 					if (merge) {
 						toRemove.add(a);
-
 						synchronized (a1.getMesh().getTriangles()) {
 							a1.getMesh().getTriangles().addAll(pa.getMesh().getTriangles());
 						}
@@ -546,37 +600,6 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 		float angle = (float)(Math.toDegrees(norm1.angle(norm2)));
 		return (angle <= PLANE_TOLERANCE || angle >= 180 - PLANE_TOLERANCE);
 	}
-
-	/**
-	 * Map which maps a primitive type to a triangle
-	 */
-	private final HashMap<Triangle, PrimitiveType>	trianglePrimitiveTypeMap	= new HashMap<Triangle, PrimitiveType>();
-
-	/**
-	 * list of all vertices of cad model
-	 */
-	List<Vertex>									allVertices;
-
-	/**
-	 * list of all triangles of cad model
-	 */
-	List<Triangle>									allTriangles;
-	
-	/**
-	 * list of all regions of cad model
-	 */
-	List<Region>									allRegions;
-
-	/**
-	 * Number of triangles already elaborated/processed. Used for indicating current progress
-	 */
-	final AtomicInteger								itemsElaborated				= new AtomicInteger(
-																						0);
-
-	/**
-	 * Remaining number of items to elaborate
-	 */
-	private int										itemsToElaborate			= 0;
 
 	/**
 	 * Analyse triangle for its primitive type
