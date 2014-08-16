@@ -5,7 +5,7 @@
  * 
  * Contributors: 
  * 		Stefan Profanter - initial API and implementation, Year: 2012
- * 		Andrei Stoica - refactored implementation during Google Summer of Code 2014, Year: 2014
+ * 		Andrei Stoica - refactored implementation during Google Summer of Code 2014
  ******************************************************************************/
 package edu.tum.cs.vis.model.uima.analyser;
 
@@ -27,7 +27,6 @@ import com.google.common.collect.HashMultimap;
 
 import edu.tum.cs.ias.knowrob.utils.ThreadPool;
 import edu.tum.cs.uima.Annotation;
-import edu.tum.cs.vis.model.Model;
 import edu.tum.cs.vis.model.uima.annotation.PrimitiveAnnotation;
 import edu.tum.cs.vis.model.uima.annotation.primitive.ConeAnnotation;
 import edu.tum.cs.vis.model.uima.annotation.primitive.PlaneAnnotation;
@@ -38,7 +37,6 @@ import edu.tum.cs.vis.model.util.Curvature;
 import edu.tum.cs.vis.model.util.Edge;
 import edu.tum.cs.vis.model.util.Region;
 import edu.tum.cs.vis.model.util.Triangle;
-import edu.tum.cs.vis.model.util.UtilityValues;
 import edu.tum.cs.vis.model.util.Vertex;
 
 /**
@@ -74,33 +72,128 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 	private final HashMap<Triangle, PrimitiveType>	trianglePrimitiveTypeMap	= new HashMap<Triangle, PrimitiveType>();
 
 	/**
-	 * list of all vertices of cad model
+	 * List of all the vertices of the CAD model under analysis
 	 */
 	List<Vertex>									allVertices;
 
 	/**
-	 * list of all triangles of cad model
+	 * List of all the triangles of the CAD model under analysis
 	 */
 	List<Triangle>									allTriangles;
 	
 	/**
-	 * list of all regions of cad model
+	 * List of all the regions of the CAD model under analysis
 	 */
 	List<Region>									allRegions;
 
 	/**
-	 * Number of triangles already elaborated/processed. Used for indicating current progress
+	 * The number of triangles already elaborated / processed by the analyser. 
+	 * Used for indicating current progress in the GUI
 	 */
-	final AtomicInteger								itemsElaborated				= new AtomicInteger(
-																						0);
+	final AtomicInteger								itemsElaborated	= new AtomicInteger(0);
 
 	/**
-	 * Remaining number of items to elaborate
+	 * The number of triangles remained to be processed by the analyser.
+	 * Used for indicating current progress in the GUI
 	 */
-	private int										itemsToElaborate			= 0;
+	private int										itemsToElaborate = 0;
 
 	/**
-	 * Analyze given triangle and try to region grow a plane. Only plane annotations are generated
+	 * Analyze given triangle and try to grow annotations (PLANE, SPHERE, CONE) based
+	 * on the processed vertices primitives types and on the same properties of its
+	 * connected neighbors. PLANE, SPHERE.CONVEX, SPHERE.CONCAVE, CONE.CONVEX, CONE.CONCAVE
+	 * annotations can be grown by this routine. The triangles added to the annotations
+	 * are marked under the {@code alreadyInAnnotation} set of already evaluated triangles
+	 * 
+	 * @param cas
+	 *            MeshCas
+	 * @param triangle
+	 *            triangle to analyze
+	 * @param alreadyInAnnotation
+	 *            set of already analyzed triangles
+	 */
+	protected void analyseTriangle(MeshCas cas, Triangle triangle, Set<Triangle> alreadyInAnnotation) {
+		if (alreadyInAnnotation.contains(triangle))
+			return;
+
+		@SuppressWarnings("rawtypes")
+		PrimitiveAnnotation annotation;
+		PrimitiveType type = getTrianglePrimitiveType(cas.getCurvatures(), triangle);
+
+		if (type == PrimitiveType.PLANE)
+			annotation = new PlaneAnnotation(cas.getCurvatures(), cas.getModel());
+		else if (type == PrimitiveType.SPHERE_CONCAVE || type == PrimitiveType.SPHERE_CONVEX)
+			annotation = new SphereAnnotation(cas.getCurvatures(), cas.getModel(), type == PrimitiveType.SPHERE_CONCAVE);
+		else
+			annotation = new ConeAnnotation(cas.getCurvatures(), cas.getModel(), type == PrimitiveType.CONE_CONCAVE);
+
+		synchronized (annotation.getMesh().getTriangles()) {
+			annotation.getMesh().getTriangles().add(triangle);
+		}
+		alreadyInAnnotation.add(triangle);
+
+		synchronized (cas.getAnnotations()) {
+			cas.addAnnotation(annotation);
+		}
+
+		// List of already visited triangles for BFS
+		HashSet<Triangle> visited = new HashSet<Triangle>();
+		visited.add(triangle);
+
+		// FIFO queue for triangles to visit for BFS
+		LinkedList<Triangle> queue = new LinkedList<Triangle>();
+		Edge[] edges = triangle.getEdges();
+		for (int i = 0 ; i < edges.length ; ++i) {
+			if (!edges[i].getIsSharpEdge()) {
+				List<Triangle> neighbors = triangle.getNeighborsOfEdge(edges[i]);
+				for (int j = 0 ; j < neighbors.size() ; ++j) {
+					queue.add(neighbors.get(j));
+				}
+			}
+		}
+
+		while (!queue.isEmpty()) {
+			Triangle currNeighbor = queue.pop();
+			visited.add(currNeighbor);
+			if (alreadyInAnnotation.contains(currNeighbor))
+				continue;
+
+			boolean isSameType = (type == getTrianglePrimitiveType(cas.getCurvatures(),currNeighbor));
+
+			boolean isSameNormal = planeAngleWithinTolerance(triangle.getNormalVector(),currNeighbor.getNormalVector());
+
+			if (isSameType && type == PrimitiveType.PLANE)
+				isSameType = isSameNormal; // only combine triangles which lie on the same plane
+
+			if (isSameType) {
+				synchronized (annotation.getMesh().getTriangles()) {
+					annotation.getMesh().getTriangles().add(currNeighbor);
+				}
+				alreadyInAnnotation.add(currNeighbor);
+
+				// Add all neighbors of current triangle to queue
+				Edge[] currEdges = currNeighbor.getEdges();
+				for (int i = 0 ; i < currEdges.length ; ++i) {
+					if (!currEdges[i].getIsSharpEdge()) {
+						List<Triangle> currNeighbors = currNeighbor.getNeighborsOfEdge(currEdges[i]);
+						for (int j = 0 ; j < currNeighbors.size() ; ++j) {
+							synchronized (annotation.getMesh()) {
+								synchronized (annotation.getMesh().getTriangles()) {
+									if (visited.contains(currNeighbors.get(j)) || annotation.getMesh().getTriangles().contains(currNeighbors.get(j))) {
+										continue;
+									}
+								}
+							}
+							queue.add(currNeighbors.get(j));
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Analyze given triangle and try to grow a plane annotation. Only PLANE annotations are generated
 	 * in this method. Curvature calculation has some problems with simple planes where a circle is
 	 * cut out. Thus we try to fix this problem by first searching planes regardless the curvature
 	 * value by only comparing their surface normal.
@@ -111,7 +204,7 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 	 *            triangle from where to start region growing
 	 * @param alreadyInAnnotation
 	 *            list of triangles which are already in an annotation
-	 * @return Plane annotation which was found or null
+	 * @return plane annotation found or null
 	 */
 	protected static PlaneAnnotation analyseTrianglePlane(MeshCas cas, Triangle triangle,
 			Set<Triangle> alreadyInAnnotation) {
@@ -127,10 +220,6 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 				queue.addAll(triangle.getNeighborsOfEdge(edges[i]));
 			}
 		}
-//		if (triangle.getNeighbors() != null) {
-//			// Add all neighbor triangles to the queue
-//			queue.addAll(triangle.getNeighbors());
-//		}
 
 		PlaneAnnotation annotation = null;
 
@@ -140,8 +229,8 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 			if (alreadyInAnnotation.contains(currNeighbor))
 				continue;
 
-			boolean isSameNormal = planeAngleWithinTolerance(triangle.getNormalVector(),
-					currNeighbor.getNormalVector());
+			// check if triangles belong to same plane annotation (normals have same direction with some tolerance)
+			boolean isSameNormal = planeAngleWithinTolerance(triangle.getNormalVector(),currNeighbor.getNormalVector());
 
 			if (isSameNormal) {
 				// found two triangles representing a plane
@@ -159,14 +248,6 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 				}
 				alreadyInAnnotation.add(currNeighbor);
 
-				// Add all neighbors of current triangle to queue
-//				for (Triangle a : currNeighbor.getNeighbors()) {
-//					synchronized (annotation.getMesh()) {
-//						synchronized (annotation.getMesh().getTriangles()) {
-//
-//							if (visited.contains(a)
-//									|| annotation.getMesh().getTriangles().contains(a))
-//								continue;
 				Edge[] nEdges = currNeighbor.getEdges();
 				for (int i = 0 ; i < nEdges.length ; ++i) {
 					if (!edges[i].getIsSharpEdge()) {
@@ -181,22 +262,19 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 								}
 							}
 							queue.add(neighbors.get(j));
-//							queue.add(a);
-//						}
-//					}
+						}
+					}
 				}
-			}
-		}
 			}
 		}
 		return annotation;
 	}
 
 	/**
-	 * Set primitive type of vertex
+	 * Sets the primitive type of a vertex
 	 * 
 	 * @param curvatures
-	 *            list of all curvature values for vertices
+	 *            list of all curvature values for the vertices of the CAD model
 	 * @param v
 	 *            vertex to analyze
 	 */
@@ -207,15 +285,19 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 	}
 
 	/**
-	 * Combines neighboring annotations which are of the same type into the same annotation.
+	 * Combines similar neighboring annotations into one annotation. PLANE, SPHERE.CONVEX,
+	 * SPHERE.CONCAVE, CONE.CONVEX, CONE.CONCAVE annotations can be merged by this routine.
+	 * Additional checking is done on merging of two PLANE annotations based on the angle
+	 * of their normal vectors and the threshold {@code PLANE_COMBINE_DEGREE}. The method
+	 * also returns in the parameter set {@code toRefit} the list of triangle annotations
+	 * needed to be refit because they have been changed (merged).
 	 * 
 	 * @param cas
 	 *            MeshCas
 	 * @param annotations
-	 *            List of all annotations to check
+	 *            list of all annotations to check
 	 * @param toRefit
-	 *            Set of annotations which need a refit of primitive types because they have been
-	 *            changed.
+	 *            annotations to refit due to merging.
 	 */
 	@SuppressWarnings("rawtypes")
 	private static void combineSameNeighboringAnnotations(MeshCas cas,
@@ -263,7 +345,14 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 	}
 
 	/**
-	 * Combine very small annotations with surrounding larger ones and merge/remove invalid ones
+	 * Combines small annotations with their surrounding larger ones and performs
+	 * a filtered cleaning of possible unwanted artifacts. The annotations types 
+	 * that can be merged into other annotations are:
+	 * 		small PLANE -> big SPHERE / CONE
+	 * 		small CONE.CONVEX -> big CONE.CONCAVE (artifact)
+	 * 		small CONE.CONCAVE -> big CONE.CONVEX (artifact)
+	 * 		small CONE -> big SPHERE (possible artifact) 
+	 * 		reset very small CONE / SPHERE annotations (artifact)
 	 * 
 	 * @param cas
 	 *            MeshCas
@@ -298,7 +387,7 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 					continue;
 				}
 
-				// merge small ones
+				// merge small annotations here
 				for (PrimitiveAnnotation a1 : neighborAnnotations) {
 
 					boolean merge = false;
@@ -392,7 +481,13 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 	}
 
 	/**
-	 * Get list of annotations of the specified type found in given annotations list.
+	 * Performs a geometric fit of all the {@code annotations} passed by as
+	 * an argument. The fitted geometric shapes are:
+	 * 		PLANE			: purple-white
+	 * 		SPHERE CONVEX	: red
+	 * 		SPHERE CONCAVE	: green
+	 * 		CONE CONVEX		: yellow
+	 * 		CONE CONCAVE	: turquoise	  
 	 * 
 	 * @param annotations
 	 *            list of annotations to search through
@@ -426,7 +521,9 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 	}
 
 	/**
-	 * Detect primitive type for vertex by checking curvature properties.
+	 * Determines the primitive type of a given vertex by checking its curvature properties.
+	 * The primitive type returned can be PLANE, SPHERE.CONVEX, SPHERE.CONCAVE, CONE.CONVEX,
+	 * CONE.CONCAVE.
 	 * 
 	 * @param curvatures
 	 *            list of curvatures for vertices
@@ -455,7 +552,8 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 	}
 
 	/**
-	 * Get primitive type for given property counts. The biggest number indicates the primitive type
+	 * Determines the primitive type given the property counts of each primitive type. 
+	 * The biggest number indicates the primitive type.
 	 * 
 	 * @param planeCnt
 	 *            number of plane vertices for triangle
@@ -489,8 +587,9 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 	}
 
 	/**
-	 * Check if two plane annotations represent the same plane by comparing surface normal angle
-	 * between annotations
+	 * Checks if two plane annotations represent the same plane by comparing the 
+	 * angle between their surface angles to the threshold tolerance value from
+	 * {@code PLANE_TOLERANCE}
 	 * 
 	 * @param a1
 	 *            plane 1
@@ -507,17 +606,17 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 	}
 
 	/**
-	 * Merge given set of annotations with neighboring annotations. The neighbor annotation to merge
+	 * Merges given set of annotations with neighboring annotations. The neighbor annotation to merge
 	 * into is chosen by it's size. If an annotation of the same type is one of the neighbors, this
 	 * one is preferred over the bigger one.
 	 * 
 	 * @param cas
 	 *            MeshCas
 	 * @param toMerge
-	 *            Set of annotations to merge
+	 *            set of annotations to merge
 	 * @param toRefit
-	 *            Returns a set of annotations which need a refit because their structure has
-	 *            changed.
+	 *            returns a set of annotations which need to be refitted because their 
+	 *            content has changed
 	 */
 	@SuppressWarnings("rawtypes")
 	private static void mergeWithNeighbors(MeshCas cas, Set<PrimitiveAnnotation> toMerge,
@@ -588,7 +687,7 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 	}
 
 	/**
-	 * Check if angle between the given surface normals is within <tt>PLANE_TOLERANCE</tt>.
+	 * Checks if angle between the given surface normals is within <tt>PLANE_TOLERANCE</tt>.
 	 * 
 	 * @param norm1
 	 *            surface normal 1
@@ -602,134 +701,13 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 	}
 
 	/**
-	 * Analyse triangle for its primitive type
-	 * 
-	 * @param cas
-	 *            main cas
-	 * @param triangle
-	 *            triangle to analyze
-	 * @param alreadyInAnnotation
-	 *            set of already analyzed triangles
-	 */
-	protected void analyseTriangle(MeshCas cas, Triangle triangle, Set<Triangle> alreadyInAnnotation) {
-		if (alreadyInAnnotation.contains(triangle))
-			return;
-
-		@SuppressWarnings("rawtypes")
-		PrimitiveAnnotation annotation;
-		PrimitiveType type = getTrianglePrimitiveType(cas.getCurvatures(), triangle);
-
-		if (type == PrimitiveType.PLANE)
-			annotation = new PlaneAnnotation(cas.getCurvatures(), cas.getModel());
-		else if (type == PrimitiveType.SPHERE_CONCAVE || type == PrimitiveType.SPHERE_CONVEX)
-			annotation = new SphereAnnotation(cas.getCurvatures(), cas.getModel(), type == PrimitiveType.SPHERE_CONCAVE);
-		else
-			annotation = new ConeAnnotation(cas.getCurvatures(), cas.getModel(), type == PrimitiveType.CONE_CONCAVE);
-
-		synchronized (annotation.getMesh().getTriangles()) {
-			annotation.getMesh().getTriangles().add(triangle);
-		}
-		alreadyInAnnotation.add(triangle);
-
-		synchronized (cas.getAnnotations()) {
-			cas.addAnnotation(annotation);
-		}
-
-		// List of already visited triangles for BFS
-		HashSet<Triangle> visited = new HashSet<Triangle>();
-		visited.add(triangle);
-
-		// FIFO queue for triangles to visit for BFS
-		LinkedList<Triangle> queue = new LinkedList<Triangle>();
-		Edge[] edges = triangle.getEdges();
-		for (int i = 0 ; i < edges.length ; ++i) {
-			if (!edges[i].getIsSharpEdge()) {
-				List<Triangle> neighbors = triangle.getNeighborsOfEdge(edges[i]);
-				for (int j = 0 ; j < neighbors.size() ; ++j) {
-					queue.add(neighbors.get(j));
-				}
-			}
-		}
-//		if (triangle.getNeighbors() != null) {
-//			// Add all neighbor triangles to the queue
-//			queue.addAll(triangle.getNeighbors());
-//		}
-
-		while (!queue.isEmpty()) {
-			Triangle currNeighbor = queue.pop();
-			visited.add(currNeighbor);
-			if (alreadyInAnnotation.contains(currNeighbor))
-				continue;
-
-			boolean isSameType = (type == getTrianglePrimitiveType(cas.getCurvatures(),currNeighbor));
-
-			boolean isSameNormal = planeAngleWithinTolerance(triangle.getNormalVector(),currNeighbor.getNormalVector());
-
-			if (isSameType && type == PrimitiveType.PLANE)
-				isSameType = isSameNormal; // only combine triangles which lie on the same plane
-
-			if (isSameType) {
-				synchronized (annotation.getMesh().getTriangles()) {
-					annotation.getMesh().getTriangles().add(currNeighbor);
-				}
-				alreadyInAnnotation.add(currNeighbor);
-
-				// Add all neighbors of current triangle to queue
-				Edge[] currEdges = currNeighbor.getEdges();
-				for (int i = 0 ; i < currEdges.length ; ++i) {
-					if (!currEdges[i].getIsSharpEdge()) {
-						List<Triangle> currNeighbors = currNeighbor.getNeighborsOfEdge(currEdges[i]);
-						for (int j = 0 ; j < currNeighbors.size() ; ++j) {
-							synchronized (annotation.getMesh()) {
-								synchronized (annotation.getMesh().getTriangles()) {
-									if (visited.contains(currNeighbors.get(j)) || annotation.getMesh().getTriangles().contains(currNeighbors.get(j))) {
-										continue;
-									}
-								}
-							}
-							queue.add(currNeighbors.get(j));
-						}
-					}
-				}
-//				for (Triangle a : currNeighbor.getNeighbors()) {
-//					synchronized (annotation.getMesh()) {
-//						synchronized (annotation.getMesh().getTriangles()) {
-//
-//							if (visited.contains(a)
-//									|| annotation.getMesh().getTriangles().contains(a))
-//								continue;
-//						}
-//					}
-//					queue.add(a);
-//				}
-			}
-		}
-	}
-
-	/* (non-Javadoc)
-	 * @see edu.tum.cs.vis.model.uima.analyser.MeshAnalyser#getLogger()
-	 */
-	@Override
-	public Logger getLogger() {
-		return logger;
-	}
-
-	/* (non-Javadoc)
-	 * @see edu.tum.cs.vis.model.uima.analyser.MeshAnalyser#getName()
-	 */
-	@Override
-	public String getName() {
-		return "Primitive";
-	}
-
-	/**
-	 * Get primitive type of triangle
+	 * Gets the primitive type of a triangle
 	 * 
 	 * @param curvatures
 	 *            curvature property for each vertex
 	 * @param triangle
 	 *            triangle to analyze
-	 * @return primitive type for triangle
+	 * @return primitive type of triangle
 	 */
 	private PrimitiveType getTrianglePrimitiveType(HashMap<Vertex, Curvature> curvatures,
 			Triangle triangle) {
@@ -737,7 +715,7 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 	}
 
 	/**
-	 * Get primitive type of triangle by optionally averaging over neighboring triangles. First
+	 * Gets primitive type of triangle by optionally averaging over neighboring triangles. First
 	 * determines primitive type of triangle and then checks if neighboring triangles are of the
 	 * same type. If triangle is totally different then type of neighboring triangles is returned.
 	 * 
@@ -776,8 +754,6 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 			}
 		}
 
-//		trianglePrimitiveTypeMap.put(triangle, getTypeForCounts(planeCnt, sphereConvexCnt, sphereConcavCnt, coneConvexCnt, coneConcavCnt));
-
 		if (checkNeighbors) {
 			// smooth type by neighbors
 			Edge[] edges = triangle.getEdges();
@@ -799,20 +775,6 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 					}
 				}
 			}
-//			for (Triangle t : triangle.getNeighbors()) {
-//				PrimitiveType type = getTrianglePrimitiveType(curvatures, t, false);
-//
-//				if (type == PrimitiveType.PLANE)
-//					planeCnt += 1;
-//				else if (type == PrimitiveType.SPHERE_CONVEX)
-//					sphereConvexCnt += 1;
-//				else if (type == PrimitiveType.SPHERE_CONCAVE)
-//					sphereConcavCnt += 1;
-//				else if (type == PrimitiveType.CONE_CONVEX)
-//					coneConvexCnt += 1;
-//				else if (type == PrimitiveType.CONE_CONCAVE)
-//					coneConcavCnt += 1;
-//			}
 		}
 
 		trianglePrimitiveTypeMap.put(triangle, getTypeForCounts(planeCnt, sphereConvexCnt, sphereConcavCnt, coneConvexCnt, coneConcavCnt));
@@ -876,15 +838,16 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 					continue;
 				PlaneAnnotation found = analyseTrianglePlane(cas, t, alreadyInAnnotation);
 				if (found != null) {
-//					System.out.println(found + " -> " + found.getArea() / totalSurfaceArea);
-					if (found.getArea() > (0.05 * totalSurfaceArea) || found.getArea() > (0.3 * areaRegionUnscaled) || found.getMesh().getTriangles().size() > 20) {
+					// check if the plane is big enough to be stored as a valid annotation
+					if (found.getArea() > (0.05 * totalSurfaceArea) || found.getArea() > (0.3 * areaRegionUnscaled) 
+							|| found.getMesh().getTriangles().size() > 20) {
 						synchronized (cas.getAnnotations()) {
 							cas.addAnnotation(found);
 						}
 						itemsElaborated.incrementAndGet();
 					}
 					else {
-						// Plane too small, maybe part of cylinder.
+						// plane too small, maybe part of another annotation
 						// give another chance in analyseTriangle
 						 toElaborate.addAll(found.getMesh().getTriangles());
 						 alreadyInAnnotation.removeAll(toElaborate);
@@ -905,9 +868,6 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 		// Split number of triangles into alreadyAdded and to elaborate
 		itemsToElaborate = (int) (allVertices.size() + alreadyInAnnotation.size() + toElaborate.size() + (allTriangles.size() * 0.1));
 
-//		fitAnnotations(cas.getAnnotations());
-		
-		// why is this here??? all items to elaborate are separate from the ones in annotations
 		alreadyInAnnotation.removeAll(toElaborate);
 		
 		for (Region r : allRegions) {
@@ -922,8 +882,9 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 		fitAnnotations(cas.getAnnotations());
 		
 		logger.debug("Pre-combining neighbors ...");
+		// now merge small annotations into bigger ones
 		combineSmallAnnotations(cas);
-
+		// and combine neighbors of same type
 		combineSameNeighboringAnnotations(cas, cas.getAnnotations(), null);
 
 		final Set<PrimitiveAnnotation> failedFittings = new HashSet<PrimitiveAnnotation>();
@@ -938,9 +899,9 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 		fitAnnotations(toRefit);
 		toRefit.clear();
 
-		// now check if all sphere annotations are spheres of if they should be cones by evaluating
-		// fit error.
-		// The fit error should be smaller than 0.001 for good fitted spheres
+		// now check if all sphere annotations are spheres or if they should be 
+		// cones by evaluating the fit error
+		// fit error should be smaller than 0.005 for good fitted spheres
 
 		logger.debug("Checking spheres ...");
 
@@ -986,14 +947,15 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 			cas.getAnnotations().addAll(toAdd);
 		}
 		mergeWithNeighbors(cas, smallSpheres, toRefit);
+		
 		logger.debug("Combining neighbors ...");
-		// Combine neighboring annotations which were previously different types before changing
-		// sphere to cone
+		// combine neighboring annotations which were previously different types before changing sphere to cone
 		combineSameNeighboringAnnotations(cas, cas.getAnnotations(), toRefit);
+		
 		fitAnnotations(toRefit);
 
-		itemsElaborated.set(itemsToElaborate);// now we have 100%
-
+		// everything has been processed at this point
+		itemsElaborated.set(itemsToElaborate);
 	}
 
 	/* (non-Javadoc)
@@ -1006,5 +968,21 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 		}
 
 	}
+	
+	/* (non-Javadoc)
+	 * @see edu.tum.cs.vis.model.uima.analyser.MeshAnalyser#getLogger()
+	 */
+	@Override
+	public Logger getLogger() {
+		return logger;
+	}
 
+	/* (non-Javadoc)
+	 * @see edu.tum.cs.vis.model.uima.analyser.MeshAnalyser#getName()
+	 */
+	
+	@Override
+	public String getName() {
+		return "Primitive";
+	}
 }
