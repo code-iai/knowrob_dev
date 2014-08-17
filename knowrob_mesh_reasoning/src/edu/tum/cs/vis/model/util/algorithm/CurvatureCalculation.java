@@ -32,12 +32,10 @@ import org.apache.log4j.Logger;
 
 import edu.tum.cs.ias.knowrob.utils.ThreadPool;
 import edu.tum.cs.vis.model.Model;
-import edu.tum.cs.vis.model.uima.analyser.PrimitiveAnalyser;
 import edu.tum.cs.vis.model.util.Curvature;
 import edu.tum.cs.vis.model.util.Edge;
-import edu.tum.cs.vis.model.util.Region;
 import edu.tum.cs.vis.model.util.Triangle;
-import edu.tum.cs.vis.model.util.UtilityValues;
+import edu.tum.cs.vis.model.util.ThresholdsReasoning;
 import edu.tum.cs.vis.model.util.Vertex;
 
 /**
@@ -61,7 +59,7 @@ abstract class ACCUM {
  * @author Stefan Profanter
  * 
  */
-class AccumCurv extends ACCUM {
+final class AccumCurv extends ACCUM {
 
 	@Override
 	public void a(final Model m, HashMap<Vertex, Curvature> curvatures, Vertex v0, Vertex c,
@@ -309,7 +307,7 @@ public class CurvatureCalculation {
 			return;
 		calculateVoronoiArea(m);
 		calculateCurvature(curvatures, m);
-		setCurvatureHueSaturation(curvatures, m, UtilityValues.CURV_SMOOTHING);
+		setCurvatureHueSaturation(curvatures, m, ThresholdsReasoning.CURV_SMOOTHING);
 		setCurvatureBoundaryValues(curvatures, m);
 	}
 

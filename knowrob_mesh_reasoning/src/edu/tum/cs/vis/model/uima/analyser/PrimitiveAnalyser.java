@@ -37,6 +37,7 @@ import edu.tum.cs.vis.model.util.Curvature;
 import edu.tum.cs.vis.model.util.Edge;
 import edu.tum.cs.vis.model.util.Region;
 import edu.tum.cs.vis.model.util.Triangle;
+import edu.tum.cs.vis.model.util.ThresholdsReasoning;
 import edu.tum.cs.vis.model.util.Vertex;
 
 /**
@@ -57,13 +58,13 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 	 * Threshold degree between normal vertices for allowing combination of neighboring 
 	 * plane annotations
 	 */
-	private static final float	PLANE_COMBINE_DEGREE	= 5.0f;
+	private static final float	PLANE_COMBINE_DEGREE	= ThresholdsReasoning.PA_PLANE_COMBINE_DEGREE;
 
 	/**
 	 * Tolerance in degrees between two surface normals of neighboring triangles in order
 	 * to add them to the same plane annotation
 	 */
-	private static double		PLANE_TOLERANCE			= 2.0f;
+	private static double		PLANE_TOLERANCE			= ThresholdsReasoning.PA_PLANE_TOLERANCE;
 	
 	/**
 	 * Map which maps a triangle to a certain primitive type: PLANE, SPHERE.CONVEX, 
@@ -980,7 +981,6 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 	/* (non-Javadoc)
 	 * @see edu.tum.cs.vis.model.uima.analyser.MeshAnalyser#getName()
 	 */
-	
 	@Override
 	public String getName() {
 		return "Primitive";
