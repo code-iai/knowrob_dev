@@ -145,7 +145,7 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 		LinkedList<Triangle> queue = new LinkedList<Triangle>();
 		Edge[] edges = triangle.getEdges();
 		for (int i = 0 ; i < edges.length ; ++i) {
-			if (!edges[i].getIsSharpEdge()) {
+			if (!edges[i].isSharpEdge()) {
 				List<Triangle> neighbors = triangle.getNeighborsOfEdge(edges[i]);
 				for (int j = 0 ; j < neighbors.size() ; ++j) {
 					queue.add(neighbors.get(j));
@@ -175,7 +175,7 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 				// Add all neighbors of current triangle to queue
 				Edge[] currEdges = currNeighbor.getEdges();
 				for (int i = 0 ; i < currEdges.length ; ++i) {
-					if (!currEdges[i].getIsSharpEdge()) {
+					if (!currEdges[i].isSharpEdge()) {
 						List<Triangle> currNeighbors = currNeighbor.getNeighborsOfEdge(currEdges[i]);
 						for (int j = 0 ; j < currNeighbors.size() ; ++j) {
 							synchronized (annotation.getMesh()) {
@@ -217,7 +217,7 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 		LinkedList<Triangle> queue = new LinkedList<Triangle>();
 		Edge[] edges = triangle.getEdges();
 		for (int i = 0 ; i < edges.length ; ++i) {
-			if (!edges[i].getIsSharpEdge()) {
+			if (!edges[i].isSharpEdge()) {
 				queue.addAll(triangle.getNeighborsOfEdge(edges[i]));
 			}
 		}
@@ -251,7 +251,7 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 
 				Edge[] nEdges = currNeighbor.getEdges();
 				for (int i = 0 ; i < nEdges.length ; ++i) {
-					if (!edges[i].getIsSharpEdge()) {
+					if (!edges[i].isSharpEdge()) {
 						List<Triangle> neighbors = currNeighbor.getNeighborsOfEdge(nEdges[i]);
 						for (int j = 0 ; j < neighbors.size() ; ++j) {
 							synchronized (annotation.getMesh()) {
@@ -759,7 +759,7 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 			// smooth type by neighbors
 			Edge[] edges = triangle.getEdges();
 			for (int i = 0 ; i < edges.length ; ++i) {
-				if (!edges[i].getIsSharpEdge()) {
+				if (!edges[i].isSharpEdge()) {
 					List<Triangle> neighbors = triangle.getNeighborsOfEdge(edges[i]);
 					for (int j = 0 ; j < neighbors.size() ; ++j) {
 						PrimitiveType type = getTrianglePrimitiveType(curvatures, neighbors.get(j), false);

@@ -406,7 +406,7 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 									Edge edge = r.getBoundaryEdges().get(i);
 									Vertex v = edge.getVerticesOfEdge()[0];
 									Vector3f edgeVal = edge.getEdgeValue();
-									if (edge.getIsSharpEdge()) {
+									if (edge.isSharpEdge()) {
 										g.stroke(240, 140, 0);
 									}
 									else {
@@ -421,7 +421,7 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 							for (Triangle t : c.getModel().getTriangles()) {
 								Edge[] edges = t.getEdges();
 								for (int i = 0 ; i < edges.length ; ++i) {
-									if (edges[i].getIsSharpEdge()) {
+									if (edges[i].isSharpEdge()) {
 										Vertex v = edges[i].getVerticesOfEdge()[0];
 										Vector3f edge = edges[i].getEdgeValue();
 										g.line(v.x, v.y, v.z, v.x - edge.x, v.y - edge.y, v.z - edge.z);
@@ -436,7 +436,7 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 							for (Triangle t : c.getModel().getTriangles()) {
 								Edge[] edges = t.getEdges();
 								for (int i = 0 ; i < edges.length ; ++i) {
-									if (edges[i].getIsSharpEdge()) {
+									if (edges[i].isSharpEdge()) {
 										Vertex v = edges[i].getVerticesOfEdge()[0];
 										Vector3f edge = edges[i].getEdgeValue();
 										g.line(v.x, v.y, v.z, v.x - edge.x, v.y - edge.y, v.z - edge.z);

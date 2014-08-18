@@ -286,7 +286,7 @@ public class CasProcessing{
 		List<Edge> commonEdges = r.getCommonEdges(n);
 		if (commonEdges.size() == 1) {
 			// if common edge is sharp cannot merge the two regions
-			if (commonEdges.get(0).getIsSharpEdge()) {
+			if (commonEdges.get(0).isSharpEdge()) {
 				adjacencyMatrix[r.getRegionId()][n.getRegionId()] = PINF;
 				adjacencyMatrix[n.getRegionId()][r.getRegionId()] = PINF;
 				return;
@@ -303,7 +303,7 @@ public class CasProcessing{
 			float sharpEdgeBorder = 0.0f;
 			for (int k = 0 ; k < commonEdges.size() ; ++k) {
 				Edge e = commonEdges.get(k);
-				if (e.getIsSharpEdge()) {
+				if (e.isSharpEdge()) {
 					sharpEdgeBorder += e.getEdgeValue().length();
 				}
 				if (!edgesVerticesAdjacency.containsKey(e.getVerticesOfEdge()[0])) {
@@ -466,7 +466,7 @@ public class CasProcessing{
 	 * clustered vertices of the model. The region growing mechanism is based on the
 	 * paper "A new CAD mesh segmentation method, based on curvature tensor analysis",
 	 * Guillaume Lavoue, Florent Dupont, Atilla Baskurt, Computer-Aided Design 37 (2005),
-	 * 975–987. The regions have therefor triangles with the same curvature properties,
+	 * 975–987. The regions have therefore triangles with the same curvature properties,
 	 * grouping connected components together on the mesh. The grown regions are added 
 	 * to a list of regions which is then added to the MeshCas instance.
 	 * 
@@ -529,7 +529,7 @@ public class CasProcessing{
 					if (edge == null) {
 						continue;
 					}
-					if (!edge.getIsSharpEdge()) {
+					if (!edge.isSharpEdge()) {
 						regions.get(i).addTriangleToRegion(t);
 						toClassify.remove(t);
 					}
