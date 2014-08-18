@@ -91,9 +91,10 @@ final class AccumCurv extends ACCUM {
  * normal form and its least square solution computed with the LU decomposition.
  * 
  * @see <a href="https://github.com/fcole/qrtsc/tree/master/trimesh2">trimesh2</a>
- * @see <a href="http://gfx.cs.princeton.edu/pubs/_2004_ECA/curvpaper.pdf">Estimating Curvatures and Their Derivatives on Triangle Meshes, S. Rusinkiewicz</a>
+ * @see <a href="http://gfx.cs.princeton.edu/pubs/_2004_ECA/curvpaper.pdf">"Estimating Curvatures and Their Derivatives on Triangle Meshes", S. Rusinkiewicz</a>
  * 
  * @author Stefan Profanter
+ * @author Andrei Stoica - minor refactor on existing implementation plus addition of new methods and functionality
  */
 public class CurvatureCalculation {
 
