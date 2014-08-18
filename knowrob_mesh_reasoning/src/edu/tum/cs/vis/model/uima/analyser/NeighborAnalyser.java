@@ -3,7 +3,9 @@
  * materials are made available under the terms of the GNU Public License v3.0 which accompanies
  * this distribution, and is available at http://www.gnu.org/licenses/gpl.html
  * 
- * Contributors: Stefan Profanter - initial API and implementation, Year: 2012
+ * Contributors: 
+ * 				Stefan Profanter - initial API and implementation, Year: 2012
+ * 				Andrei Stoica - refactored implementation during Google Summer of Code 2014
  ******************************************************************************/
 package edu.tum.cs.vis.model.uima.analyser;
 
@@ -20,60 +22,82 @@ import javax.vecmath.Vector3f;
 import org.apache.log4j.Logger;
 
 import edu.tum.cs.ias.knowrob.utils.ThreadPool;
+import edu.tum.cs.util.PrintUtil;
 import edu.tum.cs.vis.model.uima.cas.MeshCas;
 import edu.tum.cs.vis.model.util.Edge;
 import edu.tum.cs.vis.model.util.Triangle;
 import edu.tum.cs.vis.model.util.Vertex;
 
 /**
- * Analyzer for a mesh which sets direct neighbors of a triangle.
- * 
- * The neighbor information is used in other analyzers for better performance.
+ * Analyzer for a mesh which sets the direct neighbors of the triangles and
+ * vertices in the CAD model parsed. The neighboring information is used
+ * throughout the entire implementation to describe the CAD model
  * 
  * @author Stefan Profanter
- * 
+ * @author Andrei Stoica (added collinear removal and refactored neighboring
+ * to also make up for badly tesselated meshes with artifacts, e.g. gaps, not
+ * connected vertices, floating edges etc.)
  */
 public class NeighborAnalyser extends MeshAnalyser {
 
 	/**
 	 * Log4j logger
 	 */
-	private static Logger	logger				= Logger.getLogger(NeighborAnalyser.class);
+	private static final Logger	LOGGER				= Logger.getLogger(NeighborAnalyser.class);
 
 	/**
 	 * Number of currently processed triangles. Used for progress status.
 	 */
-	final AtomicInteger		trianglesElaborated	= new AtomicInteger(0);
+	final AtomicInteger			trianglesElaborated	= new AtomicInteger(0);
 
 	/**
-	 * When calling <code>process</code> all triangles of the group and its children are collected
-	 * in this list to process them afterwards.
+	 * List of all the triangles of the associated MeshCas of the CAD model
 	 */
-	List<Triangle>			allTriangles;
+	List<Triangle>				allTriangles;
 	
 	/**
-	 * Stores initial number of triangles
+	 * Initial number of triangles
 	 */
-	int 					initialNumOfTriangles;
+	int 						initialNumOfTriangles;
 
+	/* (non-Javadoc)
+	 * @see edu.tum.cs.vis.model.uima.analyser.MeshAnalyser#getLogger()
+	 */
 	@Override
 	public Logger getLogger() {
-		return logger;
+		return LOGGER;
 	}
 
+	/* (non-Javadoc)
+	 * @see edu.tum.cs.vis.model.uima.analyser.MeshAnalyser#getName()
+	 */
 	@Override
 	public String getName() {
 		return "Neighbor";
 	}
 
+	/* (non-Javadoc)
+	 * @see edu.tum.cs.vis.model.uima.analyser.MeshAnalyser#processStart(edu.tum.cs.vis.model.uima.cas.MeshCas)
+	 */
 	@Override
 	public void processStart(MeshCas cas) {
-
+		if (cas == null || cas.getModel() == null || cas.getModel().getTriangles() == null) {
+			return;
+		}
+		// in ply (and also collada) files there may be double sided triangles,
+		// so remove them if they exist in the current model
+		long startTime = System.currentTimeMillis();
+		LOGGER.debug("Checking for double sided triangles ...");
+		LOGGER.debug("Removed " + cas.getModel().removeDoubleSidedTriangles() + " triangles. Took: "
+				+ PrintUtil.prettyMillis(System.currentTimeMillis() - startTime));
+		
 		trianglesElaborated.set(0);
 		allTriangles = cas.getModel().getTriangles();
-
-		removeCollinearTriangles(allTriangles);
 		
+		// now remove collinear triangles
+		removeCollinearTriangles();
+		
+		// update number of valid triangles in the model
 		initialNumOfTriangles = allTriangles.size();
 		
 		final int interval = 100;
@@ -121,9 +145,22 @@ public class NeighborAnalyser extends MeshAnalyser {
 			});
 		}
 		ThreadPool.executeInPool(threads);
-		updateProgress();
+
+		// update the vertex sharing and neighboring information
+		startTime = System.currentTimeMillis();
+		LOGGER.debug("Checking for vertex sharing and calculating vertex normals ...");
+		cas.getModel().updateVertexSharing();
+
+		cas.getModel().updateVertexNormals();
+		LOGGER.debug("Model initialized. Took: "
+				+ PrintUtil.prettyMillis(System.currentTimeMillis() - startTime) + " (Vertices: "
+				+ cas.getModel().getVertices().size() + ", Lines: " + cas.getModel().getLines().size()
+				+ ", Triangles: " + cas.getModel().getTriangles().size() + ")");
 	}
 
+	/* (non-Javadoc)
+	 * @see edu.tum.cs.vis.model.uima.analyser.MeshAnalyser#updateProgress()
+	 */
 	@Override
 	public void updateProgress() {
 		if (allTriangles != null)
@@ -138,14 +175,16 @@ public class NeighborAnalyser extends MeshAnalyser {
 	 * @param allTriangles
 	 * 				list of all triangles in the model to be checked
 	 */
-	private void removeCollinearTriangles(final List<Triangle> allTriangles) {
+	private void removeCollinearTriangles() {
 		List<Triangle> toRemove = new ArrayList<Triangle>();
 		for (Triangle triangle : allTriangles) {
 			Vertex v0 = triangle.getPosition()[0];
 			Vertex v1 = triangle.getPosition()[1];
 			Vertex v2 = triangle.getPosition()[2];
 			// if two vertices share the same coordinates than remove triangle as collinear
-			if ((v0.x == v1.x && v0.y == v1.y && v0.z == v1.z) || (v0.x == v2.x && v0.y ==v2.y && v0.z == v2.z) || (v1.x == v2.x && v1.y == v2.y && v1.z == v2.z)) {
+			if ((v0.x == v1.x && v0.y == v1.y && v0.z == v1.z) || 
+					(v0.x == v2.x && v0.y ==v2.y && v0.z == v2.z) || 
+					(v1.x == v2.x && v1.y == v2.y && v1.z == v2.z)) {
 				toRemove.add(triangle);
 				continue;
 			}
@@ -158,7 +197,7 @@ public class NeighborAnalyser extends MeshAnalyser {
 				continue;
 			}
 		}
-		logger.debug("Removed " + toRemove.size() + " collinear triangles from the model.");
+		LOGGER.debug("Removed " + toRemove.size() + " collinear triangles from the model.");
 		allTriangles.removeAll(toRemove);
 	}
 }
