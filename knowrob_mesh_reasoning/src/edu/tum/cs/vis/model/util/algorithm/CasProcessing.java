@@ -49,7 +49,7 @@ public class CasProcessing{
 	/**
 	 * Log4J logger
 	 */
-	private final static Logger		logger = Logger.getLogger(CasProcessing.class);
+	private static final Logger		LOGGER = Logger.getLogger(CasProcessing.class);
 	
 	/**
 	 * Mesh UIMA CAS to be processed
@@ -91,7 +91,7 @@ public class CasProcessing{
 	 * 			MeshCas to be set
 	 */
 	public void setModel(MeshCas cas) {
-		this.cas = (this.cas != null) ? cas : this.cas;
+		this.cas = (this.cas != null && cas != null) ? cas : this.cas;
 	}
 	
 	/**
@@ -112,7 +112,7 @@ public class CasProcessing{
 	 * @return number of clusters used to group similar curvatures
 	 */
 	public int getNumOfClusters() {
-		return NUM_CLUSTERS;
+		return this.NUM_CLUSTERS;
 	}
 	
 	/**
@@ -126,16 +126,19 @@ public class CasProcessing{
 	 * properties to the similar vertices within them.
 	 */
 	private void kMeansCurvClassify() {
-		logger.debug("Classifying vertices of CAD model by curvature using KMeans ...");
+		if (this.cas == null) {
+			return;
+		}
+		LOGGER.debug("Classifying vertices of CAD model by curvature using KMeans ...");
 		long KMeansStartTime = System.currentTimeMillis();
 		if (NUM_CLUSTERS >= cas.getModel().getVertices().size()* 0.025) {
-			logger.debug("Number of vertices in the model smaller than number of clusters chosen");
+			LOGGER.debug("Number of vertices in the model smaller than number of clusters chosen");
 			int temp = NUM_CLUSTERS;
 			NUM_CLUSTERS = (int)(cas.getModel().getVertices().size() * 0.025);
 			if (NUM_CLUSTERS < 5) {
 				NUM_CLUSTERS = 5;
 			}
-			logger.debug("Number of clusters has been changed from " + temp + " to " + NUM_CLUSTERS);
+			LOGGER.debug("Number of clusters has been changed from " + temp + " to " + NUM_CLUSTERS);
 		}
 		Cluster[] clusters = new Cluster[NUM_CLUSTERS];
 		
@@ -156,7 +159,8 @@ public class CasProcessing{
 			clusters[i].addVertexToCluster(v);
 			clusters[i].updateCentroid(cas.getCurvatures());
 			v.setClusterLabel(clusters[i].getLabelId());
-			v.setClusterCurvatureVal(clusters[i].getCentroid()[0],clusters[i].getCentroid()[1],clusters[i].getCentroid()[2]);
+			v.setClusterCurvatureVal(clusters[i].getCentroid()[0],clusters[i].getCentroid()[1],
+					clusters[i].getCentroid()[2]);
 		}
 		
 		// remove randomly picked elements
@@ -180,7 +184,8 @@ public class CasProcessing{
 			clusters[clusterIndex].addVertexToCluster(v);
 			clusters[clusterIndex].updateCentroid(cas.getCurvatures());
 			v.setClusterLabel(clusters[clusterIndex].getLabelId());
-			v.setClusterCurvatureVal(clusters[clusterIndex].getCentroid()[0],clusters[clusterIndex].getCentroid()[1],clusters[clusterIndex].getCentroid()[2]);
+			v.setClusterCurvatureVal(clusters[clusterIndex].getCentroid()[0],clusters[clusterIndex].getCentroid()[1],
+					clusters[clusterIndex].getCentroid()[2]);
 		}
 		
 		// iterate until no significant changes are visible or iteration
@@ -205,7 +210,8 @@ public class CasProcessing{
 					clusters[clusterIndex].addVertexToCluster(cas.getModel().getVertices().get(i));
 					clusters[clusterIndex].updateCentroid(cas.getCurvatures());
 					cas.getModel().getVertices().get(i).setClusterLabel(clusterIndex);
-					cas.getModel().getVertices().get(i).setClusterCurvatureVal(clusters[clusterIndex].getCentroid()[0], clusters[clusterIndex].getCentroid()[1], clusters[clusterIndex].getCentroid()[2]);
+					cas.getModel().getVertices().get(i).setClusterCurvatureVal(clusters[clusterIndex].getCentroid()[0], 
+							clusters[clusterIndex].getCentroid()[1], clusters[clusterIndex].getCentroid()[2]);
 					isRunning = true;
 				}
 			}
@@ -217,7 +223,8 @@ public class CasProcessing{
 			classifiedVertices += clusters[i].getVertices().size();
 			for (int j = 0 ; j < clusters[i].getVertices().size() ; ++j) {
 				Curvature c = cas.getCurvature(clusters[i].getVertices().get(j));
-				clusters[i].getVertices().get(j).setClusterCurvatureVal(clusters[i].getCentroid()[0], clusters[i].getCentroid()[1], clusters[i].getCentroid()[2]);
+				clusters[i].getVertices().get(j).setClusterCurvatureVal(clusters[i].getCentroid()[0], 
+						clusters[i].getCentroid()[1], clusters[i].getCentroid()[2]);
 				c.setCurvatureMin(clusters[i].getCentroid()[0]);
 				c.setCurvatureMax(clusters[i].getCentroid()[1]);
 				c.setCurvatureMinMax(clusters[i].getCentroid()[2]);
@@ -227,10 +234,10 @@ public class CasProcessing{
 		// compute new coloring used for primitive fitting
 		CurvatureCalculation.setCurvatureHueSaturation(cas.getCurvatures(), cas.getModel(), ThresholdsReasoning.CURV_SMOOTHING);
 		
-		logger.debug("Classified " + classifiedVertices + " vertices out of "+
+		LOGGER.debug("Classified " + classifiedVertices + " vertices out of "+
 		cas.getModel().getVertices().size() + " into " + NUM_CLUSTERS + " clusters");
 		long KMeansDuration = System.currentTimeMillis() - KMeansStartTime;
-		logger.debug("Ended. Took: " + PrintUtil.prettyMillis(KMeansDuration));
+		LOGGER.debug("Ended. Took: " + PrintUtil.prettyMillis(KMeansDuration));
 	}
 	
 	/**
@@ -267,6 +274,7 @@ public class CasProcessing{
 	 * 			first region
 	 * @param n
 	 * 			second region
+	 * @see <a href="http://dl.acm.org/citation.cfm?id=1649921">"A new CAD mesh segmentation method, based on curvature tensor analysis"</a>
 	 */
 	private static void computeAdjacencyDistancesOfRegions(final float[][] adjacencyMatrix, final Region r, final Region n) {
 		float[] curvatureDistanceBoundary = {0.0f, 0.0f};
@@ -461,17 +469,23 @@ public class CasProcessing{
 	 * 975–987. The regions have therefor triangles with the same curvature properties,
 	 * grouping connected components together on the mesh. The grown regions are added 
 	 * to a list of regions which is then added to the MeshCas instance.
+	 * 
+	 * @see <a href="http://dl.acm.org/citation.cfm?id=1649921">"A new CAD mesh segmentation method, based on curvature tensor analysis"</a>
 	 */
 	private void growRegions() {
-		logger.debug("Building up regions ...");
+		if (this.cas == null) {
+			// if no cas to analyze, exit
+			return;
+		}
+		LOGGER.debug("Building up regions ...");
 		long duration = System.currentTimeMillis();
 		int trianglesToClassifyToRegions = cas.getModel().getTriangles().size();
 		List<Triangle> toClassify = new ArrayList<Triangle>();
 		List<Region> regions = new ArrayList<Region>();
 		int contId = 0;
 		
-		logger.debug("Triangles to classify: " + trianglesToClassifyToRegions);
-		logger.debug("Starting with seed triangles ...");
+		LOGGER.debug("Triangles to classify: " + trianglesToClassifyToRegions);
+		LOGGER.debug("Starting with seed triangles ...");
 		for (int i = 0 ; i < cas.getModel().getTriangles().size() ; ++i) {
 			Triangle tr = cas.getModel().getTriangles().get(i);
 			if (tr.updateIsSeedTriangle() && tr.getRegionLabel() == -1) {
@@ -487,7 +501,7 @@ public class CasProcessing{
 				toClassify.add(cas.getModel().getTriangles().get(i));
 			}
 		}
-		logger.debug("Classified: " + (trianglesToClassifyToRegions - toClassify.size()) + " out of: " + trianglesToClassifyToRegions);
+		LOGGER.debug("Classified: " + (trianglesToClassifyToRegions - toClassify.size()) + " out of: " + trianglesToClassifyToRegions);
 
 		// crack filling algorithm needed to add not grouped triangles to
 		// already existent regions
@@ -522,7 +536,7 @@ public class CasProcessing{
 				}
 			}
 			
-			logger.debug("Remained to classify: " + toClassify.size() + " triangles");
+			LOGGER.debug("Remained to classify: " + toClassify.size() + " triangles");
 			
 			// if not all triangles have been successfully classified into regions
 			// continue and remedy this by looking at their immediate neighbors that
@@ -567,9 +581,9 @@ public class CasProcessing{
 		// add regions processed to the CAD model
 		cas.getModel().setRegions(regions);
 		
-		logger.debug("Ended. Took: " + PrintUtil.prettyMillis(System.currentTimeMillis() - duration));
-		logger.debug("Triangles classified: " + (trianglesToClassifyToRegions - toClassify.size()) + " out of: " + trianglesToClassifyToRegions);
-		logger.debug("CAD model has: " + regions.size() +" classified regions");
+		LOGGER.debug("Ended. Took: " + PrintUtil.prettyMillis(System.currentTimeMillis() - duration));
+		LOGGER.debug("Triangles classified: " + (trianglesToClassifyToRegions - toClassify.size()) + " out of: " + trianglesToClassifyToRegions);
+		LOGGER.debug("CAD model has: " + regions.size() +" classified regions");
 	}
 	
 	/**
@@ -584,14 +598,20 @@ public class CasProcessing{
 	 * is reached (threshold set in {@link src.edu.tum.cs.util.TresholdReasoning}). After the merging is completed
 	 * the updated curvature information is used in order to compute the curvature properties' values needed for the
 	 * primitive fitting part of the segmentation.
+	 * 
+	 * @see <a href="http://dl.acm.org/citation.cfm?id=1649921">"A new CAD mesh segmentation method, based on curvature tensor analysis"</a>
 	 */
 	private void mergeRegions() {
-		logger.debug("Merging existent regions ...");
+		if (this.cas == null) {
+			// if no cas to analyze exit
+			return;
+		}
+		LOGGER.debug("Merging existent regions ...");
 		long duration = System.currentTimeMillis();
 		int regionsToMerge = cas.getModel().getRegions().size();
 		int iterationLimit = 0;
 		
-		logger.debug("Regions to merge: " + regionsToMerge);
+		LOGGER.debug("Regions to merge: " + regionsToMerge);
 		HashMap<Integer, Region> regions = cas.getModel().getRegionsMap();
 		float[][] adjacencyMatrix = new float[regionsToMerge][regionsToMerge];
 		
@@ -628,15 +648,15 @@ public class CasProcessing{
 				}
 			}
 			if (min == PINF) {
-				logger.debug("All regions are distinct. Stopping ...");
+				LOGGER.debug("All regions are distinct. Stopping ...");
 				break;
 			}
 			if (min > ThresholdsReasoning.MIN_DISTANCE_TOL) {
-				logger.debug("Minimum adjacency distance is bigger than threshold ("+ ThresholdsReasoning.MIN_DISTANCE_TOL +"). Stopping ...");
+				LOGGER.debug("Minimum adjacency distance is bigger than threshold ("+ ThresholdsReasoning.MIN_DISTANCE_TOL +"). Stopping ...");
 				break;
 			}
 			if (regions.get(rJ) == null) {
-				logger.debug("Stopping ...");
+				LOGGER.debug("Stopping ...");
 				break;
 			}
 			
@@ -665,9 +685,9 @@ public class CasProcessing{
 			// re-compute necessary entries in the adjacency matrix (only for the existent merged region)
 			computeAdjacencyDistances(adjacencyMatrix, regions.get(rI));
 		}
-		logger.debug("Exiting min distance value: " + min);
-		logger.debug("Merged " + regionsToMerge + " regions into " + cas.getModel().getRegions().size() + " regions in " + iteration + " iterations");
-		logger.debug("Ended. Took: " + PrintUtil.prettyMillis(System.currentTimeMillis() - duration));
+		LOGGER.debug("Exiting min distance value: " + min);
+		LOGGER.debug("Merged " + regionsToMerge + " regions into " + cas.getModel().getRegions().size() + " regions in " + iteration + " iterations");
+		LOGGER.debug("Ended. Took: " + PrintUtil.prettyMillis(System.currentTimeMillis() - duration));
 	}
 	
 	/**
@@ -677,14 +697,24 @@ public class CasProcessing{
 	 * of individual vertices.
 	 */
 	private void updateCurvaturesProperties() {
+		if (this.cas == null || this.cas.getTriangles() == null) {
+			return;
+		}
 		long duration = System.currentTimeMillis();
-		logger.debug("Updating vertices and triangles curvatures based on regions ...");
+		LOGGER.debug("Updating vertices and triangles curvatures based on regions ...");
 		HashMap<Integer, Region> regions = cas.getModel().getRegionsMap();
 		for (int i = 0 ; i < cas.getModel().getTriangles().size() ; ++i) {
+			if (cas.getModel().getTriangles().get(i) == null) {
+				continue;
+			}
 			Triangle t = cas.getModel().getTriangles().get(i);
 			for (int j = 0 ; j < t.getPosition().length ; ++j) {
 				t.getPosition()[j].setClusterCurvatureVal(regions.get(t.getRegionLabel()).getCurvatureMinMaxOfRegion()[0], 
-						regions.get(t.getRegionLabel()).getCurvatureMinMaxOfRegion()[1], regions.get(t.getRegionLabel()).getCurvatureMinMaxOfRegion()[2]);
+						regions.get(t.getRegionLabel()).getCurvatureMinMaxOfRegion()[1], 
+						regions.get(t.getRegionLabel()).getCurvatureMinMaxOfRegion()[2]);
+				if (cas.getCurvature(t.getPosition()[j]) == null) {
+					continue;
+				}
 				Curvature c = cas.getCurvature(t.getPosition()[j]);
 				c.setCurvatureMax(t.getPosition()[j].getClusterCurvatureVal()[0]);
 				c.setCurvatureMin(t.getPosition()[j].getClusterCurvatureVal()[1]);
@@ -695,10 +725,25 @@ public class CasProcessing{
 					regions.get(t.getRegionLabel()).getCurvatureMinMaxOfRegion()[2]);
 		}
 		CurvatureCalculation.setCurvatureHueSaturation(cas.getCurvatures(), cas.getModel(), ThresholdsReasoning.CURV_SMOOTHING);
-		logger.debug("Curvatures values for the CAD model updated. Took: " + (PrintUtil.prettyMillis(System.currentTimeMillis() - duration)));
+		LOGGER.debug("Curvatures values for the CAD model updated. Took: " + 
+		(PrintUtil.prettyMillis(System.currentTimeMillis() - duration)));
 	}
 	
+	/**
+	 * Runs all the processing filters on the MeshCas model of the instance.
+	 * The changes made by filtering touch the curvature of vertices and triangles
+	 * of the model as well as the hue and saturation properties of a curvature object.
+	 * In addition, the clustering information of vertices is updated and regions of
+	 * triangles with similar curvature properties are created. Triangles or vertices 
+	 * are not added or removed along the processing stages. All the changes are stored
+	 * in the utilities Vertex, Triangle, Curvature and then stored upstream in the 
+	 * model object of the MeshCas.
+	 */
 	public void process() {
+		if (this.cas == null) {
+			LOGGER.debug("No MeshCas to process. Received MeshCas: null");
+			return;
+		}
 		// perform the KMeans clustering for the vertices curvature properties
 		this.kMeansCurvClassify();
 		
