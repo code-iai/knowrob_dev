@@ -3,11 +3,11 @@
  * materials are made available under the terms of the GNU Public License v3.0 which accompanies
  * this distribution, and is available at http://www.gnu.org/licenses/gpl.html
  * 
- * Contributors: Andrei Stoica - initial API and implementation, Year: 2014
+ * Contributors: Andrei Stoica - initial API and implementation during
+ * 								 Google Summer of Code 2014
  ******************************************************************************/
 package edu.tum.cs.vis.model.uima.analyser;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -15,73 +15,105 @@ import java.util.concurrent.Callable;
 
 import org.apache.log4j.Logger;
 
+import edu.tum.cs.util.PrintUtil;
 import edu.tum.cs.vis.model.util.Appearance;
 import edu.tum.cs.vis.model.util.Edge;
 import edu.tum.cs.vis.model.util.Triangle;
-import edu.tum.cs.vis.model.util.UtilityValues;
+import edu.tum.cs.vis.model.util.ThresholdsReasoning;
 import edu.tum.cs.vis.model.util.Vertex;
 import edu.tum.cs.vis.model.uima.cas.MeshCas;
 import edu.tum.cs.ias.knowrob.utils.ThreadPool;
 
+/**
+ * Analyzer for detecting the sharp edges of the CAD model. A sharp edge is
+ * an edge which separates two surfaces whose normals form an angle bigger
+ * than a modifiable threshold. The sharp edges play a role in building up 
+ * regions of triangles with similar curvature properties. Such regions are
+ * bounded by the sharp edges, since at the level of these edges the curvature
+ * levels are not well defined
+ * 
+ * The analyser can add / remove triangles and vertices to the models. It is 
+ * an implementation based on the paper "A new CAD mesh segmentation method, based on
+ * curvature tensor analysis", Guillaume Lavoue, Florent Dupont, Atilla Baskurt, 
+ * Computer-Aided Design 37 (2005) 975–987.
+ * 
+ * @author Andrei Stoica 
+ */
 public class EdgeAnalyser extends MeshAnalyser {
 	
 	/**
 	 * Log4j logger
 	 */
-	private static Logger		logger = Logger.getLogger(EdgeAnalyser.class);
+	private static final Logger		LOGGER = Logger.getLogger(EdgeAnalyser.class);
 	
 	/**
 	 * Number of currently processed triangles. Used for progress status
 	 */
-	final AtomicInteger			trianglesProcessed = new AtomicInteger(0);
+	private final AtomicInteger		trianglesProcessed = new AtomicInteger(0);
+	
+	/**
+	 * MeshCas containing the model under analysis
+	 */
+	private MeshCas					cas;
 	
 	/**
 	 * List of all vertices of the CAD model
 	 */
-	List<Vertex> 				allVertices;
+	private List<Vertex> 			allVertices;
 	
 	/**
 	 * List of all triangles of the CAD model
 	 */
-	List<Triangle>				allTriangles;
+	private List<Triangle>			allTriangles;
 	
 	/**
 	 * Number of added triangles to the model
 	 */
-	private int 				numAddedTriangles;
-	
-	private MeshCas				cas;
+	private int 					numAddedTriangles;
 	
 	/**
-	 * Getter for the number of the added triangles
+	 * Gets the number of added triangles to the model
+	 * 
+	 * @return number of added triangles to the model
 	 */
 	public int getNumAddedTriangles() {
 		return numAddedTriangles;
 	}
 	
+	/* (non-Javadoc)
+	 * @see edu.tum.cs.vis.model.uima.analyser.MeshAnalyser#getLogger()
+	 */
 	@Override
 	public Logger getLogger() {
-		return logger;
+		return LOGGER;
 	}
 	
+	/* (non-Javadoc)
+	 * @see edu.tum.cs.vis.model.uima.analyser.MeshAnalyser#getName()
+	 */
 	@Override
 	public String getName() {
 		return "Edge";
 	}
 	
+	/* (non-Javadoc)
+	 * @see edu.tum.cs.vis.model.uima.analyser.MeshAnalyser#processStart(edu.tum.cs.vis.model.uima.cas.MeshCas)
+	 */
 	@Override
 	public void processStart(MeshCas newCas) {
+		if (newCas == null || newCas.getModel() == null || 
+				newCas.getModel().getTriangles() == null || 
+				newCas.getModel().getVertices() == null) {
+			return;
+		}
 		cas = newCas;
 		allTriangles = cas.getModel().getTriangles();
 		allVertices = cas.getModel().getVertices();
 		trianglesProcessed.set(0);
 		
-		// remove any wrong tesselated triangles in the model
-//		this.removeCollinearTriangles();
-		
 		this.numAddedTriangles = allTriangles.size();
 		
-		// perform the sharp edge detection for individual triangles (multi-threaded)
+		// perform the sharp edge detection for individual triangles
 		List<Callable<Void>> threads = new LinkedList<Callable<Void>>();
 
 		final int interval = 500;
@@ -96,7 +128,6 @@ public class EdgeAnalyser extends MeshAnalyser {
 					for (int i = st; i < end; i++) {
 						sharpEdgeDetectionForTriangle(allTriangles.get(i));
 					}
-					trianglesProcessed.addAndGet(end - st);
 					return null;
 				}
 
@@ -104,69 +135,62 @@ public class EdgeAnalyser extends MeshAnalyser {
 		}
 		ThreadPool.executeInPool(threads);
 		
+		// after sharp edges are detected build up 3 triangles
+		// in place of the sharp triangles and remove sharp
+		// triangles from the model
 		trianglesProcessed.set(0);
-		List<Triangle> toRemove = new ArrayList<Triangle>();
 		for (int i = 0 ; i < allTriangles.size() ; ++i) {
 			Triangle t = allTriangles.get(i);
 			trianglesProcessed.incrementAndGet();
 			if (t.checkIsSharpTriangle()) {
 				addTrianglesToModel(t);
-				toRemove.add(t);
 				trianglesProcessed.decrementAndGet();
 			}
 		}
-		cas.getModel().getGroup().removeTriangle(toRemove);
-		cas.getModel().reloadVertexList();
-//		allTriangles.remove(toRemove);
 		
-//		this.removeCollinearTriangles();
+		// reload the list of vertices
+		cas.getModel().reloadVertexList();
 	
 		this.numAddedTriangles = allTriangles.size() - this.numAddedTriangles;
 		if (this.numAddedTriangles != 0) {
-			logger.debug("Added " + this.numAddedTriangles + " triangles to the model");
+			LOGGER.debug("Added " + this.numAddedTriangles + " triangles to the model");
 		}
 		else {
-			logger.debug("No triangles added to the model");
+			LOGGER.debug("No triangles added to the model");
+		}
+		if (numAddedTriangles != 0) {
+			// if there were triangles added to the model re-calculate normals
+			long start = System.currentTimeMillis();
+			LOGGER.debug("Re-calculating vertex normals ...");
+			cas.getModel().updateVertexNormals();
+			LOGGER.debug("Took: "
+					+ PrintUtil.prettyMillis(System.currentTimeMillis() - start) + " (Vertices: "
+					+ cas.getModel().getVertices().size() + ", Lines: " + cas.getModel().getLines().size()
+					+ ", Triangles: " + cas.getModel().getTriangles().size() + ")");
 		}
 	}
 	
+	/* (non-Javadoc)
+	 * @see edu.tum.cs.vis.model.uima.analyser.MeshAnalyser#updateProgress()
+	 */
 	@Override
 	public void updateProgress() {
 		if (allTriangles != null)
 			setProgress((float) trianglesProcessed.get() / (float) allTriangles.size() * 100.0f);
 	}
 	
-//	/**
-//	 * Removes "colinear triangles", i.e. "triangles" which have 3 "colinear" vertices
-//	 */
-//	private void removeCollinearTriangles() {
-//		List<Triangle> allTrianglesToProcess = new ArrayList<Triangle>();
-//		allTrianglesToProcess.addAll(allTriangles);
-//		int rmTriangles = 0;
-//		for (int i = 0 ; i < allTrianglesToProcess.size() ; ++i) {
-//			Triangle tr = allTrianglesToProcess.get(i);
-////			Edge[] edges = tr.getEdges();
-//			if (tr.getNeighbors().size() == 0) {
-//				logger.debug("Removing " + tr);
-//				for (int j = 0 ; j < allTrianglesToProcess.size() ; ++j) {
-//					Triangle tn = allTrianglesToProcess.get(j);
-//					if (tn.getNeighbors().contains(tr)) {
-//						tn.removeNeighbor(tr);
-//					}
-//				}
-//				cas.getModel().getGroup().removeTriangle(tr);
-//				allTriangles.remove(tr);
-//				allTrianglesToProcess.remove(tr);
-//				rmTriangles++;
-//			}
-//		}
-//		if (rmTriangles > 0) {
-//			logger.debug("Removed " + rmTriangles + " triangles");
-//		}
-//	}
-	
 	/**
-	 * Performs the sharp detection at the triangle level
+	 * Detects the sharp edges and sharp vertices of a triangle by comparing
+	 * the angle of its normal vector with the normal vector of all its neighbors.
+	 * The edge shared between two triangles with such an angle over the threshold
+	 * is marked down as sharp edge for both of them and the edge's vertices are
+	 * marked down as sharp vertices as well. 
+	 * 
+	 * In addition an edge can be sharp if the triangle processed does not have
+	 * any neighbors associated with that edge.
+	 * 
+	 * @param t
+	 * 			triangle to be analyzed
 	 */
 	private void sharpEdgeDetectionForTriangle(Triangle t) {
 		synchronized (t) {
@@ -182,7 +206,7 @@ public class EdgeAnalyser extends MeshAnalyser {
 				}
 				else if (neighbors.size() == 1 && !neighbors.get(0).isVisited()) {
 					float angleOfNormals = (float) (Math.toDegrees(t.getNormalVector().angle(neighbors.get(0).getNormalVector())));
-					if (angleOfNormals >= UtilityValues.SHARP_EDGE_ANGLE_TOL) {
+					if (angleOfNormals >= ThresholdsReasoning.SHARP_EDGE_ANGLE_TOL) {
 						// get shared edge from the neighboring triangle
 						Edge neighborCommonEdge = neighbors.get(0).getCommonEdge(t);
 						edges[i].getVerticesOfEdge()[0].isSharpVertex(true);
@@ -203,7 +227,7 @@ public class EdgeAnalyser extends MeshAnalyser {
 					for (int j = 0 ; j < neighbors.size() ; ++j) {
 						float angleOfNormals = (float) (Math.toDegrees(t.getNormalVector().angle(neighbors.get(j).getNormalVector())));
 						Edge neighborCommonEdge = neighbors.get(j).getCommonEdge(t);
-						if (angleOfNormals >= UtilityValues.SHARP_EDGE_ANGLE_TOL && !neighbors.get(j).isVisited()) {
+						if (angleOfNormals >= ThresholdsReasoning.SHARP_EDGE_ANGLE_TOL && !neighbors.get(j).isVisited()) {
 							neighborCommonEdge.getVerticesOfEdge()[0].isSharpVertex(true);
 							neighborCommonEdge.getVerticesOfEdge()[1].isSharpVertex(true);
 							neighbors.get(j).addSharpEdge(neighborCommonEdge);
@@ -231,32 +255,21 @@ public class EdgeAnalyser extends MeshAnalyser {
 		}
 	}
 	
-//	/**
-//	 * Finds the two common points of two neighboring triangles
-//	 */
-//	private List<Vertex> findSharedVertices(Triangle t, Triangle n) {
-//		List<Vertex> v = new ArrayList<Vertex>(4);
-//		Edge[] tEdges = t.getEdges();
-//		Edge[] nEdges = n.getEdges();
-//		for (int i = 0 ; i < tEdges.length ; ++i) {
-//			for (int j = 0 ; j < nEdges.length ; ++j) {
-//				if (tEdges[i].isDirectNeighbor(nEdges[j])) {
-//					v.add(tEdges[i].getVerticesOfEdge()[0]);
-//					v.add(nEdges[j].getVerticesOfEdge()[0]);
-//					v.add(tEdges[i].getVerticesOfEdge()[1]);
-//					v.add(nEdges[j].getVerticesOfEdge()[1]);
-//					break;
-//				}
-//			}
-//		}
-//		return v;
-//	}
-	
 	/**
-	 * Adds triangles to model using the centroid of the triangle
+	 * Adds 3 triangles to the model if the passed triangle is a 
+	 * sharp triangle as defined in "A new CAD mesh segmentation method, based on
+	 * curvature tensor analysis", Guillaume Lavoue, Florent Dupont, Atilla Baskurt, 
+	 * Computer-Aided Design 37 (2005) 975–987, and previously checked based
+	 * on the processing done inside of {@link edu.tum.cs.vis.model.uima.analyser.EdgeAnalyser#sharpEdgeDetectionForTriangle(Triangle)}
+	 * 
+	 * This method builds up 3 triangles starting from the given one by adding the
+	 * centroid of it as a new vertex. The new triangles neighboring relations are 
+	 * handled based on the edge neighbors of the parent triangle, while the parent
+	 * is removed from the neighbors list of its neighbors and also removed from the
+	 * group of triangles of the CAD model 
 	 * 
 	 * @param t 
-	 * 			triangle decomposed in 3 smaller triangles
+	 * 			triangle decomposed in 3 smaller triangles and then removed
 	 */
 	private void addTrianglesToModel(Triangle t) {
 		Vertex newVertex = new Vertex(t.getCentroid().x, t.getCentroid().y, t.getCentroid().z);
@@ -313,5 +326,8 @@ public class EdgeAnalyser extends MeshAnalyser {
 			newTriangle[i].updateCentroid();
 			cas.getModel().getGroup().addTriangle(newTriangle[i]);
 		}
+		
+		// now remove parent triangle from the group of the model
+		cas.getModel().getGroup().removeTriangle(t);
 	}
 }

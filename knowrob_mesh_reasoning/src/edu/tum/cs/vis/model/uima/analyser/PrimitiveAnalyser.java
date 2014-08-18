@@ -52,7 +52,7 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 	/**
 	 * Log4J Logger
 	 */
-	private static Logger		logger					= Logger.getLogger(PrimitiveAnalyser.class);
+	private static final Logger	LOGGER					= Logger.getLogger(PrimitiveAnalyser.class);
 
 	/**
 	 * Threshold degree between normal vertices for allowing combination of neighboring 
@@ -788,6 +788,12 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 	@SuppressWarnings("rawtypes")
 	@Override
 	public void processStart(final MeshCas cas) {
+		if (cas == null || cas.getModel() == null || 
+				cas.getModel().getTriangles() == null || 
+				cas.getModel().getVertices() == null || 
+				cas.getModel().getRegions() == null) {
+			return;
+		}
 		allVertices = cas.getModel().getVertices();
 		allTriangles = cas.getModel().getTriangles();
 		allRegions = cas.getModel().getRegions();
@@ -882,7 +888,7 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 		
 		fitAnnotations(cas.getAnnotations());
 		
-		logger.debug("Pre-combining neighbors ...");
+		LOGGER.debug("Pre-combining neighbors ...");
 		// now merge small annotations into bigger ones
 		combineSmallAnnotations(cas);
 		// and combine neighbors of same type
@@ -893,7 +899,7 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 
 		Set<Annotation> toRefit = new HashSet<Annotation>();
 		if (failedFittings.size() > 0) {
-			logger.debug("Merging failed fittings into neighbors (" + failedFittings.size() + ")");
+			LOGGER.debug("Merging failed fittings into neighbors (" + failedFittings.size() + ")");
 			mergeWithNeighbors(cas, failedFittings, toRefit);
 			combineSameNeighboringAnnotations(cas, cas.getAnnotations(), toRefit);
 		}
@@ -904,7 +910,7 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 		// cones by evaluating the fit error
 		// fit error should be smaller than 0.005 for good fitted spheres
 
-		logger.debug("Checking spheres ...");
+		LOGGER.debug("Checking spheres ...");
 
 		Set<Annotation> toAdd = new HashSet<Annotation>();
 		Set<Annotation> toRemove = new HashSet<Annotation>();
@@ -936,7 +942,7 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 				if (tmp.getCone().getFitError() < sa.getSphere().getFitError()) {
 					toRemove.add(a);
 					toAdd.add(tmp);
-					// logger.debug("Changing sphere annotation to cone because fit error is smaller: "
+					// LOGGER.debug("Changing sphere annotation to cone because fit error is smaller: "
 					// + tmp.getCone().getFitError() + "<" + sa.getSphere().getFitError());
 				}
 			}
@@ -949,7 +955,7 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 		}
 		mergeWithNeighbors(cas, smallSpheres, toRefit);
 		
-		logger.debug("Combining neighbors ...");
+		LOGGER.debug("Combining neighbors ...");
 		// combine neighboring annotations which were previously different types before changing sphere to cone
 		combineSameNeighboringAnnotations(cas, cas.getAnnotations(), toRefit);
 		
@@ -975,7 +981,7 @@ public class PrimitiveAnalyser extends MeshAnalyser {
 	 */
 	@Override
 	public Logger getLogger() {
-		return logger;
+		return LOGGER;
 	}
 
 	/* (non-Javadoc)
