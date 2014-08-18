@@ -20,7 +20,6 @@ import javax.vecmath.Matrix4f;
 import javax.vecmath.Tuple3f;
 import javax.vecmath.Vector3f;
 
-import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLIndividual;
@@ -41,13 +40,9 @@ import edu.tum.cs.vis.model.util.Triangle;
 import edu.tum.cs.vis.model.util.Vertex;
 
 /**
- * Annotation for a complex handle.
- * 
- * A complex handle is a convex part in the model.
- * 
+ * Annotation for a complex handle. A complex handle is a convex part in the model.
  * 
  * @author Stefan Profanter
- * 
  */
 public class ComplexHandleAnnotation extends DrawableAnnotation implements HandleAnnotation,
 		PrologAnnotationInterface {

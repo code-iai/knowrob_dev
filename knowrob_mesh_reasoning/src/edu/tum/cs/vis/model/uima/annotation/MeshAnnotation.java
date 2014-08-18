@@ -3,7 +3,9 @@
  * materials are made available under the terms of the GNU Public License v3.0 which accompanies
  * this distribution, and is available at http://www.gnu.org/licenses/gpl.html
  * 
- * Contributors: Stefan Profanter - initial API and implementation, Year: 2012
+ * Contributors: 
+ * 				Stefan Profanter - initial API and implementation, Year: 2012
+ * 				Andrei Stoica - refactored implementation during Google Summer of Code 2014
  ******************************************************************************/
 package edu.tum.cs.vis.model.uima.annotation;
 
@@ -29,6 +31,8 @@ import edu.tum.cs.vis.model.util.Vertex;
  * or lines.
  * 
  * @author Stefan Profanter
+ * @author Andrei Stoica (refactor on neighboring annotations getters)
+ * 
  * @param <S>
  *            Type of mesh annotation
  * 
@@ -47,7 +51,7 @@ public abstract class MeshAnnotation<S extends MeshAnnotation> extends DrawableA
 	private static final long	serialVersionUID	= 1222063742441634463L;
 
 	/**
-	 * Mesh which contains the referenced Triangles for which this annotation stands.
+	 * Mesh which contains the referenced triangles for which this annotation stands.
 	 */
 	protected Mesh				mesh				= new Mesh();
 
@@ -57,9 +61,8 @@ public abstract class MeshAnnotation<S extends MeshAnnotation> extends DrawableA
 	protected Model				model;
 
 	/**
-	 * Default constructor. Sets the annotation color. Each type of annotation should have a
-	 * different color.
-	 * 
+	 * Default constructor. 
+	 * Sets the annotation color. Each type of annotation should have a different color.
 	 * 
 	 * @param clazz2
 	 *            Class of derived annotation.
@@ -76,7 +79,7 @@ public abstract class MeshAnnotation<S extends MeshAnnotation> extends DrawableA
 	}
 
 	/**
-	 * Checks if this annotation includes the triangle <code>p</code>.
+	 * Checks if this annotation includes the triangle {@code p}.
 	 * 
 	 * @param p
 	 *            triangle to check for
@@ -87,6 +90,10 @@ public abstract class MeshAnnotation<S extends MeshAnnotation> extends DrawableA
 		return mesh.getTriangles().contains(p);
 	}
 
+	/**
+	 * Draws the selected annotation as called from the visualization
+	 * thread.
+	 */
 	@Override
 	protected void drawAnnotation(PGraphics g, DrawSettings drawSettings) {
 		DrawSettings tmpSet;
@@ -99,7 +106,7 @@ public abstract class MeshAnnotation<S extends MeshAnnotation> extends DrawableA
 	}
 
 	/**
-	 * Get mesh of annotation
+	 * Gets the mesh which the annotation belongs to
 	 * 
 	 * @return the mesh
 	 */
@@ -108,7 +115,7 @@ public abstract class MeshAnnotation<S extends MeshAnnotation> extends DrawableA
 	}
 
 	/**
-	 * Get parent model of annotation.
+	 * Gets the parent model of annotation.
 	 * 
 	 * @return the model
 	 */
@@ -121,7 +128,7 @@ public abstract class MeshAnnotation<S extends MeshAnnotation> extends DrawableA
 	 * getting all annotations where direct neighbor triangles are a member of.
 	 * 
 	 * @param cas
-	 *            main mesh cas
+	 *            main cas
 	 * @return Set of found annotations which are the same type of this annotation
 	 */
 	public Set<S> getNeighborAnnotations(MeshCas cas) {
@@ -173,7 +180,6 @@ public abstract class MeshAnnotation<S extends MeshAnnotation> extends DrawableA
 		// Check all neighbors of the triangle which annotation they have
 		Edge[] edges = t.getEdges();
 		for (int i = 0 ; i < edges.length ; ++i) {
-//			if (!edges[i].getIsSharpEdge()) {
 			List<Triangle> neighbors = t.getNeighborsOfEdge(edges[i]);
 			for (int j = 0 ; j < neighbors.size() ; ++j) {
 				// neighbor not in same annotation, then process
@@ -184,22 +190,9 @@ public abstract class MeshAnnotation<S extends MeshAnnotation> extends DrawableA
 						annotations.add(neighAnnotation);
 					}
 				}
-//				}
 			}
 		}
 		return annotations;
-		
-//		for (Triangle neig : t.getNeighbors()) {
-//			// neighbor is in same annotation, skip
-//			if (getMesh().getTriangles().contains(neig))
-//				continue;
-//
-//			// Get annotation of triangle
-//			T ma = cas.findAnnotation(parClazz, neig);
-//			if (ma != null)
-//				annotations.add(ma);
-//		}
-//		return annotations;
 	}
 
 	/**
@@ -230,21 +223,6 @@ public abstract class MeshAnnotation<S extends MeshAnnotation> extends DrawableA
 						edgeVertices.add(commEdge.getVerticesOfEdge()[1]);
 						edgeTriangles.put(t, neigTriangle);
 					}
-//					int vertCount = 0;
-//					for (Vertex vt : t.getPosition()) {
-//						for (Vertex vn : neigTriangle.getPosition()) {
-//							if (vt.sameCoordinates(vn)) {
-//								edgeVertices.add(vt);
-//								vertCount++;
-//								break;
-//							}
-//						}
-//					}
-//
-//					// neighboring triangles have exactly two common vertices
-//					if (vertCount != 2)
-//						continue;
-//					edgeTriangles.put(t, neigTriangle);
 				}
 			}
 		}	
