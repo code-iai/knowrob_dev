@@ -11,24 +11,22 @@ import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JRadioButtonMenuItem;
 
 import edu.tum.cs.vis.model.uima.cas.MeshCas;
 import edu.tum.cs.vis.model.view.MeshReasoningView;
 
 /**
- * Control panel for draw settings
+ * Control panel for draw settings of the model.
+ * Implements the buttons frontend which is featured in
+ * the main applet of the mesh reasoning view.
  * 
  * @author Stefan Profanter
- * 
+ * @author Andrei Stoica - implemented new buttons for an extended view
  */
 public class DrawSettingsPanel extends JPanel implements ActionListener {
 
@@ -44,79 +42,83 @@ public class DrawSettingsPanel extends JPanel implements ActionListener {
 	private final MeshCas			cas;
 
 	/**
-	 * The view for which this control is
+	 * The view on which this control is used
 	 */
 	private final MeshReasoningView	view;
 
 	/**
-	 * draw vertex normals
+	 * Per vertex normals drawing check box button
 	 */
 	private final JCheckBox			cbxDrawVertexNormals;
 	
 	/**
-	 * draw triangle normals
+	 * Per triangle normals drawing check box button
 	 */
 	private final JCheckBox			cbxDrawTriangleNormals;
 	
 	/**
-	 * draw vertex normalized minimum curvature direction
+	 * Per vertex normalized minimum curvature direction drawing check box button
 	 */
 	private final JCheckBox			cbxDrawVertexCurvatureMin;
 	
 	/**
-	 * draw vertex normalized maximum curvature direction
+	 * Per vertex normalized maximum curvature direction drawing check box button
 	 */
 	private final JCheckBox			cbxDrawVertexCurvatureMax;
 	
 	/**
-	 * draw vertex together both min and max curvature directions
+	 * Per vertex scaled minimum and maximum curvature directions drawing check box button 
 	 */
 	private final JCheckBox			cbxDrawVertexCurvature;
 	
 	/**
-	 * color model by curvature
+	 * Model curvature coloring scheme drawing combo box button 
 	 */
+	@SuppressWarnings("rawtypes")
 	private final JComboBox			cmbbxDrawCurvatureColor;
 	
+	/**
+	 * Model curvature coloring scheme drawing combo box string options array
+	 */
 	private final String[]			cmbbxOptions;
 	
 	/**
-	 * Checkbox for displaying region edge boundaries
+	 * Region edges drawing check box button
 	 */
 	private final JCheckBox			cbxDrawRegionEdges;
 	
 	/**
-	 * draw sharp edges
+	 * Sharp edges drawing check box button
 	 */
 	private final JCheckBox			cbxDrawSharpEdges;
 	
 	/**
-	 * Checkbox for selectTrianglesOnly setting.
+	 * Select only triangles drawing type check box button
 	 */
 	private final JCheckBox			cbxSelectTriangles;
 	
 	/**
-	 * select only nearest triangle or all triangles intersecting mouse ray
+	 * Select only the nearest triangle drawing type check box button
 	 */
 	private final JCheckBox			cbxSelectNearestOnly;
 	
 	/**
-	 * draw bounding box for each group
+	 * Per model group bounding box drawing check box button
 	 */
 	private final JCheckBox			cbxDrawBoundingBox;
 
 	/**
-	 * draw voronoi area
+	 * Per vertex Voronoi area sphere drawing check box button
 	 */
 	private final JCheckBox			cbxDrawVoronoiArea;
 	
 	/**
-	 * use white background
+	 * White background check button
 	 */
 	private final JCheckBox			cbxWhiteBackground;
 	
 	/**
-	 * button to set rotation of camera manually
+	 * Set view perspective (rotate camera to given parameters) check box button
 	 */
 	private final JButton			btnSetRotation;
 	
@@ -128,6 +130,7 @@ public class DrawSettingsPanel extends JPanel implements ActionListener {
 	 * @param view
 	 *            parent mesh reasoning view
 	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public DrawSettingsPanel(MeshCas cas, MeshReasoningView view) {
 		this.view = view;
 		this.cas = cas;
@@ -166,6 +169,7 @@ public class DrawSettingsPanel extends JPanel implements ActionListener {
 		cbxDrawVertexCurvature.setSelected(false);
 		this.add(cbxDrawVertexCurvature);
 		
+		// parameterization skipped because compatibility with Java JRE >1.6 was desired
 		cmbbxDrawCurvatureColor = new JComboBox(cmbbxOptions);
 		cmbbxDrawCurvatureColor.addActionListener(this);
 		cmbbxDrawCurvatureColor.setSelectedIndex(0);

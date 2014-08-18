@@ -3,7 +3,9 @@
  * materials are made available under the terms of the GNU Public License v3.0 which accompanies
  * this distribution, and is available at http://www.gnu.org/licenses/gpl.html
  * 
- * Contributors: Stefan Profanter - initial API and implementation, Year: 2012
+ * Contributors: 
+ * 				Stefan Profanter - initial API and implementation, Year: 2012
+ * 				Andrei Stoica - refactored implementation during Google Summer of Code 2014
  ******************************************************************************/
 package edu.tum.cs.vis.model.view;
 
@@ -35,19 +37,20 @@ import edu.tum.cs.vis.model.util.Curvature;
 import edu.tum.cs.vis.model.util.DrawSettings;
 import edu.tum.cs.vis.model.util.DrawType;
 import edu.tum.cs.vis.model.util.Edge;
-import edu.tum.cs.vis.model.util.Group;
 import edu.tum.cs.vis.model.util.IntersectedTriangle;
 import edu.tum.cs.vis.model.util.Region;
 import edu.tum.cs.vis.model.util.Triangle;
 import edu.tum.cs.vis.model.util.Vertex;
 
 /**
- * Viewing applet for showing the results of the reasoning process.
- * 
- * Supported keys: + Increase scale, - Decrease scale
+ * Class which implements the main GUI applet for showing the results of the reasoning process.
+ * It implements the functionality that works in the backend to provide the model visualization
+ * throughout the mesh reasoning process. It contains different view perspectives meant
+ * for both debugging and showing the results of the processing. The possibility to save the
+ * visualization at any time is also implemented.
  * 
  * @author Stefan Profanter
- * 
+ * @author Andrei Stoica
  */
 public final class MeshReasoningView extends PAppletSelection implements MouseInputListener,
 		KeyListener {
@@ -58,64 +61,10 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 	private static final long	serialVersionUID	= 984696039698156574L;
 
 	/**
-	 * Draw a cone or cylinder with given properties on graphics context
-	 * 
-	 * @param g
-	 *            graphics context
-	 * @param sides
-	 *            number of sides to use (indicates the level of detail to draw cone)
-	 * @param r1
-	 *            bottom radius
-	 * @param r2
-	 *            top radius
-	 * @param h
-	 *            height
-	 * @param top
-	 *            draw top cap
-	 * @param bottom
-	 *            draw bottom cap
-	 */
-	public static void drawCylinder(PGraphics g, int sides, float r1, float r2, float h,
-			boolean top, boolean bottom) {
-		float angle = (float) (2 * Math.PI / sides);
-		float halfHeight = h / 2;
-		if (top) {
-			// top
-			g.beginShape();
-			for (int i = 0; i < sides; i++) {
-				float x = (float) (Math.cos(i * angle) * r1);
-				float y = (float) (Math.sin(i * angle) * r1);
-				g.vertex(x, y, -halfHeight);
-			}
-			g.endShape(PConstants.CLOSE);
-		}
-		if (bottom) {
-			// bottom
-			g.beginShape();
-			for (int i = 0; i < sides; i++) {
-				float x = (float) (Math.cos(i * angle) * r2);
-				float y = (float) (Math.sin(i * angle) * r2);
-				g.vertex(x, y, halfHeight);
-			}
-			g.endShape(PConstants.CLOSE);
-		}
-		// draw body
-		g.beginShape(PConstants.TRIANGLE_STRIP);
-		for (int i = 0; i < sides + 1; i++) {
-			float x1 = (float) (Math.cos(i * angle) * r1);
-			float y1 = (float) (Math.sin(i * angle) * r1);
-			float x2 = (float) (Math.cos(i * angle) * r2);
-			float y2 = (float) (Math.sin(i * angle) * r2);
-			g.vertex(x1, y1, -halfHeight);
-			g.vertex(x2, y2, halfHeight);
-		}
-		g.endShape(PConstants.CLOSE);
-	}
-
-	/**
 	 * Cam for manipulating the view
 	 */
-	PeasyCam										cam;
+	private static PeasyCam							cam;
+	
 	/**
 	 * Background color dark
 	 */
@@ -127,57 +76,58 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 	private final Color								bgcolorWhite		= new Color(255, 255, 255);
 
 	/**
-	 * Should background be white
+	 * White background flag
 	 */
 	private boolean									backgroundWhite		= false;
 	
 	/**
-	 * draw normals for each vertex?
+	 * Normals of vertices drawing flag
 	 */
 	private boolean									drawVertexNormals	= false;
 	
 	/**
-	 * draw normals for each triangle?
+	 * Normals of triangles drawing flag
 	 */
 	private boolean									drawTriangleNormals = false;
 	
 	/**
-	 * draw min curvature direction for each vertex?
+	 * Minimum normalized curvature direction of each vertex drawing flag
 	 */
 	private boolean									drawVertexCurvatureMin = false;
 	
 	/**
-	 * draw max curvatrue direction for each vertex?
+	 * Maximum normalized curvature direction of each vertex drawing flag
 	 */
 	private boolean 								drawVertexCurvatureMax = false;
 	
 	/**
-	 * draw curvature properties for each vertex?
+	 * Minimum and maximum scaled curvature directions of each vertex drawing flag.
+	 * The scaling is done with the associated curvature values.
 	 */
 	private boolean									drawVertexCurvature	= false;
 
 	/**
-	 * draw voronoi area for each vertex?
+	 * Voronoi area at each vertex drawing flag
 	 */
 	private boolean									drawVoronoiArea		= false;
 	
 	/**
-	 * draw sharp edges existent in the model
+	 * Sharp edges drawing flag
 	 */
 	private boolean									drawSharpEdges 		= false;
 	
 	/**
-	 * draw region edges
+	 * Region edges drawing flag
 	 */
 	private boolean									drawRegionEdges		= false;
 	
 	/**
-	 * Select only nearest triangle or all intersecting with mouse ray?
+	 * Select only nearest triangle flag
 	 */
 	private boolean									selectNearestOnly	= true;
 	
 	/**
-	 * draw bounding box for each group?
+	 * Bounding box drawing flag
 	 */
 	private boolean									drawBoundingBox		= false;
 
@@ -197,7 +147,7 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 	private ArrayList<MeshCas>						casList				= new ArrayList<MeshCas>();
 
 	/**
-	 * current scale factor
+	 * Current scale factor of the model in the MeshCas
 	 */
 	private float									modelScale			= 1f;
 
@@ -243,7 +193,7 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 	private ImageGeneratorSettings					imageGeneratorSettings;
 
 	/**
-	 * Add annotation to selected annotations
+	 * Adds annotation to selected annotations
 	 * 
 	 * @param a
 	 *            annotation to add
@@ -253,7 +203,7 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 	}
 
 	/**
-	 * Add given annotation to selected annotations list which means the annotation is selected. You
+	 * Adds given annotation to selected annotations list which means the annotation is selected. You
 	 * can additionally specify a color for the annotation.
 	 * 
 	 * @param a
@@ -269,7 +219,7 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 	}
 
 	/**
-	 * Remove / unselect all selected annotations
+	 * Removes / unselects all selected annotations
 	 */
 	public void clearSelectedAnnotations() {
 		synchronized (selectedAnnotations) {
@@ -547,7 +497,63 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 	}
 
 	/**
-	 * Get camera of mesh reasoning view.
+	 * Draw a cone or cylinder with given properties on graphics context
+	 * 
+	 * @param g
+	 *            graphics context
+	 * @param sides
+	 *            number of sides to use (indicates the level of detail to draw cone)
+	 * @param r1
+	 *            bottom radius
+	 * @param r2
+	 *            top radius
+	 * @param h
+	 *            height
+	 * @param top
+	 *            draw top cap
+	 * @param bottom
+	 *            draw bottom cap
+	 */
+	public static void drawCylinder(PGraphics g, int sides, float r1, float r2, float h,
+			boolean top, boolean bottom) {
+		float angle = (float) (2 * Math.PI / sides);
+		float halfHeight = h / 2;
+		if (top) {
+			// top
+			g.beginShape();
+			for (int i = 0; i < sides; i++) {
+				float x = (float) (Math.cos(i * angle) * r1);
+				float y = (float) (Math.sin(i * angle) * r1);
+				g.vertex(x, y, -halfHeight);
+			}
+			g.endShape(PConstants.CLOSE);
+		}
+		if (bottom) {
+			// bottom
+			g.beginShape();
+			for (int i = 0; i < sides; i++) {
+				float x = (float) (Math.cos(i * angle) * r2);
+				float y = (float) (Math.sin(i * angle) * r2);
+				g.vertex(x, y, halfHeight);
+			}
+			g.endShape(PConstants.CLOSE);
+		}
+		// draw body
+		g.beginShape(PConstants.TRIANGLE_STRIP);
+		for (int i = 0; i < sides + 1; i++) {
+			float x1 = (float) (Math.cos(i * angle) * r1);
+			float y1 = (float) (Math.sin(i * angle) * r1);
+			float x2 = (float) (Math.cos(i * angle) * r2);
+			float y2 = (float) (Math.sin(i * angle) * r2);
+			g.vertex(x1, y1, -halfHeight);
+			g.vertex(x2, y2, halfHeight);
+		}
+		g.endShape(PConstants.CLOSE);
+	}
+
+	
+	/**
+	 * Gets camera of mesh reasoning view.
 	 * 
 	 * @return the camera
 	 */
@@ -556,7 +562,7 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 	}
 
 	/**
-	 * Get list of all CAS objects (see UIMA Framework)
+	 * Gets list of all CAS objects (see UIMA Framework)
 	 * 
 	 * @return ArrayList of MeshCas
 	 */
@@ -565,14 +571,16 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 	}
 
 	/**
-	 * @return the control
+	 * Gets the control handle of the mesh reasoning view
+	 * 
+	 * @return the control handle of the view
 	 */
 	public MeshReasoningViewControl getControl() {
 		return control;
 	}
 
 	/**
-	 * get current model scale
+	 * Gets the current model scale of the view
 	 * 
 	 * @return model scale
 	 */
@@ -680,7 +688,7 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 	}
 
 	/**
-	 * Get value of selectTrianglesOnly. True if only triangles will be selected, false if whole
+	 * Gets the value of selectTrianglesOnly. True if only triangles will be selected, false if whole
 	 * annotation is selected on mouse click.
 	 * 
 	 * @return selectTrianglesOnly value
@@ -712,19 +720,12 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 		} else if (c == 'q') {
 			drawSettings.decLineWidth();
 			draw();
-		} else if (imageGeneratorSettings != null && e.isControlDown() && c == 19) {
+		} else if (imageGeneratorSettings != null && e.isControlDown() && c == 's') {
 			// Ctrl+S
 			imageGeneratorSettings.triggerViewInitialized();
 		}
-		/* else if (c == 'm') {
-		
-		test++;
-		} else if (c == 'n') {
-		test--;
-		}
-		System.out.println("Test: " + test);*/
 	}
-
+	
 	@Override
 	public void mouseClicked(MouseEvent e) {
 		if (e.getButton() == 1) {
@@ -823,16 +824,17 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 				}
 				selectedTriangles.clear();
 				selectedTriangles.add(nearest);
-				System.out.println("========= New selection =========");
-				for (IntersectedTriangle t : selectedTriangles) {
-					System.out.println(t.t);
-					System.out.println("=========== Neighbors ===========");
-					for (Triangle n : t.t.getNeighbors()) {
-						System.out.println(n);
-						System.out.println("aon = " + (Math.toDegrees(t.t.getNormalVector().angle(n.getNormalVector())) + " aoninv = " + (Math.toDegrees(n.getNormalVector().angle(t.t.getNormalVector())))));
-					}
-				}
-				System.out.println("========= End selection =========\n");
+				// uncomment below if visual debug of selected triangles is desired
+//				System.out.println("========= New selection =========");
+//				for (IntersectedTriangle t : selectedTriangles) {
+//					System.out.println(t.t);
+//					System.out.println("=========== Neighbors ===========");
+//					for (Triangle n : t.t.getNeighbors()) {
+//						System.out.println(n);
+//						System.out.println("aon = " + (Math.toDegrees(t.t.getNormalVector().angle(n.getNormalVector())) + " aoninv = " + (Math.toDegrees(n.getNormalVector().angle(t.t.getNormalVector())))));
+//					}
+//				}
+//				System.out.println("========= End selection =========\n");
 			}
 
 			selectedTrianglesChanged();
@@ -853,7 +855,7 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 	}
 
 	/**
-	 * Save current view as PNG image.
+	 * Saves the current view as PNG image.
 	 * 
 	 * @param filename
 	 *            Filename of the image
@@ -891,7 +893,7 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 	}
 
 	/**
-	 * Called to update list of selectedAnnotations after list of selectedTriangless has changed
+	 * Updates list of selectedAnnotations after list of selectedTriangless has changed
 	 */
 	private void selectedTrianglesChanged() {
 		if (!selectTrianglesOnly) {
@@ -922,7 +924,7 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 	}
 
 	/**
-	 * Set to true if background should be white
+	 * Sets background white flag to true if background should be white
 	 * 
 	 * @param backgroundWhite
 	 *            the backgroundWhite to set
@@ -932,7 +934,7 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 	}
 
 	/**
-	 * Set list of all CAS objects (see UIMA Framework)
+	 * Sets list of all CAS objects (see UIMA Framework)
 	 * 
 	 * @param casList
 	 *            list to set
@@ -952,7 +954,7 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 	}
 
 	/**
-	 * Should bounding box be drawn for each group?
+	 * Sets the bounding box drawing flag
 	 * 
 	 * @param drawBoundingBox
 	 *            the drawBoundingBox to set
@@ -962,10 +964,17 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 	}
 
 	/**
-	 * Should model colored by curvature?
+	 * Sets the curvature coloring scheme. Three coloring schemes
+	 * are available:
+	 * 		Mean Curvature coloring (relative HSV scale converted to RGB),
+	 * 		Gaussian Curvature coloring (relative HSV scale converted to RGB),
+	 * 		Estimated Curvatures coloring (absolute HSV scale converted to RGB). 
 	 * 
-	 * @param drawCurvatureColor
-	 *            true if color by curvature
+	 * @param whichColoring
+	 *            setter for the coloring scheme:
+	 *            		0 := Mean Curvature coloring
+	 *            		1 := Gaussian Curvature coloring
+	 *            		2 := Estimated Curvatures coloring
 	 */
 	public void setDrawCurvatureColor(int whichColoring) {
 
@@ -995,7 +1004,10 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 	}
 
 	/**
-	 * Set draw type for whole model and annotations. Available types are filled, lines, points.
+	 * Sets the draw type for the whole model and annotations. Available types are:
+	 * 	 	FILLED = faces are filled with color, 
+	 * 	 	LINES = faces are transparent, 
+	 * 		POINTS = faces and lines are transparent.
 	 * 
 	 * @param t
 	 *            new draw type
@@ -1006,6 +1018,7 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 	}
 
 	/**
+	 * Sets the normalized minimum curvature direction drawing flag
 	 * 
 	 * @param drawVertexCurvatureMin
 	 *            the drawVertexCurvatureMin to set
@@ -1015,6 +1028,7 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 	}
 	
 	/**
+	 * Sets the normalized maximum curvature direction drawing flag
 	 * 
 	 * @param drawVertexCurvatureMax
 	 *            the drawVertexCurvatureMax to set
@@ -1024,6 +1038,9 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 	}
 	
 	/**
+	 * Sets the scaled minimum and maximum curvature directions drawing flag.
+	 * The scaling performed is based on the associated minimum and maximum 
+	 * curvature values.
 	 * 
 	 * @param drawVertexCurvature
 	 *            the drawVertexCurvature to set
@@ -1033,6 +1050,8 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 	}
 
 	/**
+	 * Sets the normal of each vertex drawing flag
+	 * 
 	 * @param drawVertexNormals
 	 *            the drawVertexNormals to set
 	 */
@@ -1041,6 +1060,8 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 	}
 
 	/**
+	 * Sets the normal of each triangle drawing flag
+	 * 
 	 * @param drawTriangleNormals
 	 * 			  the drwaTriangleNormals to set
 	 */
@@ -1049,6 +1070,8 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 	}
 	
 	/**
+	 * Sets the Voronoi area associated to each vertex drawing flag
+	 * 
 	 * @param drawVoronoiArea
 	 *            the drawVoronoiArea to set
 	 */
@@ -1057,6 +1080,8 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 	}
 	
 	/**
+	 * Sets the sharp edges drawing flag
+	 * 
 	 * @param drawSharpEdges
 	 * 			  the drawSharpEdges to set
 	 */
@@ -1065,6 +1090,8 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 	}
 	
 	/**
+	 * Sets the region edges drawing flag
+	 * 
 	 * @param drawRegionEdges
 	 * 			  the drawRegionEdges to set
 	 */
@@ -1073,7 +1100,7 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 	}
 
 	/**
-	 * Set image generator settings for image generation. If null, image generation is disabled.
+	 * Sets the image generator settings for the image generation. If null, image generation is disabled.
 	 * 
 	 * @param imageGeneratorSettings
 	 *            new image generator settings
@@ -1084,7 +1111,7 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 	}
 
 	/**
-	 * Set manual rotation of camera
+	 * Sets the manual rotation of the camera
 	 * 
 	 * @param pitch
 	 *            rotation around x
@@ -1098,7 +1125,7 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 	}
 
 	/**
-	 * Set model scale to scale model manually
+	 * Sets the model scale to scale model manually
 	 * 
 	 * @param modelScale
 	 *            new scale factor
@@ -1108,6 +1135,8 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 	}
 
 	/**
+	 * Sets the select only the near triangle drawing flag
+	 * 
 	 * @param selectNearestOnly
 	 *            the selectNearestOnly to set
 	 */
@@ -1152,11 +1181,5 @@ public final class MeshReasoningView extends PAppletSelection implements MouseIn
 		if (imageGeneratorSettings != null) {
 			imageGeneratorSettings.triggerSetup();
 		}
-	}
-	
-	public void setSelectedTriangle(Triangle t) {
-		selectedTriangles.clear();
-		IntersectedTriangle tr = new IntersectedTriangle(t, t.getPosition()[0]);
-		selectedTriangles.add(tr);
 	}
 }
