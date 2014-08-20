@@ -107,7 +107,7 @@ public class ThresholdsReasoning extends Thresholds {
 	 * 
 	 * {@link edu.tum.cs.vis.model.uima.analyser.PrimitiveAnalyser}
 	 */
-	public static final float PA_PLANE_TOLERANCE			= 0.0f;
+	public static final float PA_PLANE_TOLERANCE			= 2.0f;
 	
 	/**
 	* Default constructor to avoid creation of new instances
