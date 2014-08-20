@@ -60,7 +60,7 @@ public class ThresholdsReasoning extends Thresholds {
 	* 
 	* {@link edu.tum.cs.vis.model.util.algorithm.CasProcessing#process()}
 	*/
-	public static final float MIN_AREA						= 0.05f;
+	public static final float MIN_AREA						= 0.01f;
 	
 	/**
 	* Minimum distance threshold for the region adjacency distances. This parameter limits
@@ -69,7 +69,7 @@ public class ThresholdsReasoning extends Thresholds {
 	* 
 	* {@link edu.tum.cs.vis.model.util.algorithm.CasProcessing#process()}
 	*/
-	public static final float MIN_DISTANCE_TOL 				= 5f;
+	public static final float MIN_DISTANCE_TOL 				= 10f;
 	
 	/**
 	* Weighting parameter used in computing the curvature hue and saturation properties.
@@ -85,11 +85,11 @@ public class ThresholdsReasoning extends Thresholds {
 	* Minimum threshold angle used in deciding whether or not an edge shared by two neighboring
 	* triangles is sharp or not. The angle between the normals of two triangle neighbors is compared
 	* to this value and if it is above it, then the shared edge is considered to be sharp for both
-	* triangle instances.
+	* triangle instances.\
 	* 
 	* {@link edu.tum.cs.vis.model.util.algorithm.CasProcessing#process()}
 	*/
-	public static final float SHARP_EDGE_ANGLE_TOL 			= 65.0f;
+	public static final float SHARP_EDGE_ANGLE_TOL 			= 65f;
 	
 	/**
 	 * PrimitiveAnalyser maximal threshold for the angle between
@@ -107,7 +107,7 @@ public class ThresholdsReasoning extends Thresholds {
 	 * 
 	 * {@link edu.tum.cs.vis.model.uima.analyser.PrimitiveAnalyser}
 	 */
-	public static final float PA_PLANE_TOLERANCE			= 2.0f;
+	public static final float PA_PLANE_TOLERANCE			= 0.0f;
 	
 	/**
 	* Default constructor to avoid creation of new instances

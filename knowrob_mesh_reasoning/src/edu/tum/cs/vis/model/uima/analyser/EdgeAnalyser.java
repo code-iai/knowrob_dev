@@ -301,7 +301,7 @@ public class EdgeAnalyser extends MeshAnalyser {
 			}
 			for (Triangle n : toAdd) {
 				for (int j = 0 ; j < 3 ; ++j) {
-					if (newTriangle[j].isDirectNeighbor(n)) {
+					if (newTriangle[j].isDirectNeighbor(n, ThresholdsReasoning.FAST_NEIGHBOR_DETECTION)) {
 						n.removeNeighbor(t);
 						n.addNeighbor(newTriangle[j]);
 						newTriangle[j].addNeighbor(n);
