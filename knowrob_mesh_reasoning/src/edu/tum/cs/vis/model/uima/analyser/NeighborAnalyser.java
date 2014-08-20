@@ -48,17 +48,17 @@ public class NeighborAnalyser extends MeshAnalyser {
 	/**
 	 * Number of currently processed triangles. Used for progress status.
 	 */
-	final AtomicInteger			trianglesElaborated	= new AtomicInteger(0);
+	private final AtomicInteger			trianglesElaborated	= new AtomicInteger(0);
 
 	/**
 	 * List of all the triangles of the associated MeshCas of the CAD model
 	 */
-	List<Triangle>				allTriangles;
+	private List<Triangle>				allTriangles;
 	
 	/**
 	 * Initial number of triangles
 	 */
-	int 						initialNumOfTriangles;
+	private int 						initialNumOfTriangles;
 
 	/* (non-Javadoc)
 	 * @see edu.tum.cs.vis.model.uima.analyser.MeshAnalyser#getLogger()
@@ -95,7 +95,7 @@ public class NeighborAnalyser extends MeshAnalyser {
 		allTriangles = cas.getModel().getTriangles();
 		
 		// now remove collinear triangles
-		removeCollinearTriangles();
+		removeCollinearTriangles(cas);
 		
 		// update number of valid triangles in the model
 		initialNumOfTriangles = allTriangles.size();
@@ -145,7 +145,7 @@ public class NeighborAnalyser extends MeshAnalyser {
 			});
 		}
 		ThreadPool.executeInPool(threads);
-
+		
 		// update the vertex sharing and neighboring information
 		startTime = System.currentTimeMillis();
 		LOGGER.debug("Checking for vertex sharing and calculating vertex normals ...");
@@ -175,7 +175,7 @@ public class NeighborAnalyser extends MeshAnalyser {
 	 * @param allTriangles
 	 * 				list of all triangles in the model to be checked
 	 */
-	private void removeCollinearTriangles() {
+	private void removeCollinearTriangles(MeshCas cas) {
 		List<Triangle> toRemove = new ArrayList<Triangle>();
 		for (Triangle triangle : allTriangles) {
 			Vertex v0 = triangle.getPosition()[0];
@@ -199,5 +199,7 @@ public class NeighborAnalyser extends MeshAnalyser {
 		}
 		LOGGER.debug("Removed " + toRemove.size() + " collinear triangles from the model.");
 		allTriangles.removeAll(toRemove);
+		// remove triangles also from the group
+		cas.getModel().getGroup().removeTriangle(toRemove);
 	}
 }
