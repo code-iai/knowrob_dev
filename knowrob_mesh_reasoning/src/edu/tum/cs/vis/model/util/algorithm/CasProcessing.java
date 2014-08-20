@@ -554,8 +554,10 @@ public class CasProcessing{
 								index = n.getRegionLabel();
 							}
 						}
-						regions.get(index).addTriangleToRegion(t);
-						toClassify.remove(t);
+						if (index != -1) {
+							regions.get(index).addTriangleToRegion(t);
+							toClassify.remove(t);
+						}
 					}
 				}
 			}
