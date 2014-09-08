@@ -86,7 +86,7 @@ public class MeshCas extends JCas implements Serializable {
 	/**
 	 * IRI for exported OWL files
 	 */
-	public final static String CAD = "http://ias.cs.tum.edu/kb/knowrob-cad.owl#";
+	public final static String CAD = "http://knowrob.org/kb/knowrob-cad.owl#";
 
 	/**
 	 * adds a new annotation to the annotations list
@@ -370,20 +370,20 @@ public class MeshCas extends JCas implements Serializable {
 	    "    <!ENTITY local_path 'file://@OWL_PATH_PREFIX@/owl/'>\n" +
 		"    <!ENTITY owl \"http://www.w3.org/2002/07/owl#\" >\n" +
 		"    <!ENTITY xsd \"http://www.w3.org/2001/XMLSchema#\" >\n" +
-		"    <!ENTITY knowrob \"http://ias.cs.tum.edu/kb/knowrob.owl#\" >\n" +
-		"    <!ENTITY cad \"http://ias.cs.tum.edu/kb/knowrob-cad.owl#\" >\n" +
+		"    <!ENTITY knowrob \"http://knowrob.org/kb/knowrob.owl#\" >\n" +
+		"    <!ENTITY cad \"http://knowrob.org/kb/knowrob-cad.owl#\" >\n" +
 		"    <!ENTITY rdfs \"http://www.w3.org/2000/01/rdf-schema#\" >\n" +
 		"    <!ENTITY rdf \"http://www.w3.org/1999/02/22-rdf-syntax-ns#\" >\n" +
 		"]>\n\n<rdf:RDF";
 		
-		owl_data = owl_data.replace("rdf:resource=\"http://ias.cs.tum.edu/kb/knowrob.owl#", 
+		owl_data = owl_data.replace("rdf:resource=\"http://knowrob.org/kb/knowrob.owl#", 
 				"rdf:resource=\"&knowrob;");
-		owl_data = owl_data.replace("rdf:about=\"http://ias.cs.tum.edu/kb/knowrob.owl#", 
+		owl_data = owl_data.replace("rdf:about=\"http://knowrob.org/kb/knowrob.owl#", 
 				"rdf:about=\"&knowrob;");
 
-		owl_data = owl_data.replace("rdf:resource=\"http://ias.cs.tum.edu/kb/knowrob-cad.owl#", 
+		owl_data = owl_data.replace("rdf:resource=\"http://knowrob.org/kb/knowrob-cad.owl#", 
 				"rdf:resource=\"&cad;");
-		owl_data = owl_data.replace("rdf:about=\"http://ias.cs.tum.edu/kb/knowrob-cad.owl#", 
+		owl_data = owl_data.replace("rdf:about=\"http://knowrob.org/kb/knowrob-cad.owl#", 
 				"rdf:about=\"&cad;");
 
 		owl_data = owl_data.replace("rdf:datatype=\"http://www.w3.org/2001/XMLSchema#", 

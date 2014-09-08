@@ -168,7 +168,7 @@ objpart_pos(Part, [X,Y,Z]) :-
 
 grasp_point(Obj, GraspPoint) :-
   rdf_triple(knowrob:properPhysicalParts, Obj, Handle),
-  annotation_handle(Handle,  'http://ias.cs.tum.edu/kb/knowrob.owl#Handle'),
+  annotation_handle(Handle,  'http://knowrob.org/kb/knowrob.owl#Handle'),
 %   rdfs_instance_of(Handle, knowrob:'Handle'),
   annotation_pose_list(Handle, GraspPoint),
    mesh_annotator_highlight_part(Obj, Handle).
@@ -196,7 +196,7 @@ object_main_plane(Obj, Part) :-
 %
 % Do mesh reasoning on cad model with given identifier.
 %
-% @param Identifier 	   eg. "http://ias.cs.tum.edu/kb/ias_semantic_map.owl#F360-Containers-revised-walls" or "knowrob:'Spoon'"
+% @param Identifier 	   eg. "http://knowrob.org/kb/ias_semantic_map.owl#F360-Containers-revised-walls" or "knowrob:'Spoon'"
 % @param MeshAnnotator     MeshAnnotator object
 %
 mesh_annotator(Identifier, MeshAnnotator) :-
@@ -450,11 +450,11 @@ comp_physical_parts(Obj, PartInst) :-
   assert(mesh_annotation_java_obj(PartInst, Annotation)).
 
 
-annotation_to_knowrob_class('Cone', 'http://ias.cs.tum.edu/kb/knowrob.owl#Cone').
-annotation_to_knowrob_class('Sphere', 'http://ias.cs.tum.edu/kb/knowrob.owl#Sphere').
-annotation_to_knowrob_class('Plane', 'http://ias.cs.tum.edu/kb/knowrob.owl#FlatPhysicalSurface').
-annotation_to_knowrob_class('Container', 'http://ias.cs.tum.edu/kb/knowrob.owl#ContainerArtifact').
-annotation_to_knowrob_class('ComplexHandle', 'http://ias.cs.tum.edu/kb/knowrob.owl#Handle').
+annotation_to_knowrob_class('Cone', 'http://knowrob.org/kb/knowrob.owl#Cone').
+annotation_to_knowrob_class('Sphere', 'http://knowrob.org/kb/knowrob.owl#Sphere').
+annotation_to_knowrob_class('Plane', 'http://knowrob.org/kb/knowrob.owl#FlatPhysicalSurface').
+annotation_to_knowrob_class('Container', 'http://knowrob.org/kb/knowrob.owl#ContainerArtifact').
+annotation_to_knowrob_class('ComplexHandle', 'http://knowrob.org/kb/knowrob.owl#Handle').
 
 
 
@@ -577,7 +577,7 @@ annotation_sphere_radius(PartInst, RadiusAvg) :-
   jpl_call(SphereAnnotation,'getRadius',[],RadiusAvg).
 
 annotation_sphere_is_concave(PartInst, ConcaveObjClass) :-
-  owl_subclass_of(ConcaveObjClass, 'http://ias.cs.tum.edu/kb/knowrob.owl#ConcaveTangibleObject'),
+  owl_subclass_of(ConcaveObjClass, 'http://knowrob.org/kb/knowrob.owl#ConcaveTangibleObject'),
   mesh_annotation_java_obj(PartInst, SphereAnnotation),
   jpl_datum_to_type(SphereAnnotation,
       class([org,knowrob,vis,model,uima,annotation,primitive],['SphereAnnotation'])),
@@ -642,7 +642,7 @@ annotation_plane_shortside(PartInst, ShortSide) :-
 
 annotation_supporting_plane(PartInst, SuppPlaneClass) :-
 
-  once(owl_subclass_of(SuppPlaneClass, 'http://ias.cs.tum.edu/kb/knowrob.owl#SupportingPlane')),
+  once(owl_subclass_of(SuppPlaneClass, 'http://knowrob.org/kb/knowrob.owl#SupportingPlane')),
 
   once(owl_has(Obj, knowrob:properPhysicalParts, PartInst)),
 
@@ -660,7 +660,7 @@ annotation_supporting_plane(PartInst, SuppPlaneClass) :-
 annotation_handle(PartInst, HandleClass) :-
 
 %   var(PartInst),
-  once(owl_subclass_of(HandleClass, 'http://ias.cs.tum.edu/kb/knowrob.owl#Handle')),
+  once(owl_subclass_of(HandleClass, 'http://knowrob.org/kb/knowrob.owl#Handle')),
 
   % find mesh annotator stored for the parent object of this part
   once((owl_has(Obj, knowrob:properPhysicalParts, PartInst), % TODO: only works for a single object that is analyzed
