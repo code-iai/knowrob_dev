@@ -13,6 +13,7 @@ import java.awt.event.ActionListener;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
@@ -20,10 +21,12 @@ import edu.tum.cs.vis.model.uima.cas.MeshCas;
 import edu.tum.cs.vis.model.view.MeshReasoningView;
 
 /**
- * Control panel for draw settings
+ * Control panel for draw settings of the model.
+ * Implements the buttons frontend which is featured in
+ * the main applet of the mesh reasoning view.
  * 
  * @author Stefan Profanter
- * 
+ * @author Andrei Stoica - implemented new buttons for an extended view
  */
 public class DrawSettingsPanel extends JPanel implements ActionListener {
 
@@ -39,48 +42,86 @@ public class DrawSettingsPanel extends JPanel implements ActionListener {
 	private final MeshCas			cas;
 
 	/**
-	 * The view for which this control is
+	 * The view on which this control is used
 	 */
 	private final MeshReasoningView	view;
 
 	/**
-	 * use white background
-	 */
-	private final JCheckBox			cbxWhiteBackground;
-	/**
-	 * draw vertex normals
+	 * Per vertex normals drawing check box button
 	 */
 	private final JCheckBox			cbxDrawVertexNormals;
+	
 	/**
-	 * draw vertex curvature
+	 * Per triangle normals drawing check box button
+	 */
+	private final JCheckBox			cbxDrawTriangleNormals;
+	
+	/**
+	 * Per vertex normalized minimum curvature direction drawing check box button
+	 */
+	private final JCheckBox			cbxDrawVertexCurvatureMin;
+	
+	/**
+	 * Per vertex normalized maximum curvature direction drawing check box button
+	 */
+	private final JCheckBox			cbxDrawVertexCurvatureMax;
+	
+	/**
+	 * Per vertex scaled minimum and maximum curvature directions drawing check box button 
 	 */
 	private final JCheckBox			cbxDrawVertexCurvature;
+	
 	/**
-	 * color model by curvature
+	 * Model curvature coloring scheme drawing combo box button 
 	 */
-	private final JCheckBox			cbxDrawCurvatureColor;
+	@SuppressWarnings("rawtypes")
+	private final JComboBox			cmbbxDrawCurvatureColor;
+	
 	/**
-	 * draw voronoi area
+	 * Model curvature coloring scheme drawing combo box string options array
 	 */
-	private final JCheckBox			cbxDrawVoronoiArea;
+	private final String[]			cmbbxOptions;
+	
 	/**
-	 * button to set rotation of camera manually
+	 * Region edges drawing check box button
 	 */
-	private final JButton			btnSetRotation;
+	private final JCheckBox			cbxDrawRegionEdges;
+	
 	/**
-	 * select only nearest triangle or all triangles intersecting mouse ray
+	 * Sharp edges drawing check box button
 	 */
-	private final JCheckBox			cbxSelectNearestOnly;
-
+	private final JCheckBox			cbxDrawSharpEdges;
+	
 	/**
-	 * Checkbox for selectTrianglesOnly setting.
+	 * Select only triangles drawing type check box button
 	 */
 	private final JCheckBox			cbxSelectTriangles;
+	
 	/**
-	 * draw bounding box for each group
+	 * Select only the nearest triangle drawing type check box button
+	 */
+	private final JCheckBox			cbxSelectNearestOnly;
+	
+	/**
+	 * Per model group bounding box drawing check box button
 	 */
 	private final JCheckBox			cbxDrawBoundingBox;
 
+	/**
+	 * Per vertex Voronoi area sphere drawing check box button
+	 */
+	private final JCheckBox			cbxDrawVoronoiArea;
+	
+	/**
+	 * White background check button
+	 */
+	private final JCheckBox			cbxWhiteBackground;
+	
+	/**
+	 * Set view perspective (rotate camera to given parameters) check box button
+	 */
+	private final JButton			btnSetRotation;
+	
 	/**
 	 * Creates a new draw settings panel
 	 * 
@@ -89,6 +130,7 @@ public class DrawSettingsPanel extends JPanel implements ActionListener {
 	 * @param view
 	 *            parent mesh reasoning view
 	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public DrawSettingsPanel(MeshCas cas, MeshReasoningView view) {
 		this.view = view;
 		this.cas = cas;
@@ -96,67 +138,130 @@ public class DrawSettingsPanel extends JPanel implements ActionListener {
 
 		GridLayout grid = new GridLayout(0, 2);
 		setLayout(grid);
-
-		cbxWhiteBackground = new JCheckBox("White Background");
-		cbxWhiteBackground.addActionListener(this);
-		cbxWhiteBackground.setSelected(view.isBackgroundWhite());
-		this.add(cbxWhiteBackground);
+		cmbbxOptions = new String[4];
+		cmbbxOptions[0] = new String("No curv. coloring");
+		cmbbxOptions[1] = new String("Mean curv. coloring");
+		cmbbxOptions[2] = new String("Gauss curv. coloring");
+		cmbbxOptions[3] = new String("Est. curv. coloring");
 
 		cbxDrawVertexNormals = new JCheckBox("Vertex normals");
 		cbxDrawVertexNormals.addActionListener(this);
 		cbxDrawVertexNormals.setSelected(false);
 		this.add(cbxDrawVertexNormals);
 
+		cbxDrawTriangleNormals = new JCheckBox("Triangle normals");
+		cbxDrawTriangleNormals.addActionListener(this);
+		cbxDrawTriangleNormals.setSelected(false);
+		this.add(cbxDrawTriangleNormals);
+		
+		cbxDrawVertexCurvatureMin = new JCheckBox("Vertex min. curvature");
+		cbxDrawVertexCurvatureMin.addActionListener(this);
+		cbxDrawVertexCurvatureMin.setSelected(false);
+		this.add(cbxDrawVertexCurvatureMin);
+		
+		cbxDrawVertexCurvatureMax = new JCheckBox("Vertex max. curvature");
+		cbxDrawVertexCurvatureMax.addActionListener(this);
+		cbxDrawVertexCurvatureMax.setSelected(false);
+		this.add(cbxDrawVertexCurvatureMax);
+
 		cbxDrawVertexCurvature = new JCheckBox("Vertex curvature");
 		cbxDrawVertexCurvature.addActionListener(this);
 		cbxDrawVertexCurvature.setSelected(false);
 		this.add(cbxDrawVertexCurvature);
+		
+		// parameterization skipped because compatibility with Java JRE >1.6 was desired
+		cmbbxDrawCurvatureColor = new JComboBox(cmbbxOptions);
+		cmbbxDrawCurvatureColor.addActionListener(this);
+		cmbbxDrawCurvatureColor.setSelectedIndex(0);
+		this.add(cmbbxDrawCurvatureColor);
 
-		cbxDrawCurvatureColor = new JCheckBox("Color by curvature");
-		cbxDrawCurvatureColor.addActionListener(this);
-		cbxDrawCurvatureColor.setSelected(false);
-		this.add(cbxDrawCurvatureColor);
-
-		cbxDrawVoronoiArea = new JCheckBox("Voronoi Area");
-		cbxDrawVoronoiArea.addActionListener(this);
-		cbxDrawVoronoiArea.setSelected(false);
-		this.add(cbxDrawVoronoiArea);
-
-		btnSetRotation = new JButton("Set View");
-		btnSetRotation.addActionListener(this);
-		this.add(btnSetRotation);
-
+		cbxDrawRegionEdges = new JCheckBox("Region Edges");
+		cbxDrawRegionEdges.addActionListener(this);
+		cbxDrawRegionEdges.setSelected(false);
+		this.add(cbxDrawRegionEdges);
+		
+		cbxDrawSharpEdges = new JCheckBox("Sharp Edges");
+		cbxDrawSharpEdges.addActionListener(this);
+		cbxDrawSharpEdges.setSelected(false);
+		this.add(cbxDrawSharpEdges);
+		
+		cbxSelectTriangles = new JCheckBox("Select triangles");
+		cbxSelectTriangles.addActionListener(this);
+		cbxSelectTriangles.setSelected(view.isSelectTrianglesOnly());
+		this.add(cbxSelectTriangles);
+		
 		cbxSelectNearestOnly = new JCheckBox("Select nearest");
 		cbxSelectNearestOnly.addActionListener(this);
 		cbxSelectNearestOnly.setSelected(view.isSelectNearestOnly());
 		this.add(cbxSelectNearestOnly);
 
-		cbxSelectTriangles = new JCheckBox("Select triangles");
-		cbxSelectTriangles.addActionListener(this);
-		cbxSelectTriangles.setSelected(view.isSelectTrianglesOnly());
-		this.add(cbxSelectTriangles);
-
+		cbxDrawVoronoiArea = new JCheckBox("Voronoi Area");
+		cbxDrawVoronoiArea.addActionListener(this);
+		cbxDrawVoronoiArea.setSelected(false);
+		this.add(cbxDrawVoronoiArea);
+		
 		cbxDrawBoundingBox = new JCheckBox("Bounding box");
 		cbxDrawBoundingBox.addActionListener(this);
 		cbxDrawBoundingBox.setSelected(view.isDrawBoundingBox());
 		this.add(cbxDrawBoundingBox);
 
+		cbxWhiteBackground = new JCheckBox("White Background");
+		cbxWhiteBackground.addActionListener(this);
+		cbxWhiteBackground.setSelected(view.isBackgroundWhite());
+		this.add(cbxWhiteBackground);
+
+		btnSetRotation = new JButton("Set View");
+		btnSetRotation.addActionListener(this);
+		this.add(btnSetRotation);
+
 	}
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		if (e.getSource() == cbxWhiteBackground)
+		if (e.getSource() == cbxWhiteBackground) {
 			view.setBackgroundWhite(cbxWhiteBackground.isSelected());
-		else if (e.getSource() == cbxDrawVertexNormals)
+		}
+		else if (e.getSource() == cbxDrawVertexNormals) {
 			view.setDrawVertexNormals(cbxDrawVertexNormals.isSelected());
-		else if (e.getSource() == cbxDrawVertexCurvature)
+		}
+		else if (e.getSource() == cbxDrawTriangleNormals) {
+			view.setDrawTriangleNormals(cbxDrawTriangleNormals.isSelected());
+		}
+		else if (e.getSource() == cbxDrawVertexCurvatureMin) {
+			view.setDrawVertexCurvatureMin(cbxDrawVertexCurvatureMin.isSelected()); 
+		}
+		else if (e.getSource() == cbxDrawVertexCurvatureMax) {
+			view.setDrawVertexCurvatureMax(cbxDrawVertexCurvatureMax.isSelected());
+		}
+		else if (e.getSource() == cbxDrawVertexCurvature) {
 			view.setDrawVertexCurvature(cbxDrawVertexCurvature.isSelected());
-		else if (e.getSource() == cbxDrawCurvatureColor)
-			view.setDrawCurvatureColor(cbxDrawCurvatureColor.isSelected());
-		else if (e.getSource() == cbxDrawVoronoiArea)
+		}
+		else if (e.getSource() == cmbbxDrawCurvatureColor) {
+			if (cmbbxDrawCurvatureColor.getSelectedIndex() == 0) {
+				view.setDrawCurvatureColor(0);
+			}
+			else if (cmbbxDrawCurvatureColor.getSelectedIndex() == 1) {
+				view.setDrawCurvatureColor(1);
+			}
+			else if (cmbbxDrawCurvatureColor.getSelectedIndex() == 2) {
+				view.setDrawCurvatureColor(2);
+			}
+			else if (cmbbxDrawCurvatureColor.getSelectedIndex() == 3) {
+				view.setDrawCurvatureColor(3);
+			}
+		}
+		else if (e.getSource() == cbxDrawVoronoiArea) {
 			view.setDrawVoronoiArea(cbxDrawVoronoiArea.isSelected());
-		else if (e.getSource() == cbxDrawBoundingBox)
+		}
+		else if (e.getSource() == cbxDrawSharpEdges) {
+			view.setDrawSharpEdges(cbxDrawSharpEdges.isSelected());
+		}
+		else if (e.getSource() == cbxDrawRegionEdges) {
+			view.setDrawRegionEdges(cbxDrawRegionEdges.isSelected());
+		}
+		else if (e.getSource() == cbxDrawBoundingBox) {
 			view.setDrawBoundingBox(cbxDrawBoundingBox.isSelected());
+		}
 		else if (e.getSource() == btnSetRotation) {
 			String current = Math.round(view.getCam().getRotations()[0] * 180f / Math.PI) + ","
 					+ Math.round(view.getCam().getRotations()[1] * 180f / Math.PI) + ","
