@@ -74,7 +74,7 @@
 
 :- use_module(library('semweb/rdfs')).
 :- use_module(library('semweb/rdf_db')).
-:- use_module(library('semweb/rdfs_computable')).
+:- use_module(library('rdfs_computable')).
 :- use_module(library('knowrob_objects')).
 :- use_module(library('knowrob_coordinates')).
 :- use_module(library('jpl')).
@@ -168,7 +168,7 @@ objpart_pos(Part, [X,Y,Z]) :-
 
 grasp_point(Obj, GraspPoint) :-
   rdf_triple(knowrob:properPhysicalParts, Obj, Handle),
-  annotation_handle(Handle,  'http://ias.cs.tum.edu/kb/knowrob.owl#Handle'),
+  annotation_handle(Handle,  'http://knowrob.org/kb/knowrob.owl#Handle'),
 %   rdfs_instance_of(Handle, knowrob:'Handle'),
   annotation_pose_list(Handle, GraspPoint),
    mesh_annotator_highlight_part(Obj, Handle).
@@ -196,7 +196,7 @@ object_main_plane(Obj, Part) :-
 %
 % Do mesh reasoning on cad model with given identifier.
 %
-% @param Identifier 	   eg. "http://ias.cs.tum.edu/kb/ias_semantic_map.owl#F360-Containers-revised-walls" or "knowrob:'Spoon'"
+% @param Identifier 	   eg. "http://knowrob.org/kb/ias_semantic_map.owl#F360-Containers-revised-walls" or "knowrob:'Spoon'"
 % @param MeshAnnotator     MeshAnnotator object
 %
 mesh_annotator(Identifier, MeshAnnotator) :-
@@ -222,7 +222,7 @@ mesh_annotator_path(Path, MeshAnnotator) :-
 % WithCanvas defaults to true if not indicated
 %
 mesh_annotator_init(MeshAnnotator, WithCanvas) :-
-  jpl_call('edu.tum.cs.vis.model.MeshReasoning', 'initMeshReasoning', [WithCanvas], MeshAnnotator).
+  jpl_call('org.knowrob.vis.model.MeshReasoning', 'initMeshReasoning', [WithCanvas], MeshAnnotator).
 mesh_annotator_init(MeshAnnotator) :-
   mesh_annotator_init(MeshAnnotator, @(true)).
 
@@ -436,7 +436,7 @@ comp_physical_parts(Obj, PartInst) :-
 
   % TODO workaround: container does not have a pose yet
   ( jpl_datum_to_type(Annotation,
-      class([edu,tum,cs,vis,model,uima,annotation],['ContainerAnnotation'])) ->
+      class([org,knowrob,vis,model,uima,annotation],['ContainerAnnotation'])) ->
     ( rdf_instance_from_class(KnowRobClass, PartInst)) ;
     ( java_annotation_pose_list(Annotation, PoseList),
       create_object_perception(KnowRobClass, PoseList, ['MeshSegmentation'], PartInst))),
@@ -450,11 +450,11 @@ comp_physical_parts(Obj, PartInst) :-
   assert(mesh_annotation_java_obj(PartInst, Annotation)).
 
 
-annotation_to_knowrob_class('Cone', 'http://ias.cs.tum.edu/kb/knowrob.owl#Cone').
-annotation_to_knowrob_class('Sphere', 'http://ias.cs.tum.edu/kb/knowrob.owl#Sphere').
-annotation_to_knowrob_class('Plane', 'http://ias.cs.tum.edu/kb/knowrob.owl#FlatPhysicalSurface').
-annotation_to_knowrob_class('Container', 'http://ias.cs.tum.edu/kb/knowrob.owl#ContainerArtifact').
-annotation_to_knowrob_class('ComplexHandle', 'http://ias.cs.tum.edu/kb/knowrob.owl#Handle').
+annotation_to_knowrob_class('Cone', 'http://knowrob.org/kb/knowrob.owl#Cone').
+annotation_to_knowrob_class('Sphere', 'http://knowrob.org/kb/knowrob.owl#Sphere').
+annotation_to_knowrob_class('Plane', 'http://knowrob.org/kb/knowrob.owl#FlatPhysicalSurface').
+annotation_to_knowrob_class('Container', 'http://knowrob.org/kb/knowrob.owl#ContainerArtifact').
+annotation_to_knowrob_class('ComplexHandle', 'http://knowrob.org/kb/knowrob.owl#Handle').
 
 
 
@@ -464,7 +464,7 @@ annotation_pose_list(PartInst, PoseList) :-
 
 java_annotation_pose_list(PrologAnnotationInterface, PoseList) :-
 %  jpl_datum_to_type(PrologAnnotationInterface,
-%      class([edu,tum,cs,vis,model,uima,annotation],['PrologAnnotationInterface'])),
+%      class([org,knowrob,vis,model,uima,annotation],['PrologAnnotationInterface'])),
   jpl_call(PrologAnnotationInterface,'getPoseMatrix',[],PoseMatrix),
   knowrob_coordinates:matrix4d_to_list(PoseMatrix, PoseList).
 
@@ -477,13 +477,13 @@ java_annotation_pose_list(PrologAnnotationInterface, PoseList) :-
 annotation_area(PartInst, Area) :-
   mesh_annotation_java_obj(PartInst, PrologAnnotationInterface),
 %  jpl_datum_to_type(PrologAnnotationInterface,
-%      class([edu,tum,cs,vis,model,uima,annotation],['PrologAnnotationInterface'])),
+%      class([org,knowrob,vis,model,uima,annotation],['PrologAnnotationInterface'])),
   jpl_call(PrologAnnotationInterface,'getPrimitiveArea',[],Area).
 
 annotation_area_coverage(PartInst, AreaCoverage) :-
   mesh_annotation_java_obj(PartInst, PrologAnnotationInterface),
 %  jpl_datum_to_type(PrologAnnotationInterface,
-%      class([edu,tum,cs,vis,model,uima,annotation],['PrologAnnotationInterface'])),
+%      class([org,knowrob,vis,model,uima,annotation],['PrologAnnotationInterface'])),
   jpl_call(PrologAnnotationInterface,'getAreaCoverage',[],AreaCoverage).
 
 
@@ -497,7 +497,7 @@ annotation_area_coverage(PartInst, AreaCoverage) :-
 annotation_triangles(Annotation, Triangles) :-
   mesh_annotation_java_obj(Annotation, PrologAnnotationInterface),
 %  jpl_datum_to_type(PrologAnnotationInterface,
-%      class([edu,tum,cs,vis,model,uima,annotation],['PrologAnnotationInterface'])),
+%      class([org,knowrob,vis,model,uima,annotation],['PrologAnnotationInterface'])),
   jpl_call(PrologAnnotationInterface, 'getTriangles', [], TriangleArr),
   jpl_array_to_list(TriangleArr, Triangles).
 
@@ -511,7 +511,7 @@ annotation_triangles(Annotation, Triangles) :-
 annotation_vertices(Annotation, Vertices) :-
   mesh_annotation_java_obj(Annotation, PrologAnnotationInterface),
 %  jpl_datum_to_type(PrologAnnotationInterface,
-%      class([edu,tum,cs,vis,model,uima,annotation],['PrologAnnotationInterface'])),
+%      class([org,knowrob,vis,model,uima,annotation],['PrologAnnotationInterface'])),
   jpl_call(PrologAnnotationInterface, 'getVertices', [], VerticesArr),
   jpl_array_to_list(VerticesArr, Vertices).
 
@@ -523,37 +523,37 @@ annotation_vertices(Annotation, Vertices) :-
 annotation_cone_radius_avg(PartInst, RadiusAvg) :-
   mesh_annotation_java_obj(PartInst, ConeAnnotation),
   jpl_datum_to_type(ConeAnnotation,
-      class([edu,tum,cs,vis,model,uima,annotation,primitive],['ConeAnnotation'])),
+      class([org,knowrob,vis,model,uima,annotation,primitive],['ConeAnnotation'])),
   jpl_call(ConeAnnotation,'getRadiusAvg',[],RadiusAvg).
 
 annotation_cone_radius_max(PartInst, RadiusMax) :-
   mesh_annotation_java_obj(PartInst, ConeAnnotation),
   jpl_datum_to_type(ConeAnnotation,
-      class([edu,tum,cs,vis,model,uima,annotation,primitive],['ConeAnnotation'])),
+      class([org,knowrob,vis,model,uima,annotation,primitive],['ConeAnnotation'])),
   jpl_call(ConeAnnotation,'getRadiusLarge',[],RadiusMax).
 
 annotation_cone_radius_min(PartInst, RadiusMin) :-
   mesh_annotation_java_obj(PartInst, ConeAnnotation),
   jpl_datum_to_type(ConeAnnotation,
-      class([edu,tum,cs,vis,model,uima,annotation,primitive],['ConeAnnotation'])),
+      class([org,knowrob,vis,model,uima,annotation,primitive],['ConeAnnotation'])),
   jpl_call(ConeAnnotation,'getRadiusSmall',[],RadiusMin).
 
 annotation_cone_volume(PartInst, Volume) :-
   mesh_annotation_java_obj(PartInst, ConeAnnotation),
   jpl_datum_to_type(ConeAnnotation,
-      class([edu,tum,cs,vis,model,uima,annotation,primitive],['ConeAnnotation'])),
+      class([org,knowrob,vis,model,uima,annotation,primitive],['ConeAnnotation'])),
   jpl_call(ConeAnnotation,'getVolume',[],Volume).
 
 annotation_cone_height(PartInst, Height) :-
   mesh_annotation_java_obj(PartInst, ConeAnnotation),
   jpl_datum_to_type(ConeAnnotation,
-      class([edu,tum,cs,vis,model,uima,annotation,primitive],['ConeAnnotation'])),
+      class([org,knowrob,vis,model,uima,annotation,primitive],['ConeAnnotation'])),
   jpl_call(ConeAnnotation,'getHeight',[],Height).
 
 annotation_cone_direction(PartInst, Direction) :-
   mesh_annotation_java_obj(PartInst, ConeAnnotation),
   jpl_datum_to_type(ConeAnnotation,
-      class([edu,tum,cs,vis,model,uima,annotation,primitive],['ConeAnnotation'])),
+      class([org,knowrob,vis,model,uima,annotation,primitive],['ConeAnnotation'])),
   jpl_call(ConeAnnotation,'getDirection',[],DirVec),
   knowrob_coordinates:vector3d_to_list(DirVec, VecList),
 
@@ -573,20 +573,20 @@ annotation_cone_direction(PartInst, Direction) :-
 annotation_sphere_radius(PartInst, RadiusAvg) :-
   mesh_annotation_java_obj(PartInst, SphereAnnotation),
   jpl_datum_to_type(SphereAnnotation,
-      class([edu,tum,cs,vis,model,uima,annotation,primitive],['SphereAnnotation'])),
+      class([org,knowrob,vis,model,uima,annotation,primitive],['SphereAnnotation'])),
   jpl_call(SphereAnnotation,'getRadius',[],RadiusAvg).
 
 annotation_sphere_is_concave(PartInst, ConcaveObjClass) :-
-  owl_subclass_of(ConcaveObjClass, 'http://ias.cs.tum.edu/kb/knowrob.owl#ConcaveTangibleObject'),
+  owl_subclass_of(ConcaveObjClass, 'http://knowrob.org/kb/knowrob.owl#ConcaveTangibleObject'),
   mesh_annotation_java_obj(PartInst, SphereAnnotation),
   jpl_datum_to_type(SphereAnnotation,
-      class([edu,tum,cs,vis,model,uima,annotation,primitive],['SphereAnnotation'])),
+      class([org,knowrob,vis,model,uima,annotation,primitive],['SphereAnnotation'])),
   jpl_call(SphereAnnotation,'isConcave',[],@(true)).
 
 annotation_sphere_volume(PartInst, Volume) :-
   mesh_annotation_java_obj(PartInst, SphereAnnotation),
   jpl_datum_to_type(SphereAnnotation,
-      class([edu,tum,cs,vis,model,uima,annotation,primitive],['SphereAnnotation'])),
+      class([org,knowrob,vis,model,uima,annotation,primitive],['SphereAnnotation'])),
   jpl_call(SphereAnnotation,'getVolume',[],Volume).
 
 
@@ -598,7 +598,7 @@ annotation_sphere_volume(PartInst, Volume) :-
 annotation_plane_normal(PartInst, NormalVec) :-
   mesh_annotation_java_obj(PartInst, PlaneAnnotation),
   jpl_datum_to_type(PlaneAnnotation,
-      class([edu,tum,cs,vis,model,uima,annotation,primitive],['PlaneAnnotation'])),
+      class([org,knowrob,vis,model,uima,annotation,primitive],['PlaneAnnotation'])),
   jpl_call(PlaneAnnotation,'getPlaneNormal',[],NormalVec3d),
   knowrob_coordinates:vector3d_to_list(NormalVec3d, VecList),
 
@@ -613,7 +613,7 @@ annotation_plane_normal(PartInst, NormalVec) :-
 annotation_plane_longside(PartInst, LongSide) :-
   mesh_annotation_java_obj(PartInst, PlaneAnnotation),
   jpl_datum_to_type(PlaneAnnotation,
-      class([edu,tum,cs,vis,model,uima,annotation,primitive],['PlaneAnnotation'])),
+      class([org,knowrob,vis,model,uima,annotation,primitive],['PlaneAnnotation'])),
   jpl_call(PlaneAnnotation,'getLongSide',[],LongSideVec),
   knowrob_coordinates:vector3d_to_list(LongSideVec, VecList),
 
@@ -628,7 +628,7 @@ annotation_plane_longside(PartInst, LongSide) :-
 annotation_plane_shortside(PartInst, ShortSide) :-
   mesh_annotation_java_obj(PartInst, PlaneAnnotation),
   jpl_datum_to_type(PlaneAnnotation,
-      class([edu,tum,cs,vis,model,uima,annotation,primitive],['PlaneAnnotation'])),
+      class([org,knowrob,vis,model,uima,annotation,primitive],['PlaneAnnotation'])),
   jpl_call(PlaneAnnotation,'getShortSide',[],ShortSideVec),
   knowrob_coordinates:vector3d_to_list(ShortSideVec, VecList),
 
@@ -642,7 +642,7 @@ annotation_plane_shortside(PartInst, ShortSide) :-
 
 annotation_supporting_plane(PartInst, SuppPlaneClass) :-
 
-  once(owl_subclass_of(SuppPlaneClass, 'http://ias.cs.tum.edu/kb/knowrob.owl#SupportingPlane')),
+  once(owl_subclass_of(SuppPlaneClass, 'http://knowrob.org/kb/knowrob.owl#SupportingPlane')),
 
   once(owl_has(Obj, knowrob:properPhysicalParts, PartInst)),
 
@@ -660,7 +660,7 @@ annotation_supporting_plane(PartInst, SuppPlaneClass) :-
 annotation_handle(PartInst, HandleClass) :-
 
 %   var(PartInst),
-  once(owl_subclass_of(HandleClass, 'http://ias.cs.tum.edu/kb/knowrob.owl#Handle')),
+  once(owl_subclass_of(HandleClass, 'http://knowrob.org/kb/knowrob.owl#Handle')),
 
   % find mesh annotator stored for the parent object of this part
   once((owl_has(Obj, knowrob:properPhysicalParts, PartInst), % TODO: only works for a single object that is analyzed
@@ -685,7 +685,7 @@ annotation_handle(PartInst, HandleClass) :-
 annotation_container_direction(PartInst, OpeningDirection) :-
   mesh_annotation_java_obj(PartInst, ContainerAnnotation),
   jpl_datum_to_type(ContainerAnnotation,
-      class([edu,tum,cs,vis,model,uima,annotation],['ContainerAnnotation'])),
+      class([org,knowrob,vis,model,uima,annotation],['ContainerAnnotation'])),
   jpl_call(ContainerAnnotation,'getDirection',[], VecList),
 
   VecList = [VX, VY, VZ],
@@ -698,6 +698,6 @@ annotation_container_direction(PartInst, OpeningDirection) :-
 annotation_container_volume(PartInst, Volume) :-
   mesh_annotation_java_obj(PartInst, ContainerAnnotation),
   jpl_datum_to_type(ContainerAnnotation,
-      class([edu,tum,cs,vis,model,uima,annotation],['ContainerAnnotation'])),
+      class([org,knowrob,vis,model,uima,annotation],['ContainerAnnotation'])),
   jpl_call(ContainerAnnotation,'getVolume',[],Volume).
 

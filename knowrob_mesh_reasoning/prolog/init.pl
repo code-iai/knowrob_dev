@@ -24,9 +24,6 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % parse OWL files, register name spaces
 
-% :- owl_parser:owl_parse('../owl/mesh_reasoning.owl', false, false, true).
-:- rdf_db:rdf_register_ns(mesh_reasoning, 'http://ias.cs.tum.edu/kb/mesh_reasoning.owl#',     [keep(true)]).
+:- rdf_db:rdf_register_ns(mesh_reasoning, 'http://knowrob.org/kb/mesh_reasoning.owl#',     [keep(true)]).
 
-
-% :- owl_parser:owl_parse('../owl/testscene-iros.owl', false, false, true).
 
