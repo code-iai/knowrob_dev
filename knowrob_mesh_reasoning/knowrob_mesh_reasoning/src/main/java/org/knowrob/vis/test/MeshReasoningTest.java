@@ -29,7 +29,7 @@ public class MeshReasoningTest {
 	 */
 	public static void main(String[] args) {
 		// modify path as desired
-		String path = "/home/andrei/Documents/work/ros/knowrob_cad_models/models/drinking-vessels/cup2.dae";
+		String path = "package://knowrob_cad_models/models/kitchen/drinking-vessels/cup2.dae";
 		
 		MeshReasoning mr = MeshReasoning.initMeshReasoning(true);
 
