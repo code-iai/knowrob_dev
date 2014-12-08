@@ -176,11 +176,13 @@ public class ContainerAnalyser extends MeshAnalyser {
 	 */
 	@Override
 	public void processStart(final MeshCas cas) {
+		if (cas == null || cas.getAnnotations() == null) {
+			return;
+		}
 		List<Callable<Void>> threads = new LinkedList<Callable<Void>>();
 
 		@SuppressWarnings("rawtypes")
-		final HashSet<PrimitiveAnnotation> annotations = cas
-				.findAnnotations(PrimitiveAnnotation.class);
+		final HashSet<PrimitiveAnnotation> annotations = cas.findAnnotations(PrimitiveAnnotation.class);
 
 		for (@SuppressWarnings("rawtypes")
 		final MeshAnnotation a : annotations) {
@@ -205,7 +207,6 @@ public class ContainerAnalyser extends MeshAnalyser {
 		// it has finished
 		maxItemsToElaborate = 1;
 		itemsElaborated.incrementAndGet();
-
 	}
 
 	/* (non-Javadoc)

@@ -32,7 +32,6 @@ import org.knowrob.vis.util.PrintUtil;
  * annotations and properties.
  * 
  * @author Stefan Profanter
- * 
  */
 public class ModelImageGenerator {
 
@@ -52,8 +51,6 @@ public class ModelImageGenerator {
 	 * ones, should be created).
 	 */
 	public static final boolean			ALSO_EXISTING_ONES	= true;
-
-	// static ImageGeneratorSettings settings;
 
 	/**
 	 * List of threads, each MeshReasoning for a Model is executed in a separate thread or process.

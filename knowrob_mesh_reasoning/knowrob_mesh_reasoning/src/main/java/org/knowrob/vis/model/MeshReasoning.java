@@ -3,7 +3,9 @@
  * materials are made available under the terms of the GNU Public License v3.0 which accompanies
  * this distribution, and is available at http://www.gnu.org/licenses/gpl.html
  * 
- * Contributors: Stefan Profanter - initial API and implementation, Year: 2012
+ * Contributors: 
+ * 		Stefan Profanter - initial API and implementation, Year: 2012
+ * 		Andrei Stoica - refactored implementation during Google Summer of Code 2014	
  ******************************************************************************/
 package org.knowrob.vis.model;
 
@@ -26,6 +28,7 @@ import org.knowrob.vis.model.ItemModel;
 import org.knowrob.vis.model.Model;
 import org.knowrob.vis.model.uima.analyser.ComplexHandleAnalyser;
 import org.knowrob.vis.model.uima.analyser.ContainerAnalyser;
+import org.knowrob.vis.model.uima.analyser.EdgeAnalyser;
 import org.knowrob.vis.model.uima.analyser.MeshAnalyser;
 import org.knowrob.vis.model.uima.analyser.NeighborAnalyser;
 import org.knowrob.vis.model.uima.analyser.PrimitiveAnalyser;
@@ -39,11 +42,12 @@ import org.knowrob.vis.model.uima.annotation.primitive.ConeAnnotation;
 import org.knowrob.vis.model.uima.annotation.primitive.PlaneAnnotation;
 import org.knowrob.vis.model.uima.annotation.primitive.SphereAnnotation;
 import org.knowrob.vis.model.uima.cas.MeshCas;
-import org.knowrob.vis.model.util.ContainerAnnotationVolumeComarator;
+import org.knowrob.vis.model.util.ContainerAnnotationVolumeComparator;
 import org.knowrob.vis.model.util.HandleComparator;
 import org.knowrob.vis.model.util.PrimitiveAnnotationAreaComparator;
 import org.knowrob.vis.model.util.Triangle;
 import org.knowrob.vis.model.util.Vertex;
+import org.knowrob.vis.model.util.algorithm.CasProcessing;
 import org.knowrob.vis.model.util.algorithm.CurvatureCalculation;
 import org.knowrob.vis.model.view.MeshReasoningView;
 import org.knowrob.vis.model.view.MeshReasoningViewControl;
@@ -53,48 +57,23 @@ import org.knowrob.vis.tools.ImageGenerator.ImageGeneratorSettings;
 import org.knowrob.vis.uima.Annotation;
 import org.knowrob.vis.util.PrintUtil;
 
+
 /**
- * Main mesh reasoning class for parsing and analyzing CAD models. Provide methods for starting mesh
- * reasoning with and without GUI.
+ * Main mesh reasoning class for parsing and analyzing CAD models. Provides methods for starting mesh
+ * reasoning with and without GUI and implements the general workflow followed by the reasoning 
+ * process on the CAD models. It implements both the backend functionality and frontend piece 
+ * of the knowrob_mesh_reasoning add-on.
  * 
  * @author Stefan Profanter
- * 
+ * @author Andrei Stoica (refactored the general processing method analyseByPath)
  */
 public class MeshReasoning {
 
 	/**
 	 * Log4j logger
 	 */
-	static Logger	logger	= Logger.getRootLogger();
-
-	/**
-	 * Main initialization method for creating mesh reasoning object. Constructs mesh reasoning
-	 * object and initializes log4j logger.
-	 * 
-	 * @param withView
-	 *            Also create GUI to visualize mesh reasoning
-	 * @return new mesh reasoning object
-	 */
-	public static MeshReasoning initMeshReasoning(boolean withView) {
-		return MeshReasoning.initMeshReasoning(withView, null);
-	}
-
-	/**
-	 * Initialize mesh reasoning object for image generation.
-	 * 
-	 * @param withView
-	 *            Also create GUI to visualize mesh reasoning. Should be true if image generation is
-	 *            used.
-	 * @param imageGenerator
-	 *            ImageGeneratorSettings for image generation
-	 * @return new Mesh Reasoning object.
-	 */
-	public static MeshReasoning initMeshReasoning(boolean withView,
-			ImageGeneratorSettings imageGenerator) {
-		DOMConfigurator.configureAndWatch("log4j.xml", 60 * 1000);
-		return new MeshReasoning(withView, imageGenerator);
-	}
-
+	private final static Logger	LOGGER	= Logger.getLogger(MeshReasoning.class);
+	
 	/**
 	 * Settings for image generator. If null, image generation is disabled.
 	 */
@@ -120,6 +99,7 @@ public class MeshReasoning {
 	 */
 	private MeshReasoningViewControl	control;
 
+	
 	/**
 	 * Constructor for mesh reasoning object. Initializes object and creates mesh reasoning view if
 	 * indicated.
@@ -180,6 +160,34 @@ public class MeshReasoning {
 	}
 
 	/**
+	 * Main initialization method for creating mesh reasoning object. Constructs mesh reasoning
+	 * object and initializes log4j logger.
+	 * 
+	 * @param withView
+	 *            Also create GUI to visualize mesh reasoning
+	 * @return new mesh reasoning object
+	 */
+	public static MeshReasoning initMeshReasoning(boolean withView) {
+		return MeshReasoning.initMeshReasoning(withView, null);
+	}
+
+	/**
+	 * Initialize mesh reasoning object for image generation.
+	 * 
+	 * @param withView
+	 *            Also create GUI to visualize mesh reasoning. Should be true if image generation is
+	 *            used.
+	 * @param imageGenerator
+	 *            ImageGeneratorSettings for image generation
+	 * @return new Mesh Reasoning object.
+	 */
+	public static MeshReasoning initMeshReasoning(boolean withView,
+			ImageGeneratorSettings imageGenerator) {
+		DOMConfigurator.configureAndWatch("log4j.xml", 60 * 1000);
+		return new MeshReasoning(withView, imageGenerator);
+	}
+
+	/**
 	 * Start mesh reasoning on specified file path
 	 * 
 	 * @param path
@@ -194,20 +202,20 @@ public class MeshReasoning {
 			imageGeneratorSettings.setCurrentModel(path.substring(imageGeneratorSettings
 					.getInputBasePath().getAbsolutePath().length() + 1));
 		}
-		logger.info("MeshReasoning started. Parsing model ...");
-		logger.debug("Path: " + path);
+		LOGGER.info("MeshReasoning started. Parsing model ...");
+		LOGGER.debug("Path: " + path);
 		long start = System.currentTimeMillis();
 
 		// Load and parse model
 		ItemModel itemModel = new ItemModel(path);
 
 		if (itemModel.getParser() == null) {
-			logger.error("Couldn't parse model. Maybe path of model file is wrong.");
+			LOGGER.error("Couldn't parse model. Maybe path of model file is wrong.");
 			return;
 		}
 
 		Model model = itemModel.getParser().getModel();
-		logger.debug("Model parsed. Took: "
+		LOGGER.debug("Model parsed. Took: "
 				+ PrintUtil.prettyMillis(System.currentTimeMillis() - start) + " (Vertices: "
 				+ model.getVertices().size() + ", Lines: " + model.getLines().size()
 				+ ", Triangles: " + model.getTriangles().size() + ")");
@@ -216,21 +224,22 @@ public class MeshReasoning {
 
 		// normalize model for further reasoning
 		model.normalize();
-
+		
 		// list of current running analyzers used in mesh reasoning view
 		ArrayList<MeshAnalyser> analyser;
 		if (mrv != null) {
 			analyser = mrv.getControl().getAnalyser();
 		} else {
 			cas = new MeshCas();
-			analyser = new ArrayList<MeshAnalyser>(5);
+			analyser = new ArrayList<MeshAnalyser>(6);
 		}
+		
+		// set model to MeshCas
 		cas.setModel(model);
 		
 		// remember model path (e.g. for saving cache files)
 		if (path.indexOf("://") <= 0) { // Is local file
-			cas.setModelFile(path);
-			
+			cas.setModelFile(path);	
 		} else if (path.startsWith("package://")) {
 			int st = path.indexOf('/') + 2;
 			int end = path.indexOf('/', st);
@@ -241,27 +250,20 @@ public class MeshReasoning {
 				cas.setModelFile(pkgPath + filePath);
 		}
 		
-
-		// in ply (and also collada) files there may be double sided triangles
-		logger.debug("Checking for double sided triangles ...");
-		logger.debug("Removed " + model.removeDoubleSidedTriangles() + " triangles. Took: "
-				+ PrintUtil.prettyMillis(System.currentTimeMillis() - start));
-
+		// analyze mesh by looking into its neighboring relation ships
+		// and remove double sided or collinear triangles while updating
+		// the vertex sharing of the model and the normal vectors of the
+		// model
 		NeighborAnalyser na = new NeighborAnalyser();
 		analyser.add(na);
 		Thread.yield();
 		na.process(cas);
-
-		logger.debug("Checking for vertex sharing and calculating vertex normals ...");
-		model.updateVertexSharing();
-
-		model.updateVertexNormals();
-		logger.debug("Model initialized. Took: "
-				+ PrintUtil.prettyMillis(System.currentTimeMillis() - start) + " (Vertices: "
-				+ model.getVertices().size() + ", Lines: " + model.getLines().size()
-				+ ", Triangles: " + model.getTriangles().size() + ")");
-
-		// File f = model.exportVerticesAsTxt();
+		
+		// perform sharp edge detection on the model
+		EdgeAnalyser ea = new EdgeAnalyser();
+		analyser.add(ea);
+		Thread.yield();
+		ea.process(cas,imageGeneratorSettings);
 
 		if (imageGeneratorSettings != null) {
 			imageGeneratorSettings.waitSetup();
@@ -278,7 +280,7 @@ public class MeshReasoning {
 
 			if (imageGeneratorSettings.isSaveView() && !imageGeneratorSettings.isViewInitialized()) {
 				// allow user to set a viewpoint
-				logger.info("Set the desired view and then press Ctrl+S to continue");
+				LOGGER.info("Set the desired view and then press Ctrl+S to continue");
 				imageGeneratorSettings.waitViewInitialized();
 			}
 
@@ -288,21 +290,25 @@ public class MeshReasoning {
 			}
 		}
 
-		// Create analyzers and start them
-
-		logger.debug("Calculating curvature ...");
+		// estimate curvature values
+		LOGGER.debug("Calculating curvature estimates ...");
 		long curvatureStartTime = System.currentTimeMillis();
-		CurvatureCalculation.calculateCurvatures(cas.getCurvatures(), model);
+		CurvatureCalculation.calculateCurvatures(cas.getCurvatures(), cas.getModel());
 		long curvatureDuration = System.currentTimeMillis() - curvatureStartTime;
-		logger.debug("Ended. Took: " + PrintUtil.prettyMillis(curvatureDuration));
-
+		LOGGER.debug("Ended. Took: " + PrintUtil.prettyMillis(curvatureDuration));
+	
 		if (imageGeneratorSettings != null && imageGeneratorSettings.isSaveCurvatureColor()) {
-			// wait until model is saved
-			mrv.setDrawCurvatureColor(true);
+			// draw estimated curvature coloring
+			mrv.setDrawCurvatureColor(3);
 			imageGeneratorSettings.waitSaved("curvature");
-			mrv.setDrawCurvatureColor(false);
-		}
-
+			mrv.setDrawCurvatureColor(0);
+		}		
+		
+		// process the estimated curvature information
+		CasProcessing casProcessor = new CasProcessing(cas);
+		casProcessor.process();
+		
+		// create analysers and add them to the analyser list
 		PrimitiveAnalyser pa = new PrimitiveAnalyser();
 		analyser.add(pa);
 		ContainerAnalyser ca = new ContainerAnalyser();
@@ -310,19 +316,22 @@ public class MeshReasoning {
 		ComplexHandleAnalyser cha = new ComplexHandleAnalyser();
 		analyser.add(cha);
 
+		// optimize resources
 		Thread.yield();
+		// run the analysers
 		pa.process(cas, imageGeneratorSettings);
 		ca.process(cas, imageGeneratorSettings);
 		cha.process(cas, imageGeneratorSettings);
 
+		LOGGER.info("MeshReasoning completed. Took: " + PrintUtil.prettyMillis(System.currentTimeMillis() - start));
 		if (imageGeneratorSettings != null && imageGeneratorSettings.isCloseAfterFinish()) {
-			logger.debug("Closing ...");
+			LOGGER.debug("Closing ...");
 			System.exit(123);
 		}
 	}
 
 	/**
-	 * Clear all highlighted annotations in mesh reasoning view
+	 * Clears all highlighted annotations in mesh reasoning view
 	 */
 	public void clearHightlight() {
 		if (mrv != null)
@@ -330,7 +339,7 @@ public class MeshReasoning {
 	}
 
 	/**
-	 * Get all annotations of given class.
+	 * Gets all annotations of given class.
 	 * 
 	 * @param clazz
 	 *            Class of desired annotation type.
@@ -342,7 +351,7 @@ public class MeshReasoning {
 	}
 
 	/**
-	 * Get all cone annotations
+	 * Gets all the cone annotations of the CAD model
 	 * 
 	 * @return Set of cone annotations in model
 	 */
@@ -351,7 +360,7 @@ public class MeshReasoning {
 	}
 
 	/**
-	 * Get all container annotations
+	 * Gets all container annotations of the CAD model
 	 * 
 	 * @return Set of container annotations in model
 	 */
@@ -360,7 +369,7 @@ public class MeshReasoning {
 	}
 
 	/**
-	 * Get all plane annotations
+	 * Gets all plane annotations of the CAD model
 	 * 
 	 * @return Set of plane annotations in model
 	 */
@@ -369,7 +378,7 @@ public class MeshReasoning {
 	}
 
 	/**
-	 * Get all sphere annotations
+	 * Gets all sphere annotations of the CAD model
 	 * 
 	 * @return Set of sphere annotations in model
 	 */
@@ -378,7 +387,7 @@ public class MeshReasoning {
 	}
 
 	/**
-	 * Get list of all found annotation types in mesh object
+	 * Gets list of all found annotation types in mesh object
 	 * 
 	 * @return List of annotation names such as Sphere, Cone, Plane, ...
 	 */
@@ -403,7 +412,7 @@ public class MeshReasoning {
 	}
 
 	/**
-	 * Get list of all handle annotations in model. List is ordered using HandleComparator.
+	 * Gets list of all handle annotations in model. List is ordered using HandleComparator.
 	 * 
 	 * @return Ordered list by handle probability of all handles found in model.
 	 * 
@@ -414,7 +423,7 @@ public class MeshReasoning {
 	}
 
 	/**
-	 * Get list of all handle annotations in model. List is ordered using HandleComparator.
+	 * Gets list of all handle annotations in model. List is ordered using HandleComparator.
 	 * 
 	 * @param minRadius
 	 *            handle minimum radius (in meters)
@@ -430,8 +439,7 @@ public class MeshReasoning {
 	}
 
 	/**
-	 * Get list of all handle annotations in model. List is ordered using HandleComparator.
-	 * 
+	 * Gets list of all handle annotations in model. List is ordered using HandleComparator.
 	 * 
 	 * @param minRadius
 	 *            handle minimum radius (in meters)
@@ -472,8 +480,6 @@ public class MeshReasoning {
 			if((HandleComparator.getHandleWeight(h, cas.getModel(),
 					HandleComparator.DEFAULT_RADIUS_MIN, HandleComparator.DEFAULT_RADIUS_MAX,
 					HandleComparator.DEFAULT_LENGTH_MIN, HandleComparator.DEFAULT_LENGTH_MAX) < HandleComparator.MIN_WEIGHT_FOR_HANDLE)) {
-				
-//				System.out.println("Less than minimum weight");
 				continue;
 			}
 
@@ -535,7 +541,7 @@ public class MeshReasoning {
 	}
 
 	/**
-	 * Init imageGeneratorSettings with predefined settings.
+	 * Initializes imageGeneratorSettings with predefined settings.
 	 */
 	private void initImageGenerator() {
 		imageGeneratorSettings.setDrawAxis(false);
@@ -633,7 +639,7 @@ public class MeshReasoning {
 						mr.clearHightlight();
 						ContainerAnnotation[] container = mr.findAnnotations(
 								ContainerAnnotation.class).toArray(new ContainerAnnotation[0]);
-						Arrays.sort(container, new ContainerAnnotationVolumeComarator());
+						Arrays.sort(container, new ContainerAnnotationVolumeComparator());
 						int max = 3;
 						for (int i = 0; i < max && i < container.length; i++) {
 							mr.highlightAnnotation(container[i]);
@@ -677,7 +683,7 @@ public class MeshReasoning {
 	}
 
 	/**
-	 * Init image generator settings for spoon images where handle and spoon sphere are selected.
+	 * Initializes image generator settings for spoon images where handle and spoon sphere are selected.
 	 */
 	@SuppressWarnings("unused")
 	private void initImageGeneratorSpoon() {
@@ -716,11 +722,11 @@ public class MeshReasoning {
 						Arrays.sort(spheres, new PrimitiveAnnotationAreaComparator());
 
 						if (cones.length == 0) {
-							logger.warn("Skipping image because no cone found");
+							LOGGER.warn("Skipping image because no cone found");
 							return;
 						}
 						if (spheres.length == 0) {
-							logger.warn("Skipping image because no sphere found");
+							LOGGER.warn("Skipping image because no sphere found");
 							return;
 						}
 						for (int i = 0; i < cones.length; i++) {
@@ -762,7 +768,7 @@ public class MeshReasoning {
 	}
 
 	/**
-	 * Set title of main frame
+	 * Sets the title of the main frame
 	 * 
 	 * @param title
 	 *            new title
@@ -770,5 +776,4 @@ public class MeshReasoning {
 	public void setFrameTitle(String title) {
 		frame.setTitle(title);
 	}
-
 }

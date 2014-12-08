@@ -40,13 +40,9 @@ import org.knowrob.vis.model.util.Triangle;
 import org.knowrob.vis.model.util.Vertex;
 
 /**
- * Annotation for a complex handle.
- * 
- * A complex handle is a convex part in the model.
- * 
+ * Annotation for a complex handle. A complex handle is a convex part in the model.
  * 
  * @author Stefan Profanter
- * 
  */
 public class ComplexHandleAnnotation extends DrawableAnnotation implements HandleAnnotation,
 		PrologAnnotationInterface {

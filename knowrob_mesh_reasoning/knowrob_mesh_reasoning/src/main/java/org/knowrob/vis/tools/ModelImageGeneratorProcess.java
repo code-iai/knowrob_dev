@@ -13,7 +13,6 @@ package org.knowrob.vis.tools;
  * @author Stefan Profanter
  * 
  * @see edu.tum.cs.tools.ModelImageGenerator
- * 
  */
 public class ModelImageGeneratorProcess {
 	/**

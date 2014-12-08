@@ -153,7 +153,9 @@ public class ComplexHandleAnalyser extends MeshAnalyser {
 	@SuppressWarnings("rawtypes")
 	@Override
 	public void processStart(final MeshCas cas) {
-
+		if (cas == null || cas.getAnnotations() == null) {
+			return;
+		}
 		HashMap<PrimitiveAnnotation, ComplexHandleAnnotation> alreadyAdded = new HashMap<PrimitiveAnnotation, ComplexHandleAnnotation>();
 		maxItemsToElaborate = cas.getAnnotations().size() + 1;
 		itemsElaborated.set(0);
@@ -206,8 +208,6 @@ public class ComplexHandleAnalyser extends MeshAnalyser {
 		}
 
 		itemsElaborated.incrementAndGet();
-		updateProgress();
-
 	}
 
 	/* (non-Javadoc)

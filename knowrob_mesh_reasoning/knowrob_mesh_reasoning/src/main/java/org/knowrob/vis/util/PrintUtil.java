@@ -15,9 +15,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Util functions for printing on screen.
  * 
- * 
  * @author Stefan Profanter
- * 
  */
 public class PrintUtil {
 	/**
