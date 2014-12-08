@@ -6,7 +6,7 @@
  * Contributors: Andrei Stoica - initial API and implementation during Google Summer of Code 2014
  ******************************************************************************/
 
-package edu.tum.cs.vis.model.util;
+package org.knowrob.vis.model.util;
 
 /**
  * Class that implements the main thresholds and constants used in the mesh reasoning

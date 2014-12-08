@@ -6,7 +6,7 @@
  * Contributors: Andrei Stoica - initial API and implementation during Google Summer of Code 2014
  ******************************************************************************/
 
-package edu.tum.cs.vis.model.util.algorithm;
+package org.knowrob.vis.model.util.algorithm;
 
 import java.lang.Math;
 
@@ -18,15 +18,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
 
-import edu.tum.cs.util.PrintUtil;
-import edu.tum.cs.vis.model.uima.cas.MeshCas;
-import edu.tum.cs.vis.model.util.Cluster;
-import edu.tum.cs.vis.model.util.Curvature;
-import edu.tum.cs.vis.model.util.Edge;
-import edu.tum.cs.vis.model.util.Region;
-import edu.tum.cs.vis.model.util.Triangle;
-import edu.tum.cs.vis.model.util.ThresholdsReasoning;
-import edu.tum.cs.vis.model.util.Vertex;
+import org.knowrob.vis.util.PrintUtil;
+import org.knowrob.vis.model.uima.cas.MeshCas;
+import org.knowrob.vis.model.util.Cluster;
+import org.knowrob.vis.model.util.Curvature;
+import org.knowrob.vis.model.util.Edge;
+import org.knowrob.vis.model.util.Region;
+import org.knowrob.vis.model.util.Triangle;
+import org.knowrob.vis.model.util.ThresholdsReasoning;
+import org.knowrob.vis.model.util.Vertex;
 
 
 /**
@@ -261,7 +261,7 @@ public class CasProcessing{
 	 * Computes the adjacency distance between two neighboring regions. This is done based on the
 	 * paper "A new CAD mesh segmentation method, based on curvature tensor analysis",
 	 * Guillaume Lavoue, Florent Dupont, Atilla Baskurt, Computer-Aided Design 37 (2005) 
-	 * 975–987, and it takes into account only the KMin and KMax curvature values.The result 
+	 * 975ï¿½987, and it takes into account only the KMin and KMax curvature values.The result 
 	 * is stored into the corresponding entry of the {@code adjacencyMatrix} associated.
 	 * 
 	 * Two similar curvature-wise regions tend to have a low distance associated, while two distinct
@@ -466,7 +466,7 @@ public class CasProcessing{
 	 * clustered vertices of the model. The region growing mechanism is based on the
 	 * paper "A new CAD mesh segmentation method, based on curvature tensor analysis",
 	 * Guillaume Lavoue, Florent Dupont, Atilla Baskurt, Computer-Aided Design 37 (2005),
-	 * 975–987. The regions have therefore triangles with the same curvature properties,
+	 * 975ï¿½987. The regions have therefore triangles with the same curvature properties,
 	 * grouping connected components together on the mesh. The grown regions are added 
 	 * to a list of regions which is then added to the MeshCas instance.
 	 * 
@@ -592,7 +592,7 @@ public class CasProcessing{
 	 * Merges together already existent regions which part the mesh surface of the
 	 * CAD model. The merging process is implemented based on the paper "A new CAD mesh 
 	 * segmentation method, based on curvature tensor analysis", Guillaume Lavoue, 
-	 * Florent Dupont, Atilla Baskurt, Computer-Aided Design 37 (2005) 975–987. The region
+	 * Florent Dupont, Atilla Baskurt, Computer-Aided Design 37 (2005) 975ï¿½987. The region
 	 * content of the MeshCas is modified as the deprecated merged regions are removed, while
 	 * the regions which are merged into are updated. The merging is continued until 
 	 * either all remaining regions are completely distinct (all entries are at {@link java.lang.Float.Float.MAX_VALUE}

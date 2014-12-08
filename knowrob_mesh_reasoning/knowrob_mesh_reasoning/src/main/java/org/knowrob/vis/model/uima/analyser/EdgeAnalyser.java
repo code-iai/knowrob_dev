@@ -6,7 +6,7 @@
  * Contributors: Andrei Stoica - initial API and implementation during
  * 								 Google Summer of Code 2014
  ******************************************************************************/
-package edu.tum.cs.vis.model.uima.analyser;
+package org.knowrob.vis.model.uima.analyser;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -15,14 +15,14 @@ import java.util.concurrent.Callable;
 
 import org.apache.log4j.Logger;
 
-import edu.tum.cs.util.PrintUtil;
-import edu.tum.cs.vis.model.util.Appearance;
-import edu.tum.cs.vis.model.util.Edge;
-import edu.tum.cs.vis.model.util.Triangle;
-import edu.tum.cs.vis.model.util.ThresholdsReasoning;
-import edu.tum.cs.vis.model.util.Vertex;
-import edu.tum.cs.vis.model.uima.cas.MeshCas;
-import edu.tum.cs.ias.knowrob.utils.ThreadPool;
+import org.knowrob.vis.util.PrintUtil;
+import org.knowrob.vis.model.util.Appearance;
+import org.knowrob.vis.model.util.Edge;
+import org.knowrob.vis.model.util.Triangle;
+import org.knowrob.vis.model.util.ThresholdsReasoning;
+import org.knowrob.vis.model.util.Vertex;
+import org.knowrob.vis.model.uima.cas.MeshCas;
+import org.knowrob.utils.ThreadPool;
 
 /**
  * Analyzer for detecting the sharp edges of the CAD model. A sharp edge is
@@ -35,7 +35,7 @@ import edu.tum.cs.ias.knowrob.utils.ThreadPool;
  * The analyser can add / remove triangles and vertices to the models. It is 
  * an implementation based on the paper "A new CAD mesh segmentation method, based on
  * curvature tensor analysis", Guillaume Lavoue, Florent Dupont, Atilla Baskurt, 
- * Computer-Aided Design 37 (2005) 975–987.
+ * Computer-Aided Design 37 (2005) 975ï¿½987.
  * 
  * @author Andrei Stoica 
  */
@@ -81,7 +81,7 @@ public class EdgeAnalyser extends MeshAnalyser {
 	}
 	
 	/* (non-Javadoc)
-	 * @see edu.tum.cs.vis.model.uima.analyser.MeshAnalyser#getLogger()
+	 * @see org.knowrob.vis.model.uima.analyser.MeshAnalyser#getLogger()
 	 */
 	@Override
 	public Logger getLogger() {
@@ -89,7 +89,7 @@ public class EdgeAnalyser extends MeshAnalyser {
 	}
 	
 	/* (non-Javadoc)
-	 * @see edu.tum.cs.vis.model.uima.analyser.MeshAnalyser#getName()
+	 * @see org.knowrob.vis.model.uima.analyser.MeshAnalyser#getName()
 	 */
 	@Override
 	public String getName() {
@@ -97,7 +97,7 @@ public class EdgeAnalyser extends MeshAnalyser {
 	}
 	
 	/* (non-Javadoc)
-	 * @see edu.tum.cs.vis.model.uima.analyser.MeshAnalyser#processStart(edu.tum.cs.vis.model.uima.cas.MeshCas)
+	 * @see org.knowrob.vis.model.uima.analyser.MeshAnalyser#processStart(org.knowrob.vis.model.uima.cas.MeshCas)
 	 */
 	@Override
 	public void processStart(MeshCas newCas) {
@@ -171,7 +171,7 @@ public class EdgeAnalyser extends MeshAnalyser {
 	}
 	
 	/* (non-Javadoc)
-	 * @see edu.tum.cs.vis.model.uima.analyser.MeshAnalyser#updateProgress()
+	 * @see org.knowrob.vis.model.uima.analyser.MeshAnalyser#updateProgress()
 	 */
 	@Override
 	public void updateProgress() {
@@ -259,8 +259,8 @@ public class EdgeAnalyser extends MeshAnalyser {
 	 * Adds 3 triangles to the model if the passed triangle is a 
 	 * sharp triangle as defined in "A new CAD mesh segmentation method, based on
 	 * curvature tensor analysis", Guillaume Lavoue, Florent Dupont, Atilla Baskurt, 
-	 * Computer-Aided Design 37 (2005) 975–987, and previously checked based
-	 * on the processing done inside of {@link edu.tum.cs.vis.model.uima.analyser.EdgeAnalyser#sharpEdgeDetectionForTriangle(Triangle)}
+	 * Computer-Aided Design 37 (2005) 975ï¿½987, and previously checked based
+	 * on the processing done inside of {@link org.knowrob.vis.model.uima.analyser.EdgeAnalyser#sharpEdgeDetectionForTriangle(Triangle)}
 	 * 
 	 * This method builds up 3 triangles starting from the given one by adding the
 	 * centroid of it as a new vertex. The new triangles neighboring relations are 

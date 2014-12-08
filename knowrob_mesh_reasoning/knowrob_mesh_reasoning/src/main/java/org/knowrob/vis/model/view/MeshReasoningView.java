@@ -39,6 +39,7 @@ import org.knowrob.vis.model.util.IntersectedTriangle;
 import org.knowrob.vis.model.util.Region;
 import org.knowrob.vis.model.util.Triangle;
 import org.knowrob.vis.model.util.Vertex;
+import org.knowrob.vis.tools.ImageGenerator.ImageGeneratorSettings;
 import org.knowrob.vis.uima.Annotation;
 
 /**

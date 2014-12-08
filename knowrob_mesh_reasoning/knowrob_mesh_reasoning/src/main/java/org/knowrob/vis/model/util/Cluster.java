@@ -7,10 +7,10 @@
  * 								 Google Summer of Code 2014
  ******************************************************************************/
 
-package edu.tum.cs.vis.model.util;
+package org.knowrob.vis.model.util;
 
-import edu.tum.cs.vis.model.util.Curvature;
-import edu.tum.cs.vis.model.util.Vertex;
+import org.knowrob.vis.model.util.Curvature;
+import org.knowrob.vis.model.util.Vertex;
 
 import java.util.ArrayList;
 import java.util.List;

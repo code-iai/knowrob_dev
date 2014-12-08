@@ -7,11 +7,11 @@
  * 				Stefan Profanter - initial API and implementation, Year: 2013
  * 				Andrei Stoica - improved during Google Summer of Code 2014
  ******************************************************************************/
-package edu.tum.cs.vis.model.util;
+package org.knowrob.vis.model.util;
 
 import java.util.Comparator;
 
-import edu.tum.cs.vis.model.uima.annotation.ContainerAnnotation;
+import org.knowrob.vis.model.uima.annotation.ContainerAnnotation;
 
 /**
  * Class that implements the Comparator abstract class of a ContainerAnnotation
