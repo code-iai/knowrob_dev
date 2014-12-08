@@ -1,0 +1,3 @@
+#!/bin/bash
+
+$(rospack find knowrob_mesh_reasoning)/knowrob_mesh_reasoning/build/install/knowrob_mesh_reasoning/bin/knowrob_mesh_reasoning org.knowrob.vis.model.MeshReasoning.MeshReasoningTest

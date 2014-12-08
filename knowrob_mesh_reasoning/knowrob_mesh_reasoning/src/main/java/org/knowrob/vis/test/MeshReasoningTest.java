@@ -28,8 +28,13 @@ public class MeshReasoningTest {
 	 *            command line arguments not used
 	 */
 	public static void main(String[] args) {
+		
 		// modify path as desired
 		String path = "package://knowrob_cad_models/models/kitchen/drinking-vessels/cup2.dae";
+		
+		if(args.length > 1) {
+			path=args[1];
+		}
 		
 		MeshReasoning mr = MeshReasoning.initMeshReasoning(true);
 
