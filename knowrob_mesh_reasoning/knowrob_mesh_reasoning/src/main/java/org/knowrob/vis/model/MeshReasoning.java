@@ -247,7 +247,7 @@ public class MeshReasoning {
 			String filePath = path.substring(end + 1);
 			String pkgPath = ResourceRetriever.findPackage(serverName);
 			if (pkgPath != null)
-				cas.setModelFile(pkgPath + filePath);
+				cas.setModelFile(pkgPath + "/" + filePath);
 		}
 		
 		// analyze mesh by looking into its neighboring relation ships
