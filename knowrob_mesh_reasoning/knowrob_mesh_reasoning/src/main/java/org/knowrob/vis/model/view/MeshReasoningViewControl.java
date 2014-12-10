@@ -61,12 +61,10 @@ public final class MeshReasoningViewControl extends JPanel implements ActionList
 	/**
 	 * List which shows the current progress of all analysers
 	 */
-	@SuppressWarnings("rawtypes")
 	private final JList						analyserList;
 	/**
 	 * List model for analyserList
 	 */
-	@SuppressWarnings("rawtypes")
 	private final DefaultListModel			analyserListModel;
 
 	/**
@@ -136,7 +134,6 @@ public final class MeshReasoningViewControl extends JPanel implements ActionList
 	 *            the parent MeshReasoningView
 	 * 
 	 */
-	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public MeshReasoningViewControl(MeshCas cas, ArrayList<MeshAnalyser> analyser,
 			MeshReasoningView view) {
 		this.view = view;
@@ -331,7 +328,6 @@ public final class MeshReasoningViewControl extends JPanel implements ActionList
 	/**
 	 * Updates the status in the analyser list (the progress and current duration)
 	 */
-	@SuppressWarnings("unchecked")
 	void updateAnalyserList() {
 		int i;
 		synchronized (analyser) {
